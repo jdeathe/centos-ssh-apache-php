@@ -54,7 +54,7 @@ if [[ ${OPTS_APACHE_MOD_SSL_ENABLED} == "true" ]]; then
 	cat /etc/httpd/conf.d/ssl.conf.off > /etc/httpd/conf.d/ssl.conf
 
 	sed -i \
-		-e 's~^#NameVirtualHost *:443$~NameVirtualHost *:443~g' \
+		-e 's~^#NameVirtualHost \*:443$~NameVirtualHost \*:443~g' \
 		-e 's~^#Include /var/www/app/vhost-ssl.conf$~Include /var/www/app/vhost-ssl.conf~g' \
 		/etc/httpd/conf/httpd.conf
 
@@ -73,7 +73,7 @@ else
 	> /etc/httpd/conf.d/ssl.conf
 
 	sed -i \
-		-e 's~^NameVirtualHost *:443$~#NameVirtualHost *:443~g' \
+		-e 's~^NameVirtualHost \*:443$~#NameVirtualHost \*:443~g' \
 		-e 's~^Include /var/www/app/vhost-ssl.conf$~#Include /var/www/app/vhost-ssl.conf~g' \
 		/etc/httpd/conf/httpd.conf
 fi
