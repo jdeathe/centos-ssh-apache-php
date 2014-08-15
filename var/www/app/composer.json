@@ -1,0 +1,9 @@
+{
+	"name": "jdeathe/apache-php-app-demo",
+	"require": {
+		"php": "5.3.*",
+		"ext-apc": "*",
+		"ext-memcached": "*",
+		"ext-mysqli": "*"
+	}
+}
