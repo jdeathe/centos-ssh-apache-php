@@ -15,7 +15,7 @@ If enabling and configuring SSH access, it is by public key authentication and, 
 
 ## Quick Example
 
-Run up a container named 'apache-php.app-1.1.1' from the docker image 'jdeathe/centos-ssh-apache-php' on port 2020 of your docker host.
+Run up a container named 'apache-php.app-1.1.1' from the docker image 'jdeathe/centos-ssh-apache-php' on port 8080 of your docker host.
 
 ```
 $ docker run -d \
