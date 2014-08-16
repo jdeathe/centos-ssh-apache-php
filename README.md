@@ -31,6 +31,10 @@ $ docker run -d \
   jdeathe/centos-ssh-apache-php:latest
 ```
 
+Now point your browser to ```http://<docker-host>:8080``` where "```<docker-host>```" is the host name of your docker server and, if all went well, you should see the "Hello, world!" page.
+
+![Hello World Screen Shot](images/hello-world.png?raw=true)
+
 ## Instructions
 
 ### (Optional) Configuration Data Volume
@@ -93,7 +97,7 @@ There are several environmental variables defined at runtime these allow the ope
 
 ##### 1. SERVICE_UNIT*
 
-The ```SERVICE_UNIT``` environmental variables are used to set a response header that lets you identify the container that is serving the content. This is useful when you have many containers running on a single host using differnt ports (i.e with differnet ```SERVICE_UNIT_LOCAL_ID``` values) or if you are running a cluster and need to identify which host the content is served from (i.e with different ```SERVICE_UNIT_INSTANCE``` values). The three values should mapp to the last 3 dotted values of the container name; in our case that is "app-1.1.1"
+The ```SERVICE_UNIT``` environmental variables are used to set a response header named ```X-Service-Uid``` that lets you identify the container that is serving the content. This is useful when you have many containers running on a single host using differnt ports (i.e with differnet ```SERVICE_UNIT_LOCAL_ID``` values) or if you are running a cluster and need to identify which host the content is served from (i.e with different ```SERVICE_UNIT_INSTANCE``` values). The three values should map to the last 3 dotted values of the container name; in our case that is "app-1.1.1"
 
 ```
 ...
