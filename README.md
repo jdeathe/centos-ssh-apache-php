@@ -191,6 +191,26 @@ $ docker run -d \
   jdeathe/centos-ssh-apache-php:latest
 ```
 
+#### services-config/ssl/certs/localhost.crt
+
+You may need to override the default auto-generated self signed certificate. To do this you can add the SSLCertificateFile to your config directory using the filename ```localhost.crt``` for example:
+
+```
+./config/services-config/ssl/certs/localhost.crt
+```
+
+*Note:* You must also specify the associated SSLCertificateKeyFile in this case.
+
+#### services-config/ssl/private/localhost.key
+
+To override the SSLCertificateKeyFile add it to your config directory using the filename ```localhost.key``` for example:
+
+```
+./config/services-config/ssl/private/localhost.key
+```
+
+*Note:* You must also specify the associated SSLCertificateFile in this case.
+
 #### services-config/supervisor/supervisord.conf
 
 The supervisor service's configuration can also be overriden by editing the custom supervisord.conf file. It shouldn't be necessary to change the existing configuration here but you could include more [program:x] sections to run additional commands at startup.
