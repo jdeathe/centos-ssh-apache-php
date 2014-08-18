@@ -1,0 +1,86 @@
+# -----------------------------------------------------------------------------
+# Create a data container for the configuration volume: 
+#     docker run -v /config --name volume-config.<service-name> busybox /bin/true
+#
+# To install: 
+#     sudo cp <container-path>/<service-name>@<port>.service /etc/systemd/system/
+#     sudo systemctl daemon-reload
+#     sudo systemctl enable /etc/systemd/system/<service-name>@<port>.service
+# 
+# Start using: 
+#     sudo systemctl restart <service-name>@<port>.service
+# -----------------------------------------------------------------------------
+
+[Unit]
+Description=CentOS-6 / Apache / PHP (Standard) // app-1.1.1
+After=etcd.service
+After=docker.service
+Requires=docker.service
+Requires=etcd.service
+
+[Service]
+Restart=on-failure
+RestartSec=30
+TimeoutStartSec=1200
+
+# Create a data container for the configuration volume
+ExecStartPre=/bin/sudo /bin/bash -c \
+  "if [ ! \"busybox\" == \"$(/usr/bin/docker images | /bin/grep -e '^busybox[ ]\{1,\}' | /bin/grep -o 'busybox')\" ]; then \
+    if [ -f /var/services-packages/busybox.latest-1.0.0.tar.xz ]; then \
+      /usr/bin/xz -dc /var/services-packages/busybox.latest-1.0.0.tar.xz | /usr/bin/docker load; \
+    else \
+      /usr/bin/docker pull busybox:latest; \
+    fi; \
+  fi; \
+  if [ ! \"volume-config.%p\" == \"$(/usr/bin/docker ps -a | /bin/grep -v -e \\\"volume-config.%p/.*,.*\\\" | /bin/grep -e '[ ]\{1,\}'volume-config.%p | /bin/grep -o volume-config.%p)\" ]; then \
+    /usr/bin/docker run \
+      --name volume-config.%p \
+      -v /etc/services-config/ssh.pool-1:/etc/services-config/ssh \
+      -v /etc/services-config/%p/supervisor:/etc/services-config/supervisor \
+      -v /etc/services-config/%p/httpd:/etc/services-config/httpd \
+      -v /etc/services-config/%p/ssl/certs:/etc/services-config/ssl/certs \
+      -v /etc/services-config/%p/ssl/private:/etc/services-config/ssl/private \
+      busybox:latest \
+      /bin/true; \
+  fi"
+
+# Initialisation: Pull or build image if required
+ExecStartPre=/bin/sudo /bin/bash -c \
+  "if [ ! \"jdeathe/centos-ssh-apache-php\" == \"$(/usr/bin/docker images | /bin/grep -e '^jdeathe/centos-ssh-apache-php[ ]\{1,\}' | /bin/grep -o 'jdeathe/centos-ssh-apache-php')\" ]; then \
+    if [ -f /var/services-packages/jdeathe/centos-ssh-apache-php.centos-6-1.0.0.tar.xz ]; then \
+      /usr/bin/xz -dc /var/services-packages/jdeathe/centos-ssh-apache-php.centos-6-1.0.0.tar.xz | /usr/bin/docker load; \
+    else \
+      /usr/bin/docker pull jdeathe/centos-ssh-apache-php:latest; \
+    fi; \
+  fi"
+
+# Startup: Remove existing container (and stop if running) so it is re-created on startup but not removed on exit - to allow debugging if required
+ExecStart=/bin/sudo /bin/bash -c \
+  "if [ \"%p\" == \"$(/usr/bin/docker ps -a | /bin/grep -v -e \\\"%p/.*,.*\\\" | /bin/grep -e '[ ]\{1,\}'%p | /bin/grep -o %p)\" ]; then \
+    if [ \"%p\" == \"$(/usr/bin/docker ps | /bin/grep -v -e \\\"%p/.*,.*\\\" | /bin/grep -e '[ ]\{1,\}'%p | /bin/grep -o %p)\" ]; then \
+      /usr/bin/docker stop %p; \
+    fi; \
+    /usr/bin/docker rm %p; \
+  fi; \
+  /usr/bin/docker run \
+    --privileged \
+    --name %p \
+    -p %i:80 \
+    -p 8580:8443 \
+    --env SERVICE_UNIT_INSTANCE=app-1 \
+    --env SERVICE_UNIT_LOCAL_ID=1 \
+    --env SERVICE_UNIT_INSTANCE=1 \
+    --env APACHE_SERVER_NAME=app-1.local \
+    --env APACHE_SERVER_ALIAS=app-1 \
+    --env DATE_TIMEZONE=UTC \
+    --volumes-from volume-config.%p \
+    -v /var/services-data/apache-php/app-1:/var/www/app \
+    jdeathe/centos-ssh-apache-php:latest"
+
+ExecStartPost=/usr/bin/etcdctl set /services/apache-php/app-1/1.1 %H:%i
+
+ExecStop=/usr/bin/docker stop --time 10 %p
+ExecStopPost=/usr/bin/etcdctl rm /services/apache-php/app-1/1.1
+
+[Install]
+WantedBy=multi-user.target
