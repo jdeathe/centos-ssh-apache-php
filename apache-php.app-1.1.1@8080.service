@@ -50,7 +50,7 @@ ExecStartPre=/bin/sudo /bin/bash -c \
     if [ -f /var/services-packages/jdeathe/centos-ssh-apache-php.centos-6-1.0.0.tar.xz ]; then \
       /usr/bin/xz -dc /var/services-packages/jdeathe/centos-ssh-apache-php.centos-6-1.0.0.tar.xz | /usr/bin/docker load; \
     else \
-      /usr/bin/docker pull jdeathe/centos-ssh-apache-php:latest; \
+      /usr/bin/docker pull jdeathe/centos-ssh-apache-php:centos-6-1.0.0; \
     fi; \
   fi"
 
@@ -75,7 +75,7 @@ ExecStart=/bin/sudo /bin/bash -c \
     --env DATE_TIMEZONE=UTC \
     --volumes-from volume-config.%p \
     -v /var/services-data/apache-php/app-1:/var/www/app \
-    jdeathe/centos-ssh-apache-php:latest"
+    jdeathe/centos-ssh-apache-php:centos-6-1.0.0"
 
 ExecStartPost=/usr/bin/etcdctl set /services/apache-php/app-1/1.1 %H:%i
 
