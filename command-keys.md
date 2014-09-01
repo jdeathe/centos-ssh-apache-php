@@ -18,9 +18,19 @@ $ sed -i '' \
   ~/.ssh/id-rsa.apache-php.app-1.1.1.pub
 ```
 
-## Upload the public key to the docker host (CoreOS) VM
+## Upload the public key to the docker host VM
 
 The host in this example is core-01.local that has SSH public key authentication enabled using the Vagrant insecure private key.
+
+### Generic Linux Host Example
+
+```
+$ cat ~/.ssh/id-rsa.apache-php.app-1.1.1.pub | ssh -i ~/.vagrant.d/insecure_private_key \
+  core@core-01.local \
+  "mkdir -p ~/.ssh && cat >> ~/.ssh/authorized_keys"
+```
+
+### CoreOS Host Example
 
 ```
 $ cat ~/.ssh/id-rsa.apache-php.app-1.1.1.pub | ssh -i ~/.vagrant.d/insecure_private_key \
