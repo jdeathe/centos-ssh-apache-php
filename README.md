@@ -19,7 +19,7 @@ Run up a container named ```apache-php.app-1.1.1``` from the docker image ```jde
 
 ```
 $ docker run -d \
-  apache-php.app-1.1.1 \
+  --name apache-php.app-1.1.1 \
   -p 8080:80 \
   --env SERVICE_UNIT_APP_GROUP=app-1 \
   --env SERVICE_UNIT_LOCAL_ID=1 \
