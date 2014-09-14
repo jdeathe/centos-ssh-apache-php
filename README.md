@@ -195,7 +195,7 @@ $ docker run -d \
   jdeathe/centos-ssh-apache-php:latest
 ```
 
-#### [ssl/certs/localhost.crt](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6/etc/services-config/ssl/certs/localhost.crt)
+#### ssl/certs/localhost.crt
 
 You may need to override the default auto-generated self signed certificate. To do this you can add the SSLCertificateFile to the Docker hosts directory using the filename ```localhost.crt``` for example:
 
@@ -205,7 +205,7 @@ You may need to override the default auto-generated self signed certificate. To 
 
 *Note:* You must also specify the associated SSLCertificateKeyFile in this case.
 
-#### [ssl/private/localhost.key](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6/etc/services-config/ssl/private/localhost.key)
+#### ssl/private/localhost.key
 
 To override the SSLCertificateKeyFile add it to your config directory using the filename ```localhost.key``` for example:
 
