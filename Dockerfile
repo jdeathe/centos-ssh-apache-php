@@ -9,11 +9,6 @@ FROM jdeathe/centos-ssh:centos-6
 MAINTAINER James Deathe <james.deathe@gmail.com>
 
 # -----------------------------------------------------------------------------
-# Add a "Message of the Day" to help identify container if logging in via SSH
-# -----------------------------------------------------------------------------
-RUN echo '[ CentOS-6 / Apache / PHP (Standard) ]' > /etc/motd
-
-# -----------------------------------------------------------------------------
 # Base Apache, PHP
 # -----------------------------------------------------------------------------
 RUN yum --setopt=tsflags=nodocs -y install \
@@ -85,26 +80,26 @@ RUN sed -i \
 # -----------------------------------------------------------------------------
 # Custom Apache configuration
 # -----------------------------------------------------------------------------
-RUN echo $'\n#\n# Custom configuration\n#' >> /etc/httpd/conf/httpd.conf
-RUN echo 'Options -Indexes' >> /etc/httpd/conf/httpd.conf
-RUN echo 'Listen 8443' >> /etc/httpd/conf/httpd.conf
-RUN echo 'NameVirtualHost *:80' >> /etc/httpd/conf/httpd.conf
-RUN echo 'NameVirtualHost *:8443' >> /etc/httpd/conf/httpd.conf
-RUN echo '#NameVirtualHost *:443' >> /etc/httpd/conf/httpd.conf
-RUN echo 'Include /var/www/app/vhost.conf' >> /etc/httpd/conf/httpd.conf
-RUN echo '#Include /var/www/app/vhost-ssl.conf' >> /etc/httpd/conf/httpd.conf
-RUN echo $'\n<Location /server-status>' >> /etc/httpd/conf/httpd.conf
-RUN echo '    SetHandler server-status' >> /etc/httpd/conf/httpd.conf
-RUN echo '    Order deny,allow' >> /etc/httpd/conf/httpd.conf
-RUN echo '    Deny from all' >> /etc/httpd/conf/httpd.conf
-RUN echo '    Allow from localhost 127.0.0.1' >> /etc/httpd/conf/httpd.conf
-RUN echo '</Location>' >> /etc/httpd/conf/httpd.conf
+RUN echo $'\n#\n# Custom configuration\n#' >> /etc/httpd/conf/httpd.conf \
+	&& echo 'Options -Indexes' >> /etc/httpd/conf/httpd.conf \
+	&& echo 'Listen 8443' >> /etc/httpd/conf/httpd.conf \
+	&& echo 'NameVirtualHost *:80' >> /etc/httpd/conf/httpd.conf \
+	&& echo 'NameVirtualHost *:8443' >> /etc/httpd/conf/httpd.conf \
+	&& echo '#NameVirtualHost *:443' >> /etc/httpd/conf/httpd.conf \
+	&& echo 'Include /var/www/app/vhost.conf' >> /etc/httpd/conf/httpd.conf \
+	&& echo '#Include /var/www/app/vhost-ssl.conf' >> /etc/httpd/conf/httpd.conf \
+	&& echo $'\n<Location /server-status>' >> /etc/httpd/conf/httpd.conf \
+	&& echo '    SetHandler server-status' >> /etc/httpd/conf/httpd.conf \
+	&& echo '    Order deny,allow' >> /etc/httpd/conf/httpd.conf \
+	&& echo '    Deny from all' >> /etc/httpd/conf/httpd.conf \
+	&& echo '    Allow from localhost 127.0.0.1' >> /etc/httpd/conf/httpd.conf \
+	&& echo '</Location>' >> /etc/httpd/conf/httpd.conf
 
 # -----------------------------------------------------------------------------
 # Limit process for the application user
 # -----------------------------------------------------------------------------
-RUN echo $'\napache\tsoft\tnproc\t30\napache\thard\tnproc\t50' >> /etc/security/limits.conf
-RUN echo $'\napp-www\tsoft\tnproc\t30\napp-www\thard\tnproc\t50' >> /etc/security/limits.conf
+RUN echo $'\napache\tsoft\tnproc\t30\napache\thard\tnproc\t50' >> /etc/security/limits.conf \
+	&& echo $'\napp-www\tsoft\tnproc\t30\napp-www\thard\tnproc\t50' >> /etc/security/limits.conf
 
 # -----------------------------------------------------------------------------
 # Disable the default SSL Virtual Host
@@ -118,9 +113,9 @@ RUN sed -i \
 # -----------------------------------------------------------------------------
 # Disable the SSL support by default
 # -----------------------------------------------------------------------------
-RUN mv /etc/httpd/conf.d/ssl.conf /etc/httpd/conf.d/ssl.conf.off
-RUN touch /etc/httpd/conf.d/ssl.conf
-RUN chmod 444 /etc/httpd/conf.d/ssl.conf
+RUN mv /etc/httpd/conf.d/ssl.conf /etc/httpd/conf.d/ssl.conf.off \
+	&& touch /etc/httpd/conf.d/ssl.conf \
+	&& chmod 444 /etc/httpd/conf.d/ssl.conf
 
 # -----------------------------------------------------------------------------
 # Global PHP configuration changes
@@ -143,20 +138,17 @@ RUN sed -i \
 # -----------------------------------------------------------------------------
 # Add default service users
 # -----------------------------------------------------------------------------
-RUN useradd -u 501 -d /var/www/app -m app
-RUN useradd -u 502 -d /var/www/app -M -s /sbin/nologin -G app app-www
-RUN usermod -a -G app-www app
-RUN usermod -a -G app-www apache
+RUN useradd -u 501 -d /var/www/app -m app \
+	&& useradd -u 502 -d /var/www/app -M -s /sbin/nologin -G app app-www \
+	&& usermod -a -G app-www app \
+	&& usermod -a -G app-www apache
 
 # -----------------------------------------------------------------------------
-# Add a symbolic link to the app users home within the home directory
-# -----------------------------------------------------------------------------
-RUN ln -s /var/www/app /home/app
-
-# -----------------------------------------------------------------------------
+# Add a symbolic link to the app users home within the home directory &
 # Create the initial directory structure
 # -----------------------------------------------------------------------------
-RUN mkdir -p /var/www/app/{public_html,src,var/{log,session,tmp}}
+RUN ln -s /var/www/app /home/app \
+	&& mkdir -p /var/www/app/{public_html,src,var/{log,session,tmp}}
 
 # -----------------------------------------------------------------------------
 # Populate the app home directory
@@ -165,11 +157,9 @@ ADD var/www/app/vhost.conf /var/www/app/vhost.conf
 ADD var/www/app/vhost.conf /var/www/app/vhost-ssl.conf
 ADD var/www/app/public_html/index.php /var/www/app/public_html/index.php
 
-# Add PHP Info _phpinfo.php
-RUN echo '<?php phpinfo(); ?>' > /var/www/app/public_html/_phpinfo.php
-
-# Add APC Control Panel _apc.php
-RUN cp /usr/share/php-pecl-apc/apc.php /var/www/app/public_html/_apc.php
+# Add PHP Info _phpinfo.php and Add APC Control Panel _apc.php
+RUN echo '<?php phpinfo(); ?>' > /var/www/app/public_html/_phpinfo.php \
+	&& cp /usr/share/php-pecl-apc/apc.php /var/www/app/public_html/_apc.php
 
 # -----------------------------------------------------------------------------
 # Create the SSL VirtualHosts configuration file
@@ -188,8 +178,8 @@ RUN sed -i \
 # -----------------------------------------------------------------------------
 # Set permissions (app:app-www === 501:502)
 # -----------------------------------------------------------------------------
-RUN chown -R 501:502 /var/www/app
-RUN chmod 775 /var/www/app
+RUN chown -R 501:502 /var/www/app \
+	&& chmod 775 /var/www/app
 
 # -----------------------------------------------------------------------------
 # Create the template directory
@@ -199,22 +189,18 @@ RUN cp -rpf /var/www/app /var/www/.app-skel
 # -----------------------------------------------------------------------------
 # Copy files into place
 # -----------------------------------------------------------------------------
-ADD etc/services-config/supervisor/supervisord.conf /etc/services-config/supervisor/
-RUN ln -sf /etc/services-config/supervisor/supervisord.conf /etc/supervisord.conf
-
-RUN mkdir -p /etc/services-config/{httpd/{conf,conf.d},ssl/{certs,private}}
-
-RUN ln -sf /etc/services-config/ssl/certs/localhost.crt /etc/pki/tls/certs/localhost.crt
-RUN ln -sf /etc/services-config/ssl/private/localhost.key /etc/pki/tls/private/localhost.key
-
-ADD etc/services-config/httpd/apache-bootstrap.conf /etc/services-config/httpd/
-RUN ln -sf /etc/services-config/httpd/apache-bootstrap.conf /etc/apache-bootstrap.conf
-
-RUN cp /etc/httpd/conf/httpd.conf /etc/services-config/httpd/conf/
-RUN ln -sf /etc/services-config/httpd/conf/httpd.conf /etc/httpd/conf/httpd.conf
-
 ADD etc/apache-bootstrap /etc/
-RUN chmod +x /etc/apache-bootstrap
+ADD etc/services-config/httpd/apache-bootstrap.conf /etc/services-config/httpd/
+ADD etc/services-config/supervisor/supervisord.conf /etc/services-config/supervisor/
+
+RUN mkdir -p /etc/services-config/{httpd/{conf,conf.d},ssl/{certs,private}} \
+	&& cp /etc/httpd/conf/httpd.conf /etc/services-config/httpd/conf/ \
+	&& ln -sf /etc/services-config/httpd/apache-bootstrap.conf /etc/apache-bootstrap.conf \
+	&& ln -sf /etc/services-config/httpd/conf/httpd.conf /etc/httpd/conf/httpd.conf \
+	&& ln -sf /etc/services-config/ssl/certs/localhost.crt /etc/pki/tls/certs/localhost.crt \
+	&& ln -sf /etc/services-config/ssl/private/localhost.key /etc/pki/tls/private/localhost.key \
+	&& ln -sf /etc/services-config/supervisor/supervisord.conf /etc/supervisord.conf \
+	&& chmod +x /etc/apache-bootstrap
 
 # -----------------------------------------------------------------------------
 # Set default environment variables used to identify the service container
