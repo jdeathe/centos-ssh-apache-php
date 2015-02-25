@@ -37,3 +37,31 @@ $ cat ~/.ssh/id-rsa.apache-php.app-1.1.1.pub | ssh -i ~/.vagrant.d/insecure_priv
   core@core-01.local \
   update-ssh-keys -a core@apache-php.app-1.1.1
 ```
+
+### Usage
+
+```
+$ ssh -i ~/.ssh/id-rsa.apache-php.app-1.1.1 \
+  core@core-01.local \
+  -o StrictHostKeyChecking=no
+```
+
+#### SSH Config
+
+To simplify the command required to access the running container we can add an entry to the SSH configuration file ```~/.ssh/config``` as follows:
+
+```
+Host core-01.apache-php.app-1.1.1
+	HostName core-01.local
+	Port 22
+	User core
+	StrictHostKeyChecking no
+	IdentitiesOnly yes
+	IdentityFile ~/.ssh/id-rsa.apache-php.app-1.1.1
+```
+
+With the above entry in place we can now run the following to access the running container:
+
+```
+$ ssh core-01.apache-php.app-1.1.1
+```
