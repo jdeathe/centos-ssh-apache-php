@@ -1,9 +1,13 @@
 centos-ssh-apache-php
 =====================
 
-Docker Image including CentOS-6, Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1, Composer.
+Docker Image including CentOS-6 6.6 x86_64, Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1, Composer.
 
-The Dockerfile can be used to build a base image that can be run as-is or used as the bases for other more specific builds.
+Apache loads only a minimal set of modules by default. Supports custom configuration via a configuration data volume.
+
+## Overview & links
+
+The [Dockerfile](https://github.com/jdeathe/centos-ssh-apache-php/blob/master/Dockerfile) can be used to build a base image that can be run as-is or used as the bases for other more specific builds.
 
 Included in the build is the EPEL repository and SSH, vi, elinks (for fullstatus support), APC, Memcache and Composer are installed along with python-pip, supervisor and supervisor-stdout.
 
