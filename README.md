@@ -7,13 +7,13 @@ Apache loads only a minimal set of modules by default. Supports custom configura
 
 ## Overview & links
 
-The [Dockerfile](https://github.com/jdeathe/centos-ssh-apache-php/blob/master/Dockerfile) can be used to build a base image that can be run as-is or used as the bases for other more specific builds.
+The [Dockerfile](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6/Dockerfile) can be used to build a base image that can be run as-is or used as the bases for other more specific builds.
 
 Included in the build is the EPEL repository and SSH, vi, elinks (for fullstatus support), APC, Memcache and Composer are installed along with python-pip, supervisor and supervisor-stdout.
 
 [Supervisor](http://supervisord.org/) is used to start httpd (and optionally the sshd) daemon when a docker container based on this image is run. To enable simple viewing of stdout for the sshd subprocess, supervisor-stdout is included. This allows you to see output from the supervisord controlled subprocesses with `docker logs <docker-container-name>`.
 
-SSH is not required in order to access a terminal for the running container the prefered method is to use Command Keys and the nsenter command. See [command-keys.md](https://github.com/jdeathe/centos-ssh-apache-php/blob/master/command-keys.md) for details on how to set this up.
+SSH is not required in order to access a terminal for the running container the prefered method is to use Command Keys and the nsenter command. See [command-keys.md](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6/command-keys.md) for details on how to set this up.
 
 If enabling and configuring SSH access, it is by public key authentication and, by default, the [Vagrant](http://www.vagrantup.com/) [insecure private key](https://github.com/mitchellh/vagrant/blob/master/keys/vagrant) is required.
 
@@ -37,7 +37,7 @@ $ docker run -d \
 
 Now point your browser to ```http://<docker-host>:8080``` where "```<docker-host>```" is the host name of your docker server and, if all went well, you should see the "Hello, world!" page.
 
-![Hello World Screen Shot](https://raw.github.com/jdeathe/centos-ssh-apache-php/master/images/hello-world.png)
+![Hello World Screen Shot](https://raw.github.com/jdeathe/centos-ssh-apache-php/centos-6/images/hello-world.png)
 
 ## Instructions
 
@@ -45,7 +45,7 @@ Now point your browser to ```http://<docker-host>:8080``` where "```<docker-host
 
 Create a "data volume" for configuration, this allows you to share the same configuration between multiple docker containers and, by mounting a host directory into the data volume you can override the default configuration files provided.
 
-Make a directory on the docker host for storing container configuration files. This directory needs to contain everything from the directory [etc/services-config](https://github.com/jdeathe/centos-ssh-apache-php/blob/master/etc/services-config)
+Make a directory on the docker host for storing container configuration files. This directory needs to contain everything from the directory [etc/services-config](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6/etc/services-config)
 
 ```
 $ mkdir -p /etc/services-config/apache-php.app-1.1.1
@@ -67,7 +67,7 @@ $ docker run \
 
 ### Running
 
-To run the a docker container from this image you can use the included [run.sh](https://github.com/jdeathe/centos-ssh-apache-php/blob/master/run.sh) and [run.conf](https://github.com/jdeathe/centos-ssh-apache-php/blob/master/run.conf) scripts. The helper script will stop any running container of the same name, remove it and run a new daemonised container on an unspecified host port. Alternatively you can use the following.
+To run the a docker container from this image you can use the included [run.sh](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6/run.sh) and [run.conf](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6/run.conf) scripts. The helper script will stop any running container of the same name, remove it and run a new daemonised container on an unspecified host port. Alternatively you can use the following.
 
 ```
 $ docker stop apache-php.app-1.1.1 && \
@@ -140,7 +140,7 @@ To set the timezone for the UK and account for British Summer Time you would use
 
 If using the optional data volume for container configuration you are able to customise the configuration. In the following examples your custom docker configuration files should be located on the Docker host under the directory ```/etc/service-config/<container-name>/``` where ```<container-name>``` should match the applicable container name such as "apache-php.app-1.1.1" in the examples.
 
-#### [httpd/apache-bootstrap.conf](https://github.com/jdeathe/centos-ssh-apache-php/blob/master/etc/services-config/httpd/apache-bootstrap.conf)
+#### [httpd/apache-bootstrap.conf](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6/etc/services-config/httpd/apache-bootstrap.conf)
 
 The bootstrap script initialises the app. It sets up the Apache service user + group, generates passwords, enables Apache modules and adds/removes SSL support.
 
@@ -179,7 +179,7 @@ APACHE_LOAD_MODULES="
 
 By default SSL support is disabled but a second port, (mapped to 8443), is available for traffic that has been been through upstream SSL termination (SSL Offloading). If you want the container to support SSL directly then set ```APACHE_MOD_SSL_ENABLED=true``` this will then generate a self signed certificate and will update Apache to accept traffic on port 443.
 
-*Note:* The included helper script [run.sh](https://github.com/jdeathe/centos-ssh-apache-php/blob/master/run.sh) will automatically map the docker host port 8580 to 443 but if you are running docker manually can use the following.
+*Note:* The included helper script [run.sh](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6/run.sh) will automatically map the docker host port 8580 to 443 but if you are running docker manually can use the following.
 
 ```
 $ docker stop apache-php.app-1.1.1 && \
@@ -219,7 +219,7 @@ To override the SSLCertificateKeyFile add it to your config directory using the 
 
 *Note:* You must also specify the associated SSLCertificateFile in this case.
 
-#### [supervisor/supervisord.conf](https://github.com/jdeathe/centos-ssh-apache-php/blob/master/etc/services-config/supervisor/supervisord.conf)
+#### [supervisor/supervisord.conf](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6/etc/services-config/supervisor/supervisord.conf)
 
 The supervisor service's configuration can also be overriden by editing the custom supervisord.conf file. It shouldn't be necessary to change the existing configuration here but you could include more [program:x] sections to run additional commands at startup.
 
@@ -227,4 +227,4 @@ The supervisor service's configuration can also be overriden by editing the cust
 
 In the previous example Docker run commands we mapped the Docker host directory ```/var/services-data/apache-php/app-1``` to ```/var/www/app``` in the Docker container, where ```/var/services-data/``` is the directory used to store persistent files and the subdirectory is used by an individual app's named container(s), ```apache-php.app-1.1.1```, in the previous examples.
 
-On first run, the bootstrap script, ([/etc/apache-bootstrap](https://github.com/jdeathe/centos-ssh-apache-php/blob/master/etc/apache-bootstrap)), will check if the DocumentRoot directory is empty and, if so, will poplate it with the example app scripts and VirtualHost configuration files. If you place your own app in this directory it will not be overwritten but you must ensure to include at least a vhost.conf file and, if enabling SSL a vhost-ssl.conf file too.
+On first run, the bootstrap script, ([/etc/apache-bootstrap](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6/etc/apache-bootstrap)), will check if the DocumentRoot directory is empty and, if so, will poplate it with the example app scripts and VirtualHost configuration files. If you place your own app in this directory it will not be overwritten but you must ensure to include at least a vhost.conf file and, if enabling SSL a vhost-ssl.conf file too.
