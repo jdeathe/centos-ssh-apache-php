@@ -78,6 +78,19 @@ else
 		/etc/httpd/conf/httpd.conf
 fi
 
+if [[ $(df -PT /var/www/app | awk 'NR>1 { print $2 }') == "nfs" ]]; then
+	echo DocumentRoot mounted on NFS filesystem - Setting EnableSendfile off...
+	sed -i \
+		-e 's~^#EnableSendfile [o|O]n$~EnableSendfile off~g' \
+		-e 's~^EnableSendfile [o|O]n$~EnableSendfile off~g' \
+		/etc/httpd/conf/httpd.conf
+else
+	echo DocumentRoot mounted on non-NFS filesystem - Setting EnableSendfile off...
+	sed -i \
+		-e 's~^EnableSendfile [o|O]ff$~#EnableSendfile on~g' \
+		/etc/httpd/conf/httpd.conf
+fi
+
 # Set the service user / service group user
 if getent passwd app && [[ ${OPTS_SERVICE_USER} != "app" ]]; then
 	usermod -l ${OPTS_SERVICE_USER} app
