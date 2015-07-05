@@ -45,7 +45,7 @@ if [[ ${OPTS_APACHE_MOD_SSL_ENABLED} == "true" ]] && [[ ! -f ${APP_HOME_DIR}/vho
 		-e 's~#SSLCipherSuite \(.*\)$~SSLCipherSuite \1~g' \
 		-e 's~#SSLCertificateFile \(.*\)$~SSLCertificateFile \1~g' \
 		-e 's~#SSLCertificateKeyFile \(.*\)$~SSLCertificateKeyFile \1~g' \
-		/var/www/app/vhost-ssl.conf
+		${APP_HOME_DIR}/vhost-ssl.conf
 fi
 
 # Enable/Disable SSL support
@@ -55,7 +55,7 @@ if [[ ${OPTS_APACHE_MOD_SSL_ENABLED} == "true" ]]; then
 
 	sed -i \
 		-e 's~^#NameVirtualHost \*:443$~NameVirtualHost \*:443~g' \
-		-e 's~^#Include /var/www/app/vhost-ssl.conf$~Include /var/www/app/vhost-ssl.conf~g' \
+		-e 's~^#Include ${APP_HOME_DIR}/vhost-ssl.conf$~Include ${APP_HOME_DIR}/vhost-ssl.conf~g' \
 		/etc/httpd/conf/httpd.conf
 
 	if [[ ! -f /etc/services-config/ssl/private/localhost.key ]] || [[ ! -f /etc/services-config/ssl/certs/localhost.crt ]]; then
@@ -74,7 +74,7 @@ else
 
 	sed -i \
 		-e 's~^NameVirtualHost \*:443$~#NameVirtualHost \*:443~g' \
-		-e 's~^Include /var/www/app/vhost-ssl.conf$~#Include /var/www/app/vhost-ssl.conf~g' \
+		-e 's~^Include ${APP_HOME_DIR}/vhost-ssl.conf$~#Include ${APP_HOME_DIR}/vhost-ssl.conf~g' \
 		/etc/httpd/conf/httpd.conf
 fi
 
@@ -90,13 +90,13 @@ fi
 # Set the Apache (run) service user/group
 if [[ ${OPTS_SUEXECUSERGROUP} == "true" ]]; then
 	sed -i -e "s~^User .*$~User ${OPTS_SERVICE_USER_GROUP}~g" -e "s~^Group .*$~Group ${OPTS_SERVICE_USER_GROUP}~g" /etc/httpd/conf/httpd.conf
-	sed -i -e 's~#SuexecUserGroup \(.*\)$~SuexecUserGroup \1~g' /var/www/app/vhost.conf
-	sed -i -e 's~#SuexecUserGroup \(.*\)$~SuexecUserGroup \1~g' /var/www/app/vhost-ssl.conf
+	sed -i -e 's~#SuexecUserGroup \(.*\)$~SuexecUserGroup \1~g' ${APP_HOME_DIR}/vhost.conf
+	sed -i -e 's~#SuexecUserGroup \(.*\)$~SuexecUserGroup \1~g' ${APP_HOME_DIR}/vhost-ssl.conf
 	chown -R 502:502 /var/{www/app/bin,www/.app-skel/bin,run/mod_fcgid}
 else
 	sed -i -e "s~^User .*$~User apache~g" -e "s~^Group .*$~Group apache~g" /etc/httpd/conf/httpd.conf
-	sed -i -e 's~\([^#]\)SuexecUserGroup \(.*\)$~\1#SuexecUserGroup \2~g' /var/www/app/vhost.conf
-	sed -i -e 's~\([^#]\)SuexecUserGroup \(.*\)$~\1#SuexecUserGroup \2~g' /var/www/app/vhost-ssl.conf
+	sed -i -e 's~\([^#]\)SuexecUserGroup \(.*\)$~\1#SuexecUserGroup \2~g' ${APP_HOME_DIR}/vhost.conf
+	sed -i -e 's~\([^#]\)SuexecUserGroup \(.*\)$~\1#SuexecUserGroup \2~g' ${APP_HOME_DIR}/vhost-ssl.conf
 	chown -R apache:apache /var/{www/app/bin,www/.app-skel/bin,run/mod_fcgid}
 fi
 
