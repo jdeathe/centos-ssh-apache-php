@@ -78,7 +78,7 @@ else
 		/etc/httpd/conf/httpd.conf
 fi
 
-if [[ $(df -PT /var/www/app | awk 'NR>1 { print $2 }') == "nfs" ]]; then
+if [[ $(df -PT ${APP_HOME_DIR} | awk 'NR>1 { print $2 }') == "nfs" ]]; then
 	echo DocumentRoot mounted on NFS filesystem - Setting EnableSendfile off...
 	sed -i \
 		-e 's~^#EnableSendfile [o|O]n$~EnableSendfile off~g' \
