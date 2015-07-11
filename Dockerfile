@@ -4,7 +4,7 @@
 # CentOS-6, Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1, Composer
 # 
 # =============================================================================
-FROM jdeathe/centos-ssh:centos-6
+FROM jdeathe/centos-ssh:centos-6-1.3.0
 
 MAINTAINER James Deathe <james.deathe@gmail.com>
 
@@ -12,13 +12,18 @@ MAINTAINER James Deathe <james.deathe@gmail.com>
 # Base Apache, PHP
 # -----------------------------------------------------------------------------
 RUN yum --setopt=tsflags=nodocs -y install \
+	elinks-0.12-0.21.pre5.el6_3 \
+	httpd-2.2.15-39.el6.centos \
+	mod_ssl-2.2.15-39.el6.centos \
+	php-5.3.3-46.el6_6 \
+	php-cli-5.3.3-46.el6_6 \
+	php-pecl-apc-3.1.9-2.el6 \
+	php-pecl-memcached-1.0.0-1.el6 \
+	&& yum versionlock add \
 	elinks \
 	httpd \
 	mod_ssl \
-	php \
-	php-cli \
-	php-pecl-apc \
-	php-pecl-memcached \
+	php* \
 	&& rm -rf /var/cache/yum/* \
 	&& yum clean all
 
