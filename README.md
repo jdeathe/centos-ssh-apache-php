@@ -56,7 +56,7 @@ Create the data volume, mounting our docker host's configuration directory to */
 ```
 $ docker run \
   --name volume-config.apache-php.app-1.1.1 \
-  -v /etc/services-config/ssh.pool-1:/etc/services-config/ssh \
+  -v /etc/services-config/ssh.pool-1/ssh:/etc/services-config/ssh \
   -v /etc/services-config/apache-php.app-1.1.1/supervisor:/etc/services-config/supervisor \
   -v /etc/services-config/apache-php.app-1.1.1/httpd:/etc/services-config/httpd \
   -v /etc/services-config/apache-php.app-1.1.1/ssl/certs:/etc/services-config/ssl/certs \
