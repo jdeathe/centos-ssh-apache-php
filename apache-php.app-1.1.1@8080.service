@@ -35,7 +35,7 @@ ExecStartPre=/bin/sudo /bin/bash -c \
   if [ ! \"volume-config.%p\" == \"$(/usr/bin/docker ps -a | /bin/grep -v -e \\\"volume-config.%p/.*,.*\\\" | /bin/grep -e '[ ]\{1,\}'volume-config.%p | /bin/grep -o volume-config.%p)\" ]; then \
     /usr/bin/docker run \
       --name volume-config.%p \
-      -v /etc/services-config/ssh.pool-1:/etc/services-config/ssh \
+      -v /etc/services-config/ssh.pool-1/ssh:/etc/services-config/ssh \
       -v /etc/services-config/%p/supervisor:/etc/services-config/supervisor \
       -v /etc/services-config/%p/httpd:/etc/services-config/httpd \
       -v /etc/services-config/%p/ssl/certs:/etc/services-config/ssl/certs \
