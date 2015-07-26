@@ -79,7 +79,7 @@ if [ ! -d ${CONTAINER_MOUNT_PATH_CONFIG}/supervisor ]; then
 fi
 
 if [[ ! -n $(find ${CONTAINER_MOUNT_PATH_CONFIG}/supervisor -maxdepth 1 -type f) ]]; then
-		CMD=$(cp -R etc/services-config/supervisor/ ${CONTAINER_MOUNT_PATH_CONFIG}/supervisor/)
+		CMD=$(cp -R etc/services-config/supervisor ${CONTAINER_MOUNT_PATH_CONFIG}/)
 		$CMD || sudo $CMD
 fi
 
@@ -89,7 +89,7 @@ if [ ! -d ${CONTAINER_MOUNT_PATH_CONFIG}/httpd ]; then
 fi
 
 if [[ ! -n $(find ${CONTAINER_MOUNT_PATH_CONFIG}/httpd -maxdepth 1 -type f) ]]; then
-		CMD=$(cp -R etc/services-config/httpd/ ${CONTAINER_MOUNT_PATH_CONFIG}/httpd/)
+		CMD=$(cp -R etc/services-config/httpd ${CONTAINER_MOUNT_PATH_CONFIG}/)
 		$CMD || sudo $CMD
 fi
 
