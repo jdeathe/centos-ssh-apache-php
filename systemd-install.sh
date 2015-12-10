@@ -62,7 +62,7 @@ if [[ ! -n $(find /etc/services-config/${OPT_SERVICE_NAME_SHORT}/supervisor -max
 	cp -R etc/services-config/supervisor /etc/services-config/${OPT_SERVICE_NAME_SHORT}/
 fi
 
-if [[ ! -n $(find /etc/services-config/${OPT_SERVICE_NAME_SHORT}/mysql -maxdepth 1 -type f) ]]; then
+if [[ ! -n $(find /etc/services-config/${OPT_SERVICE_NAME_SHORT}/httpd -maxdepth 1 -type f) ]]; then
 	cp -R etc/services-config/httpd /etc/services-config/${OPT_SERVICE_NAME_SHORT}/
 fi
 
