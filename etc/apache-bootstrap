@@ -11,8 +11,7 @@ OPTS_SERVICE_USER="${SERVICE_USER:-app}"
 OPTS_SERVICE_USER_GROUP="${SERVICE_USER_GROUP:-app-www}"
 OPTS_SERVICE_USER_PASSWORD="${SERVICE_USER_PASSWORD:-$(get_password 8)}"
 OPTS_SERVICE_USER_GROUP_PASSWORD="${SERVICE_USER_GROUP_PASSWORD:-$(get_password 8)}"
-# Should always be false for mod_php
-OPTS_SUEXECUSERGROUP="false"
+OPTS_SUEXECUSERGROUP="${SUEXECUSERGROUP:-false}"
 
 OPTS_APACHE_SERVER_NAME="${APACHE_SERVER_NAME:-$(hostname)}"
 OPTS_APACHE_MOD_SSL_ENABLED="${APACHE_MOD_SSL_ENABLED:-false}"
@@ -25,7 +24,10 @@ fi
 if [[ ! -n $(find ${APP_HOME_DIR} -maxdepth 1 -type f) ]] && [[ -d ${APP_HOME_DIR_TEMPLATE} ]]; then
 	echo Home directory ${APP_HOME_DIR} exists but is empty - populate it using ${APP_HOME_DIR_TEMPLATE}...
 	cp -rf ${APP_HOME_DIR_TEMPLATE}/. ${APP_HOME_DIR}/
-elif [[ ! -d ${APP_HOME_DIR}/public_html ]]; then
+fi
+
+# Document root directory is required
+if [[ ! -d ${APP_HOME_DIR}/public_html ]]; then
 	echo ERROR: ${APP_HOME_DIR}/public_html not found.
 	exit 1
 fi
@@ -89,16 +91,22 @@ fi
 
 # Set the Apache (run) service user/group
 if [[ ${OPTS_SUEXECUSERGROUP} == "true" ]]; then
-	sed -i -e "s~^User .*$~User ${OPTS_SERVICE_USER_GROUP}~g" -e "s~^Group .*$~Group ${OPTS_SERVICE_USER_GROUP}~g" /etc/httpd/conf/httpd.conf
+	sed -i -e "s~^User .*$~User ${OPTS_SERVICE_USER_GROUP}~g" \
+		-e "s~^Group .*$~Group ${OPTS_SERVICE_USER_GROUP}~g" /etc/httpd/conf/httpd.conf
 	sed -i -e 's~#SuexecUserGroup \(.*\)$~SuexecUserGroup \1~g' ${APP_HOME_DIR}/vhost.conf
 	sed -i -e 's~#SuexecUserGroup \(.*\)$~SuexecUserGroup \1~g' ${APP_HOME_DIR}/vhost-ssl.conf
-	chown -R 502:502 /var/{www/app/bin,www/.app-skel/bin,run/mod_fcgid}
+	chown -R 502:502 /var/{www/app-bin,run/mod_fcgid}
 else
-	sed -i -e "s~^User .*$~User apache~g" -e "s~^Group .*$~Group apache~g" /etc/httpd/conf/httpd.conf
+	sed -i -e "s~^User .*$~User apache~g" \
+		-e "s~^Group .*$~Group apache~g" /etc/httpd/conf/httpd.conf
 	sed -i -e 's~\([^#]\)SuexecUserGroup \(.*\)$~\1#SuexecUserGroup \2~g' ${APP_HOME_DIR}/vhost.conf
 	sed -i -e 's~\([^#]\)SuexecUserGroup \(.*\)$~\1#SuexecUserGroup \2~g' ${APP_HOME_DIR}/vhost-ssl.conf
-	chown -R apache:apache /var/{www/app/bin,www/.app-skel/bin,run/mod_fcgid}
+	chown -R apache:apache /var/{www/app-bin,run/mod_fcgid}
 fi
+
+# Update any existing instances of php-wrapper path in the Virtual Host
+sed -i -e 's~app/bin/php-wrapper~app-bin/php-wrapper~g' ${APP_HOME_DIR}/vhost.conf
+sed -i -e 's~app/bin/php-wrapper~app-bin/php-wrapper~g' ${APP_HOME_DIR}/vhost-ssl.conf
 
 echo Loading Apache modules...
 for MODULE in ${APACHE_LOAD_MODULES}
@@ -113,16 +121,15 @@ done
 echo "${OPTS_SERVICE_USER}:${OPTS_SERVICE_USER_PASSWORD}" | chpasswd
 echo "${OPTS_SERVICE_USER_GROUP}:${OPTS_SERVICE_USER_GROUP_PASSWORD}" | chpasswd
 
-echo
-echo "================================================================================"
-echo "Apache Credentials"
-echo "--------------------------------------------------------------------------------"
-echo "${OPTS_SERVICE_USER} : ${OPTS_SERVICE_USER_PASSWORD}"
-echo "${OPTS_SERVICE_USER_GROUP} : ${OPTS_SERVICE_USER_GROUP_PASSWORD}"
-echo "--------------------------------------------------------------------------------"
-echo
+	cat <<-EOT
 
-# Allow some time for supervisor_stdout to start
-sleep 2
+		================================================================================
+		Apache Credentials
+		--------------------------------------------------------------------------------
+		${OPTS_SERVICE_USER} : ${OPTS_SERVICE_USER_PASSWORD}
+		${OPTS_SERVICE_USER_GROUP} : ${OPTS_SERVICE_USER_GROUP_PASSWORD}
+		--------------------------------------------------------------------------------
+		
+	EOT
 
 exit 0
