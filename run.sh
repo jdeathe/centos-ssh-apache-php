@@ -81,6 +81,14 @@ if ! have_docker_container_name ${VOLUME_CONFIG_NAME} ; then
 	if [[ ! -n $(find ${CONTAINER_MOUNT_PATH_CONFIG}/supervisor -maxdepth 1 -type f) ]]; then
 			CMD=$(cp -R etc/services-config/supervisor ${CONTAINER_MOUNT_PATH_CONFIG}/)
 			$CMD || sudo $CMD
+	else
+		# In case the supervisor configuration exists from the mod_fcgid child container
+		if [ "$(uname)" == "Darwin" ]; then
+			CMD=$(sed -i '' -e 's~/usr/sbin/httpd.worker ~/usr/sbin/httpd ~g' ${CONTAINER_MOUNT_PATH_CONFIG}/supervisor/supervisord.conf)
+		else
+			CMD=$(sed -i -e 's~/usr/sbin/httpd.worker ~/usr/sbin/httpd ~g' ${CONTAINER_MOUNT_PATH_CONFIG}/supervisor/supervisord.conf)
+		fi
+		$CMD || sudo $CMD
 	fi
 
 	if [ ! -d ${CONTAINER_MOUNT_PATH_CONFIG}/httpd ]; then
