@@ -11,7 +11,8 @@ MAINTAINER James Deathe <james.deathe@gmail.com>
 # -----------------------------------------------------------------------------
 # Base Apache, PHP
 # -----------------------------------------------------------------------------
-RUN yum --setopt=tsflags=nodocs -y install \
+RUN rpm --rebuilddb \
+	&& yum --setopt=tsflags=nodocs -y install \
 	elinks-0.12-0.21.pre5.el6_3 \
 	httpd-2.2.15-47.el6.centos \
 	mod_ssl-2.2.15-47.el6.centos \
