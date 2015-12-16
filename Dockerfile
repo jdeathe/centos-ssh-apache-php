@@ -92,8 +92,8 @@ RUN echo $'\n#\n# Custom configuration\n#' >> /etc/httpd/conf/httpd.conf \
 	&& echo 'NameVirtualHost *:80' >> /etc/httpd/conf/httpd.conf \
 	&& echo 'NameVirtualHost *:8443' >> /etc/httpd/conf/httpd.conf \
 	&& echo '#NameVirtualHost *:443' >> /etc/httpd/conf/httpd.conf \
-	&& echo 'Include /var/www/app/vhost.conf' >> /etc/httpd/conf/httpd.conf \
-	&& echo '#Include /var/www/app/vhost-ssl.conf' >> /etc/httpd/conf/httpd.conf \
+	&& echo 'Include ${APP_HOME_DIR}/vhost.conf' >> /etc/httpd/conf/httpd.conf \
+	&& echo '#Include ${APP_HOME_DIR}/vhost-ssl.conf' >> /etc/httpd/conf/httpd.conf \
 	&& echo $'\n<Location /server-status>' >> /etc/httpd/conf/httpd.conf \
 	&& echo '    SetHandler server-status' >> /etc/httpd/conf/httpd.conf \
 	&& echo '    Order deny,allow' >> /etc/httpd/conf/httpd.conf \
@@ -211,12 +211,23 @@ RUN mkdir -p /etc/services-config/{httpd/{conf,conf.d},ssl/{certs,private}} \
 # -----------------------------------------------------------------------------
 # Set default environment variables used to identify the service container
 # -----------------------------------------------------------------------------
-ENV APACHE_SERVER_NAME app-1.local
-ENV APACHE_SERVER_ALIAS app-1
 ENV SERVICE_UNIT_APP_GROUP app-1
 ENV SERVICE_UNIT_LOCAL_ID 1
 ENV SERVICE_UNIT_INSTANCE 1
+
+# -----------------------------------------------------------------------------
+# Set default environment variables used to configure the service container
+# -----------------------------------------------------------------------------
+ENV APACHE_SERVER_ALIAS ""
+ENV APACHE_SERVER_NAME app-1.local
+ENV APACHE_LOAD_MODULES "authz_user_module log_config_module expires_module deflate_module headers_module setenvif_module mime_module status_module dir_module alias_module"
+ENV APACHE_MOD_SSL_ENABLED false
+ENV APP_HOME_DIR /var/www/app
 ENV DATE_TIMEZONE UTC
+ENV SERVICE_USER app
+ENV SERVICE_USER_GROUP app-www
+ENV SERVICE_USER_PASSWORD ""
+ENV SUEXECUSERGROUP false
 
 EXPOSE 80 8443 443
 

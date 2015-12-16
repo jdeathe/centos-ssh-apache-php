@@ -8,10 +8,8 @@ fi
 source run.conf
 source etc/services-config/httpd/apache-bootstrap.conf
 
-OPTS_APACHE_MOD_SSL_ENABLED="${APACHE_MOD_SSL_ENABLED:-false}"
-
 # Enable/Disable SSL support
-if [[ ${OPTS_APACHE_MOD_SSL_ENABLED} == "true" ]]; then
+if [[ ${APACHE_MOD_SSL_ENABLED} == "true" ]]; then
 	OPTS_HTTPS_PORT=443
 else
 	OPTS_HTTPS_PORT=8443
@@ -142,18 +140,25 @@ docker run \
 	--name "${DOCKER_NAME}" \
 	-p 8080:80 \
 	-p 8580:${OPTS_HTTPS_PORT} \
-	--env SERVICE_UNIT_APP_GROUP=${SERVICE_UNIT_APP_GROUP} \
-	--env SERVICE_UNIT_LOCAL_ID=${SERVICE_UNIT_LOCAL_ID} \
-	--env SERVICE_UNIT_INSTANCE=${SERVICE_UNIT_INSTANCE} \
-	--env APACHE_SERVER_NAME=${SERVICE_UNIT_APP_GROUP}.local \
-	--env APACHE_SERVER_ALIAS=${SERVICE_UNIT_APP_GROUP} \
-	--env DATE_TIMEZONE=${DATE_TIMEZONE} \
+	--env "SERVICE_UNIT_APP_GROUP=app-1" \
+	--env "SERVICE_UNIT_LOCAL_ID=1" \
+	--env "SERVICE_UNIT_INSTANCE=1" \
+	--env "APACHE_SERVER_ALIAS=app-1" \
+	--env "APACHE_SERVER_NAME=app-1.local" \
+	--env "APACHE_LOAD_MODULES=${APACHE_LOAD_MODULES}" \
+	--env "APACHE_MOD_SSL_ENABLED=false" \
+	--env "APP_HOME_DIR=${APP_HOME_DIR}" \
+	--env "DATE_TIMEZONE=UTC" \
+	--env "SERVICE_USER=app" \
+	--env "SERVICE_USER_GROUP=app-www" \
+	--env "SERVICE_USER_PASSWORD=" \
+	--env "SUEXECUSERGROUP=false" \
 	--volumes-from ${VOLUME_CONFIG_NAME} \
-	-v ${MOUNT_PATH_DATA}/${SERVICE_UNIT_NAME}/${SERVICE_UNIT_APP_GROUP}:${APP_HOME_DIR:-/var/www/app} \
+	-v ${MOUNT_PATH_DATA}/${SERVICE_UNIT_NAME}/${SERVICE_UNIT_APP_GROUP}:${APP_HOME_DIR} \
 	${DOCKER_IMAGE_REPOSITORY_NAME} -c "${DOCKER_COMMAND}"
 )
 
-# Linked MySQL + SSH + XDebug remote debugging port
+# Linked MySQL + SSH + XDebug remote debugging port + Apache rewrite module
 # (
 # set -x
 # docker run \
@@ -164,13 +169,21 @@ docker run \
 # 	-p 2312:22 \
 # 	-p :9000 \
 # 	--link ${DOCKER_NAME_DB_MYSQL}:db_mysql \
-# 	--env SERVICE_UNIT_APP_GROUP=${SERVICE_UNIT_APP_GROUP} \
-# 	--env SERVICE_UNIT_LOCAL_ID=${SERVICE_UNIT_LOCAL_ID} \
-# 	--env SERVICE_UNIT_INSTANCE=${SERVICE_UNIT_INSTANCE} \
-# 	--env APACHE_SERVER_NAME=${SERVICE_UNIT_APP_GROUP}.local \
-# 	--env APACHE_SERVER_ALIAS=${SERVICE_UNIT_APP_GROUP} \
+# 	--env "SERVICE_UNIT_APP_GROUP=app-1" \
+# 	--env "SERVICE_UNIT_LOCAL_ID=1" \
+# 	--env "SERVICE_UNIT_INSTANCE=1" \
+# 	--env "APACHE_SERVER_ALIAS=app-1 www.app-1 www.app-1.local" \
+# 	--env "APACHE_SERVER_NAME=app-1.local" \
+# 	--env "APACHE_LOAD_MODULES=${APACHE_LOAD_MODULES} rewrite_module" \
+# 	--env "APACHE_MOD_SSL_ENABLED=false" \
+# 	--env "APP_HOME_DIR=/var/www/app-1" \
+# 	--env "DATE_TIMEZONE=Europe/London" \
+# 	--env "SERVICE_USER=app" \
+# 	--env "SERVICE_USER_GROUP=app-www" \
+# 	--env "SERVICE_USER_PASSWORD=" \
+# 	--env "SUEXECUSERGROUP=false" \
 # 	--volumes-from ${VOLUME_CONFIG_NAME} \
-# 	-v ${MOUNT_PATH_DATA}/${SERVICE_UNIT_NAME}/${SERVICE_UNIT_APP_GROUP}:${APP_HOME_DIR:-/var/www/app} \
+# 	-v ${MOUNT_PATH_DATA}/${SERVICE_UNIT_NAME}/${SERVICE_UNIT_APP_GROUP}:/var/www/app-1 \
 # 	${DOCKER_IMAGE_REPOSITORY_NAME} -c "${DOCKER_COMMAND}"
 # )
 
