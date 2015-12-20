@@ -36,8 +36,8 @@ $ docker run -d \
   --env SERVICE_UNIT_APP_GROUP=app-1 \
   --env SERVICE_UNIT_LOCAL_ID=1 \
   --env SERVICE_UNIT_INSTANCE=1 \
-  --env APACHE_SERVER_NAME=app-1.local \
   --env APACHE_SERVER_ALIAS=app-1 \
+  --env APACHE_SERVER_NAME=app-1.local \
   --env DATE_TIMEZONE=UTC \
   -v /var/services-data/apache-php/app-1:/var/www/app \
   jdeathe/centos-ssh-apache-php:latest
@@ -87,8 +87,8 @@ $ docker run -d \
   --env SERVICE_UNIT_INSTANCE=app-1 \
   --env SERVICE_UNIT_LOCAL_ID=1 \
   --env SERVICE_UNIT_INSTANCE=1 \
-  --env APACHE_SERVER_NAME=app-1.local \
   --env APACHE_SERVER_ALIAS=app-1 \
+  --env APACHE_SERVER_NAME=app-1.local \
   --env DATE_TIMEZONE=UTC \
   --volumes-from volume-config.apache-php.app-1.1.1 \
   -v /var/services-data/apache-php/app-1:/var/www/app \
@@ -125,8 +125,8 @@ The ```APACHE_SERVER_NAME``` and ```APACHE_SERVER_ALIAS``` environmental variabl
 
 ```
 ...
-  --env APACHE_SERVER_NAME=app-1.local \
   --env APACHE_SERVER_ALIAS=app-1 \
+  --env APACHE_SERVER_NAME=app-1.local \
 ...
 ```
 
@@ -159,8 +159,8 @@ Use the ```SERVICE_USER*``` variables in your custom apache-bootstrap.conf file 
 ```
 SERVICE_USER=apacheUser
 SERVICE_USER_GROUP=apacheGroup
-SERVICE_USER_PASSWORD=userPassword123
 SERVICE_USER_GROUP_PASSWORD=userGroupPassword123
+SERVICE_USER_PASSWORD=userPassword123
 ```
 
 ##### 2. Apache Modules
@@ -199,8 +199,8 @@ $ docker run -d \
   --env SERVICE_UNIT_APP_GROUP=app-1 \
   --env SERVICE_UNIT_LOCAL_ID=1 \
   --env SERVICE_UNIT_INSTANCE=1 \
-  --env APACHE_SERVER_NAME=app-1.local \
   --env APACHE_SERVER_ALIAS=app-1 \
+  --env APACHE_SERVER_NAME=app-1.local \
   --env DATE_TIMEZONE=UTC \
   --volumes-from volume-config.apache-php.app-1.1.1 \
   -v /var/services-data/apache-php/app-1:/var/www/app \
