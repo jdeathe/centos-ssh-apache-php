@@ -161,7 +161,7 @@ The ```APACHE_SERVER_NAME``` and ```APACHE_SERVER_ALIAS``` environmental variabl
 
 from your browser you can then access it with ```http://app-1.local:8080``` assuming you have the IP address of your docker mapped to the hostname using your DNS server or a local hosts entry.
 
-##### 3. APACHE_LOAD_MODULES (Apache Modules)
+##### 3. APACHE_LOAD_MODULES
 
 The variable ```APACHE_LOAD_MODULES``` defines all Apache modules to be loaded from */etc/httpd/conf/http.conf*. The default is the minimum required so you may need to add more as necessary. To add the "mod\_rewrite" Apache Module you would add it's identifier ```rewrite_module``` to the array as follows.
 
@@ -171,7 +171,7 @@ The variable ```APACHE_LOAD_MODULES``` defines all Apache modules to be loaded f
 ...
 ```
 
-##### 4. APACHE_MOD_SSL_ENABLED - SSL Support
+##### 4. APACHE_MOD_SSL_ENABLED
 
 By default SSL support is disabled but a second port, (mapped to 8443), is available for traffic that has been been through upstream SSL termination (SSL Offloading). If you want the container to support SSL directly then set ```APACHE_MOD_SSL_ENABLED=true``` this will then generate a self signed certificate and will update Apache to accept traffic on port 443.
 
