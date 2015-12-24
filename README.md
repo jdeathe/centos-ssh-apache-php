@@ -1,7 +1,7 @@
 centos-ssh-apache-php
 =====================
 
-Docker Image including CentOS-6 6.6 x86_64, Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1, Composer.
+Docker Image including CentOS-6 6.7 x86_64, Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1, Composer.
 
 Apache loads only a minimal set of modules by default. Supports custom configuration via a configuration data volume.
 

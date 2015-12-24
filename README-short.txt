@@ -1,1 +1,1 @@
-CentOS-6 6.6 x86_64 / Apache / PHP / PHP memcached / PHP APC / Composer.
+CentOS-6 6.7 x86_64 / Apache / PHP / PHP memcached / PHP APC / Composer.

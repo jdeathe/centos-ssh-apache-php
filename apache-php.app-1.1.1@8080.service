@@ -32,7 +32,7 @@ TimeoutStartSec=1200
 Environment="MOUNT_PATH_CONFIG=/etc/services-config"
 Environment="MOUNT_PATH_DATA=/var/services-data"
 Environment="DOCKER_IMAGE_NAME=jdeathe/centos-ssh-apache-php"
-Environment="DOCKER_IMAGE_TAG=centos-6-1.3.1"
+Environment="DOCKER_IMAGE_TAG=centos-6-1.4.0"
 
 # Create a data container for the configuration volume
 ExecStartPre=/bin/sudo /bin/bash -c \
