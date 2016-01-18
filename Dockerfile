@@ -1,7 +1,7 @@
 # =============================================================================
 # jdeathe/centos-ssh-apache-php
 #
-# CentOS-6, Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1, Composer
+# CentOS-6, Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1
 # 
 # =============================================================================
 FROM jdeathe/centos-ssh:centos-6-1.4.0
@@ -225,6 +225,7 @@ ENV APACHE_LOAD_MODULES "authz_user_module log_config_module expires_module defl
 ENV APACHE_MOD_SSL_ENABLED false
 ENV APP_HOME_DIR /var/www/app
 ENV DATE_TIMEZONE UTC
+ENV HTTPD /usr/sbin/httpd
 ENV SERVICE_USER app
 ENV SERVICE_USER_GROUP app-www
 ENV SERVICE_USER_PASSWORD ""
