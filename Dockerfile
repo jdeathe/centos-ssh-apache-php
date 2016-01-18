@@ -18,6 +18,7 @@ RUN rpm --rebuilddb \
 	mod_ssl-2.2.15-47.el6.centos \
 	php-5.3.3-46.el6_6 \
 	php-cli-5.3.3-46.el6_6 \
+	php-zts-5.3.3-46.el6_6 \
 	php-pecl-apc-3.1.9-2.el6 \
 	php-pecl-memcached-1.0.0-1.el6 \
 	&& yum versionlock add \
