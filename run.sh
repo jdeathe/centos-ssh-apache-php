@@ -117,15 +117,17 @@ fi
 # Force replace container of same name if found to exist
 remove_docker_container_name ${DOCKER_NAME}
 
-if [ -z ${1+x} ]; then
+if [[ ${#} -eq 0 ]]; then
 	echo "Running container ${DOCKER_NAME} as a background/daemon process."
-	DOCKER_OPERATOR_OPTIONS="-d --entrypoint /bin/bash"
-	DOCKER_COMMAND="/usr/bin/supervisord --configuration=/etc/supervisord.conf"
+	DOCKER_OPERATOR_OPTIONS="-d"
 else
-	# This is usful for running commands like 'export' or 'env' to check the environment variables set by the --link docker option
+	# This is useful for running commands like 'export' or 'env' to check the 
+	# environment variables set by the --link docker option.
+	# 
+	# If you need to pipe to another command, quote the commands. e.g: 
+	#   ./run.sh "env | grep APACHE | sort"
 	printf "Running container %s with CMD [/bin/bash -c '%s']\n" "${DOCKER_NAME}" "${*}"
-	DOCKER_OPERATOR_OPTIONS="--entrypoint /bin/bash"
-	DOCKER_COMMAND=${@}
+	DOCKER_OPERATOR_OPTIONS="-it --entrypoint /bin/bash --env TERM=${TERM:-xterm}"
 fi
 
 # In a sub-shell set xtrace - prints the docker command to screen for reference
@@ -151,7 +153,7 @@ docker run \
 	--env "SUEXECUSERGROUP=false" \
 	--volumes-from ${VOLUME_CONFIG_NAME} \
 	-v ${MOUNT_PATH_DATA}/${SERVICE_UNIT_NAME}/${SERVICE_UNIT_APP_GROUP}:${APP_HOME_DIR} \
-	${DOCKER_IMAGE_REPOSITORY_NAME} -c "${DOCKER_COMMAND}"
+	${DOCKER_IMAGE_REPOSITORY_NAME}${@:+ -c }"${@}"
 )
 
 # Linked MySQL + SSH + XDebug remote debugging port + Apache rewrite module
@@ -180,7 +182,7 @@ docker run \
 # 	--env "SUEXECUSERGROUP=false" \
 # 	--volumes-from ${VOLUME_CONFIG_NAME} \
 # 	-v ${MOUNT_PATH_DATA}/${SERVICE_UNIT_NAME}/${SERVICE_UNIT_APP_GROUP}:/var/www/app-1 \
-# 	${DOCKER_IMAGE_REPOSITORY_NAME} -c "${DOCKER_COMMAND}"
+# 	${DOCKER_IMAGE_REPOSITORY_NAME}${@:+ -c }"${@}"
 # )
 
 if is_docker_container_name_running ${DOCKER_NAME}; then
