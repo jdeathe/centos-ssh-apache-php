@@ -147,6 +147,7 @@ docker run \
 	--env "APACHE_MOD_SSL_ENABLED=false" \
 	--env "APP_HOME_DIR=${APP_HOME_DIR}" \
 	--env "DATE_TIMEZONE=UTC" \
+	--env "HTTPD=/usr/sbin/httpd" \
 	--env "SERVICE_USER=app" \
 	--env "SERVICE_USER_GROUP=app-www" \
 	--env "SERVICE_USER_PASSWORD=" \
@@ -176,6 +177,7 @@ docker run \
 # 	--env "APACHE_MOD_SSL_ENABLED=false" \
 # 	--env "APP_HOME_DIR=/var/www/app-1" \
 # 	--env "DATE_TIMEZONE=Europe/London" \
+# 	--env "HTTPD=/usr/sbin/httpd.worker" \
 # 	--env "SERVICE_USER=app" \
 # 	--env "SERVICE_USER_GROUP=app-www" \
 # 	--env "SERVICE_USER_PASSWORD=" \
