@@ -1,7 +1,7 @@
 # =============================================================================
 # jdeathe/centos-ssh-apache-php
 #
-# CentOS-6, Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1, Composer
+# CentOS-6, Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1
 # 
 # =============================================================================
 FROM jdeathe/centos-ssh:centos-6-1.4.0
@@ -18,6 +18,7 @@ RUN rpm --rebuilddb \
 	mod_ssl-2.2.15-47.el6.centos \
 	php-5.3.3-46.el6_6 \
 	php-cli-5.3.3-46.el6_6 \
+	php-zts-5.3.3-46.el6_6 \
 	php-pecl-apc-3.1.9-2.el6 \
 	php-pecl-memcached-1.0.0-1.el6 \
 	&& yum versionlock add \
@@ -225,6 +226,7 @@ ENV APACHE_LOAD_MODULES "authz_user_module log_config_module expires_module defl
 ENV APACHE_MOD_SSL_ENABLED false
 ENV APP_HOME_DIR /var/www/app
 ENV DATE_TIMEZONE UTC
+ENV HTTPD /usr/sbin/httpd
 ENV SERVICE_USER app
 ENV SERVICE_USER_GROUP app-www
 ENV SERVICE_USER_PASSWORD ""

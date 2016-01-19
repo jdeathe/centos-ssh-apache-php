@@ -1,17 +1,19 @@
 centos-ssh-apache-php
 =====================
 
-Docker Image including CentOS-6 6.7 x86_64, Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1, Composer.
+Docker Image including CentOS-6 6.7 x86_64, Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1.
 
-Apache loads only a minimal set of modules by default. Supports custom configuration via a configuration data volume.
+Apache PHP web server, loading only a minimal set of Apache modules by default. Supports custom configuration via environment variables and/or a configuration data volume.
 
 ## Overview & links
 
 The [Dockerfile](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6/Dockerfile) can be used to build a base image that can be run as-is or used as the bases for other more specific builds.
 
-Included in the build is the EPEL repository and SSH, vi, elinks (for fullstatus support), APC, Memcache and Composer are installed along with python-pip, supervisor and supervisor-stdout.
+This build of [Apache](https://httpd.apache.org/), (httpd CentOS package), uses the mpm_prefork_module and php5_module modules for handling [PHP](http://php.net/).
 
-[Supervisor](http://supervisord.org/) is used to start httpd (and optionally the sshd) daemon when a docker container based on this image is run. To enable simple viewing of stdout for the sshd subprocess, supervisor-stdout is included. This allows you to see output from the supervisord controlled subprocesses with `docker logs <docker-container-name>`.
+Included in the build are the [EPEL](http://fedoraproject.org/wiki/EPEL) and [IUS](https://ius.io/) repositories. Installed packages include [OpenSSH](http://www.openssh.com/portable.html) secure shell, [vim-minimal](http://www.vim.org/), [elinks](http://elinks.or.cz) (for fullstatus support), PHP [APC](http://pecl.php.net/package/APC), PHP [Memcached](http://pecl.php.net/package/memcached) are installed along with python-setuptools, [supervisor](http://supervisord.org/) and [supervisor-stdout](https://github.com/coderanger/supervisor-stdout).
+
+Supervisor is used to start httpd.worker daemon when a docker container based on this image is run. To enable simple viewing of stdout for the sshd subprocess, supervisor-stdout is included. This allows you to see output from the supervisord controlled subprocesses with ```docker logs <docker-container-name>```.
 
 If enabling and configuring SSH access, it is by public key authentication and, by default, the [Vagrant](http://www.vagrantup.com/) [insecure private key](https://github.com/mitchellh/vagrant/blob/master/keys/vagrant) is required.
 
