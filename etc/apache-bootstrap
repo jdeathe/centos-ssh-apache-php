@@ -2,6 +2,28 @@
 
 source /etc/apache-bootstrap.conf
 
+add_hosts_entry ()
+{
+	local IP=${1:-127.0.0.1}
+	local HOSTS
+	local USAGE="Usage: $0 ip_address hostname [hostname ...]"
+
+	shift
+	if [[ ${#} -eq 0 ]]; then
+		echo ${USAGE}
+		exit 1
+	fi
+
+	while (( ${#} )); do
+		if [[ ${1} != 'localhost' ]] && [[ ${1} != '127.0.0.1' ]] && [[ ${1} != ${IP} ]]; then
+			HOSTS+=" ${1}"
+		fi
+		shift
+	done
+
+	printf -- "%s\t%s\n" "${IP}" "${HOSTS}" >> /etc/hosts
+}
+
 get_password ()
 {
 	echo $(head -n 4096 /dev/urandom | tr -cd '[:alnum:]' | head -c ${1})
@@ -9,9 +31,10 @@ get_password ()
 
 APP_HOME_DIR_TEMPLATE="/var/www/.app-skel"
 
+OPTS_APACHE_SERVER_ALIAS="${APACHE_SERVER_ALIAS:-}"
 OPTS_APACHE_SERVER_NAME="${APACHE_SERVER_NAME:-$(hostname)}"
-OPTS_APACHE_MOD_SSL_ENABLED="${APACHE_MOD_SSL_ENABLED:-false}"
 OPTS_APACHE_LOAD_MODULES="${APACHE_LOAD_MODULES:-authz_user_module log_config_module expires_module deflate_module headers_module setenvif_module mime_module status_module dir_module alias_module reqtimeout_module}"
+OPTS_APACHE_MOD_SSL_ENABLED="${APACHE_MOD_SSL_ENABLED:-false}"
 OPTS_APP_HOME_DIR="${APP_HOME_DIR:-/var/www/app}"
 OPTS_SERVICE_USER="${SERVICE_USER:-app}"
 OPTS_SERVICE_USER_GROUP="${SERVICE_USER_GROUP:-app-www}"
@@ -57,6 +80,9 @@ else
 	echo "ERROR: Apache Server MPM (${HTTPD}) unknown."
 	exit 1
 fi
+
+# Add local hosts entries
+add_hosts_entry 127.0.0.1 ${OPTS_APACHE_SERVER_NAME}${OPTS_APACHE_SERVER_ALIAS:+ }${OPTS_APACHE_SERVER_ALIAS}
 
 # If users need to change the vhost.conf the SSL version can be rebuilt if it is deleted
 if [[ ${OPTS_APACHE_MOD_SSL_ENABLED} == true ]] && [[ ! -f ${OPTS_APP_HOME_DIR}/vhost-ssl.conf ]] && [[ -f ${OPTS_APP_HOME_DIR}/vhost.conf ]]; then
