@@ -71,6 +71,7 @@ RUN sed -i \
 # -----------------------------------------------------------------------------
 RUN sed -i \
 	-e 's~^\(LoadModule .*\)$~#\1~g' \
+	-e 's~^\(#LoadModule version_module modules/mod_version.so\)$~\1\n#LoadModule reqtimeout_module modules/mod_reqtimeout.so~g' \
 	-e 's~^#LoadModule mime_module ~LoadModule mime_module ~g' \
 	-e 's~^#LoadModule log_config_module ~LoadModule log_config_module ~g' \
 	-e 's~^#LoadModule setenvif_module ~LoadModule setenvif_module ~g' \
@@ -82,32 +83,42 @@ RUN sed -i \
 	-e 's~^#LoadModule deflate_module ~LoadModule deflate_module ~g' \
 	-e 's~^#LoadModule headers_module ~LoadModule headers_module ~g' \
 	-e 's~^#LoadModule alias_module ~LoadModule alias_module ~g' \
-	-e 's~^\(#LoadModule version_module modules/mod_version.so\)$~\1\n#LoadModule reqtimeout_module modules/mod_reqtimeout.so~g' \
 	/etc/httpd/conf/httpd.conf
 
 # -----------------------------------------------------------------------------
 # Custom Apache configuration
 # -----------------------------------------------------------------------------
-RUN echo $'\n#\n# Custom configuration\n#' >> /etc/httpd/conf/httpd.conf \
-	&& echo 'Options -Indexes' >> /etc/httpd/conf/httpd.conf \
-	&& echo 'Listen 8443' >> /etc/httpd/conf/httpd.conf \
-	&& echo 'NameVirtualHost *:80' >> /etc/httpd/conf/httpd.conf \
-	&& echo 'NameVirtualHost *:8443' >> /etc/httpd/conf/httpd.conf \
-	&& echo '#NameVirtualHost *:443' >> /etc/httpd/conf/httpd.conf \
-	&& echo 'Include ${APP_HOME_DIR}/vhost.conf' >> /etc/httpd/conf/httpd.conf \
-	&& echo '#Include ${APP_HOME_DIR}/vhost-ssl.conf' >> /etc/httpd/conf/httpd.conf \
-	&& echo $'\n<Location /server-status>' >> /etc/httpd/conf/httpd.conf \
-	&& echo '    SetHandler server-status' >> /etc/httpd/conf/httpd.conf \
-	&& echo '    Order deny,allow' >> /etc/httpd/conf/httpd.conf \
-	&& echo '    Deny from all' >> /etc/httpd/conf/httpd.conf \
-	&& echo '    Allow from localhost 127.0.0.1' >> /etc/httpd/conf/httpd.conf \
-	&& echo '</Location>' >> /etc/httpd/conf/httpd.conf
+RUN { \
+	echo ''; \
+	echo '#'; \
+	echo '# Custom configuration'; \
+	echo '#'; \
+	echo 'Options -Indexes'; \
+	echo 'Listen 8443'; \
+	echo 'NameVirtualHost *:80'; \
+	echo 'NameVirtualHost *:8443'; \
+	echo '#NameVirtualHost *:443'; \
+	echo 'Include ${APP_HOME_DIR}/vhost.conf'; \
+	echo '#Include ${APP_HOME_DIR}/vhost-ssl.conf'; \
+	echo ''; \
+	echo '<Location /server-status>'; \
+	echo '    SetHandler server-status'; \
+	echo '    Order deny,allow'; \
+	echo '    Deny from all'; \
+	echo '    Allow from localhost 127.0.0.1'; \
+	echo '</Location>'; \
+} >> /etc/httpd/conf/httpd.conf
 
 # -----------------------------------------------------------------------------
 # Limit process for the application user
 # -----------------------------------------------------------------------------
-RUN echo $'\napache\tsoft\tnproc\t30\napache\thard\tnproc\t50' >> /etc/security/limits.conf \
-	&& echo $'\napp-www\tsoft\tnproc\t30\napp-www\thard\tnproc\t50' >> /etc/security/limits.conf
+RUN { \
+	echo ''; \
+	echo $'apache\tsoft\tnproc\t30'; \
+	echo $'apache\thard\tnproc\t50'; \
+	echo $'app-www\tsoft\tnproc\t30'; \
+	echo $'app-www\thard\tnproc\t50'; \
+} >> /etc/security/limits.conf
 
 # -----------------------------------------------------------------------------
 # Disable the default SSL Virtual Host
