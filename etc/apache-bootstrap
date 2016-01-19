@@ -91,7 +91,7 @@ if [[ ${OPTS_APACHE_MOD_SSL_ENABLED} == true ]] && [[ ! -f ${OPTS_APP_HOME_DIR}/
 
 	# Enable the SSL VirtualHosts configuration
 	sed -i \
-		-e 's~^<VirtualHost \*:80>$~#<VirtualHost \*:80>~g' \
+		-e 's~^<VirtualHost \*:80 \*:8443>$~#<VirtualHost \*:80 \*:8443>~g' \
 		-e 's~^#<VirtualHost \*:443>$~<VirtualHost \*:443>~g' \
 		-e 's~#SSLEngine \(.*\)$~SSLEngine \1~g' \
 		-e 's~#SSLOptions \(.*\)$~SSLOptions \1~g' \
@@ -105,13 +105,7 @@ fi
 # Enable/Disable SSL support
 if [[ ${OPTS_APACHE_MOD_SSL_ENABLED} == true ]]; then
 	echo "Enabling SSL support."
-
 	cat /etc/httpd/conf.d/ssl.conf.off > /etc/httpd/conf.d/ssl.conf
-
-	sed -i \
-		-e 's~^#NameVirtualHost \*:443$~NameVirtualHost \*:443~g' \
-		-e 's~^#Include ${OPTS_APP_HOME_DIR}/vhost-ssl.conf$~Include ${OPTS_APP_HOME_DIR}/vhost-ssl.conf~g' \
-		/etc/httpd/conf/httpd.conf
 
 	if [[ ! -f /etc/services-config/ssl/private/localhost.key ]] || [[ ! -f /etc/services-config/ssl/certs/localhost.crt ]]; then
 		echo "Generating new certificate."
@@ -129,11 +123,6 @@ if [[ ${OPTS_APACHE_MOD_SSL_ENABLED} == true ]]; then
 else
 	echo "Disabling SSL support."
 	> /etc/httpd/conf.d/ssl.conf
-
-	sed -i \
-		-e 's~^NameVirtualHost \*:443$~#NameVirtualHost \*:443~g' \
-		-e 's~^Include ${OPTS_APP_HOME_DIR}/vhost-ssl.conf$~#Include ${OPTS_APP_HOME_DIR}/vhost-ssl.conf~g' \
-		/etc/httpd/conf/httpd.conf
 fi
 
 # Set the service user / service group user

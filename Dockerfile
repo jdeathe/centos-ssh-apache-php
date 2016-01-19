@@ -40,7 +40,6 @@ RUN sed -i \
 	-e 's~^ServerTokens OS$~ServerTokens Prod~g' \
 	-e 's~^#ExtendedStatus On$~ExtendedStatus On~g' \
 	-e 's~^DirectoryIndex \(.*\)$~DirectoryIndex \1 index.php~g' \
-	-e 's~^NameVirtualHost \(.*\)$~#NameVirtualHost \1~g' \
 	/etc/httpd/conf/httpd.conf
 
 # -----------------------------------------------------------------------------
@@ -86,48 +85,42 @@ RUN sed -i \
 	/etc/httpd/conf/httpd.conf
 
 # -----------------------------------------------------------------------------
-# Custom Apache configuration
+# Enable ServerStatus access via /_httpdstatus to local client
 # -----------------------------------------------------------------------------
-RUN { \
-	echo ''; \
-	echo '#'; \
-	echo '# Custom configuration'; \
-	echo '#'; \
-	echo 'Options -Indexes'; \
-	echo 'Listen 8443'; \
-	echo 'NameVirtualHost *:80'; \
-	echo 'NameVirtualHost *:8443'; \
-	echo '#NameVirtualHost *:443'; \
-	echo 'Include ${APP_HOME_DIR}/vhost.conf'; \
-	echo '#Include ${APP_HOME_DIR}/vhost-ssl.conf'; \
-	echo ''; \
-	echo '<Location /server-status>'; \
-	echo '    SetHandler server-status'; \
-	echo '    Order deny,allow'; \
-	echo '    Deny from all'; \
-	echo '    Allow from localhost 127.0.0.1'; \
-	echo '</Location>'; \
-} >> /etc/httpd/conf/httpd.conf
-
-# -----------------------------------------------------------------------------
-# Limit process for the application user
-# -----------------------------------------------------------------------------
-RUN { \
-	echo ''; \
-	echo $'apache\tsoft\tnproc\t30'; \
-	echo $'apache\thard\tnproc\t50'; \
-	echo $'app-www\tsoft\tnproc\t30'; \
-	echo $'app-www\thard\tnproc\t50'; \
-} >> /etc/security/limits.conf
+RUN sed -i \
+	-e '/#<Location \/server-status>/,/#<\/Location>/ s~^#~~' \
+	-e '/<Location \/server-status>/,/<\/Location>/ s~Allow from .example.com~Allow from localhost 127.0.0.1~' \
+	-e 's~<Location /server-status>~<Location /_httpdstatus>~g' \
+	/etc/httpd/conf/httpd.conf
 
 # -----------------------------------------------------------------------------
 # Disable the default SSL Virtual Host
-# 	Simplest approach is to use non-standard port instead of attempting to 
-# 	comment out or remove the necessary lines
 # -----------------------------------------------------------------------------
 RUN sed -i \
-	-e 's~^<VirtualHost _default_:443>$~<VirtualHost _default_:404>~g' \
+	-e '/<VirtualHost _default_:443>/,/#<\/VirtualHost>/ s/^/#/' \
 	/etc/httpd/conf.d/ssl.conf
+
+# -----------------------------------------------------------------------------
+# Custom Apache configuration
+# -----------------------------------------------------------------------------
+RUN { \
+		echo ''; \
+		echo '#'; \
+		echo '# Custom configuration'; \
+		echo '#'; \
+		echo 'Options -Indexes'; \
+		echo 'Listen 8443'; \
+		echo 'NameVirtualHost *:8443'; \
+		echo 'Include ${APP_HOME_DIR}/vhost.conf'; \
+	} >> /etc/httpd/conf/httpd.conf \
+	&& { \
+		echo ''; \
+		echo '#'; \
+		echo '# Custom SSL configuration'; \
+		echo '#'; \
+		echo 'NameVirtualHost *:443'; \
+		echo 'Include ${APP_HOME_DIR}/vhost-ssl.conf'; \
+	} >> /etc/httpd/conf.d/ssl.conf
 
 # -----------------------------------------------------------------------------
 # Disable the SSL support by default
@@ -135,6 +128,17 @@ RUN sed -i \
 RUN mv /etc/httpd/conf.d/ssl.conf /etc/httpd/conf.d/ssl.conf.off \
 	&& touch /etc/httpd/conf.d/ssl.conf \
 	&& chmod 444 /etc/httpd/conf.d/ssl.conf
+
+# -----------------------------------------------------------------------------
+# Limit process for the application user
+# -----------------------------------------------------------------------------
+RUN { \
+		echo ''; \
+		echo $'apache\tsoft\tnproc\t30'; \
+		echo $'apache\thard\tnproc\t50'; \
+		echo $'app-www\tsoft\tnproc\t30'; \
+		echo $'app-www\thard\tnproc\t50'; \
+	} >> /etc/security/limits.conf
 
 # -----------------------------------------------------------------------------
 # Global PHP configuration changes
