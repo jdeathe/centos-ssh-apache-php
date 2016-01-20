@@ -40,6 +40,7 @@ RUN sed -i \
 	-e 's~^ServerTokens OS$~ServerTokens Prod~g' \
 	-e 's~^#ExtendedStatus On$~ExtendedStatus On~g' \
 	-e 's~^DirectoryIndex \(.*\)$~DirectoryIndex \1 index.php~g' \
+	-e 's~^NameVirtualHost \(.*\)$~#NameVirtualHost \1~g' \
 	/etc/httpd/conf/httpd.conf
 
 # -----------------------------------------------------------------------------
@@ -110,6 +111,7 @@ RUN { \
 		echo '#'; \
 		echo 'Options -Indexes'; \
 		echo 'Listen 8443'; \
+		echo 'NameVirtualHost *:80'; \
 		echo 'NameVirtualHost *:8443'; \
 		echo 'Include ${APP_HOME_DIR}/vhost.conf'; \
 	} >> /etc/httpd/conf/httpd.conf \
