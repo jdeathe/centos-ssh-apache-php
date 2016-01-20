@@ -29,6 +29,16 @@ get_password ()
 	echo $(head -n 4096 /dev/urandom | tr -cd '[:alnum:]' | head -c ${1})
 }
 
+set_httpd_server_name ()
+{
+	local HOST_NAME=${1:-${APACHE_SERVER_NAME:-$(hostname)}}
+	local PORT=${2:-80}
+
+	sed -i \
+		-e "s~^#ServerName \(.*\):80$~ServerName ${HOST_NAME}:${PORT}~g" \
+		/etc/httpd/conf/httpd.conf
+}
+
 APP_HOME_DIR_TEMPLATE="/var/www/.app-skel"
 
 OPTS_APACHE_SERVER_ALIAS="${APACHE_SERVER_ALIAS:-}"
@@ -83,6 +93,9 @@ fi
 
 # Add local hosts entries
 add_hosts_entry 127.0.0.1 ${OPTS_APACHE_SERVER_NAME}${OPTS_APACHE_SERVER_ALIAS:+ }${OPTS_APACHE_SERVER_ALIAS}
+
+# Add ServerName
+set_httpd_server_name ${OPTS_APACHE_SERVER_NAME} 80
 
 # If users need to change the vhost.conf the SSL version can be rebuilt if it is deleted
 if [[ ${OPTS_APACHE_MOD_SSL_ENABLED} == true ]] && [[ ! -f ${OPTS_APP_HOME_DIR}/vhost-ssl.conf ]] && [[ -f ${OPTS_APP_HOME_DIR}/vhost.conf ]]; then
