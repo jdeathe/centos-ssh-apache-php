@@ -62,10 +62,10 @@ set_apache_server_name ()
 APP_HOME_DIR_TEMPLATE="/var/www/.app-skel"
 
 OPTS_APACHE_EXTENDED_STATUS_ENABLED="${APACHE_EXTENDED_STATUS_ENABLED:-false}"
-OPTS_APACHE_SERVER_ALIAS="${APACHE_SERVER_ALIAS:-}"
-OPTS_APACHE_SERVER_NAME="${APACHE_SERVER_NAME:-$(hostname)}"
 OPTS_APACHE_LOAD_MODULES="${APACHE_LOAD_MODULES:-authz_user_module log_config_module expires_module deflate_module headers_module setenvif_module mime_module status_module dir_module alias_module reqtimeout_module}"
 OPTS_APACHE_MOD_SSL_ENABLED="${APACHE_MOD_SSL_ENABLED:-false}"
+OPTS_APACHE_SERVER_ALIAS="${APACHE_SERVER_ALIAS:-}"
+OPTS_APACHE_SERVER_NAME="${APACHE_SERVER_NAME:-$(hostname)}"
 OPTS_APP_HOME_DIR="${APP_HOME_DIR:-/var/www/app}"
 OPTS_SERVICE_USER="${SERVICE_USER:-app}"
 OPTS_SERVICE_USER_GROUP="${SERVICE_USER_GROUP:-app-www}"
