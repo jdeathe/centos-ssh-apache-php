@@ -37,7 +37,7 @@ set_apache_extended_status ()
 
 	if [[ ${ENABLED} == true ]]; then
 		echo "Enabling ExtendedStatus."
-		PATTERN_FROM="^([#]?ExtendedStatus )(On|on|Off|off)$"
+		PATTERN_FROM="^[#]?ExtendedStatus (On|on|Off|off)$"
 		PATTERN_TO="ExtendedStatus On"
 	else
 		PATTERN_FROM="^ExtendedStatus (On|on)$"
