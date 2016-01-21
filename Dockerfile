@@ -38,7 +38,6 @@ RUN openssl x509 -in /etc/pki/tls/certs/localhost.crt -text
 RUN sed -i \
 	-e 's~^ServerSignature On$~ServerSignature Off~g' \
 	-e 's~^ServerTokens OS$~ServerTokens Prod~g' \
-	-e 's~^#ExtendedStatus On$~ExtendedStatus On~g' \
 	-e 's~^DirectoryIndex \(.*\)$~DirectoryIndex \1 index.php~g' \
 	-e 's~^NameVirtualHost \(.*\)$~#NameVirtualHost \1~g' \
 	/etc/httpd/conf/httpd.conf
