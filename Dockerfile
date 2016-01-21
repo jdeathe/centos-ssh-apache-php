@@ -98,7 +98,7 @@ RUN sed -i \
 # Disable the default SSL Virtual Host
 # -----------------------------------------------------------------------------
 RUN sed -i \
-	-e '/<VirtualHost _default_:443>/,/#<\/VirtualHost>/ s/^/#/' \
+	-e '/<VirtualHost _default_:443>/,/#<\/VirtualHost>/ s~^~#~' \
 	/etc/httpd/conf.d/ssl.conf
 
 # -----------------------------------------------------------------------------
@@ -190,14 +190,8 @@ RUN echo '<?php phpinfo(); ?>' > /var/www/app/public_html/_phpinfo.php \
 # Create the SSL VirtualHosts configuration file
 # -----------------------------------------------------------------------------
 RUN sed -i \
-	-e 's~^<VirtualHost \*:80 \*:8443>$~#<VirtualHost \*:80 \*:8443>~g' \
-	-e 's~^#<VirtualHost \*:443>$~<VirtualHost \*:443>~g' \
-	-e 's~#SSLEngine \(.*\)$~SSLEngine \1~g' \
-	-e 's~#SSLOptions \(.*\)$~SSLOptions \1~g' \
-	-e 's~#SSLProtocol \(.*\)$~SSLProtocol \1~g' \
-	-e 's~#SSLCipherSuite \(.*\)$~SSLCipherSuite \1~g' \
-	-e 's~#SSLCertificateFile \(.*\)$~SSLCertificateFile \1~g' \
-	-e 's~#SSLCertificateKeyFile \(.*\)$~SSLCertificateKeyFile \1~g' \
+	-e 's~^<VirtualHost \*:80 \*:8443>$~<VirtualHost \*:443>~g' \
+	-e '/<IfModule mod_ssl.c>/,/<\/IfModule>/ s~^#~~' \
 	/var/www/app/vhost-ssl.conf
 
 # -----------------------------------------------------------------------------
