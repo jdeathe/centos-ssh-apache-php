@@ -29,6 +29,26 @@ get_password ()
 	echo $(head -n 4096 /dev/urandom | tr -cd '[:alnum:]' | head -c ${1})
 }
 
+set_apache_extended_status ()
+{
+	local ENABLED=${1:-false}
+	local PATTERN_FROM
+	local PATTERN_TO
+
+	if [[ ${ENABLED} == true ]]; then
+		echo "Enabling ExtendedStatus."
+		PATTERN_FROM="^([#]?ExtendedStatus )(On|on|Off|off)$"
+		PATTERN_TO="ExtendedStatus On"
+	else
+		PATTERN_FROM="^ExtendedStatus (On|on)$"
+		PATTERN_TO="#ExtendedStatus On"
+	fi
+
+	sed -i \
+		-re "s~${PATTERN_FROM}~${PATTERN_TO}~g" \
+		/etc/httpd/conf/httpd.conf
+}
+
 set_apache_server_name ()
 {
 	local HOST_NAME=${1:-${APACHE_SERVER_NAME:-$(hostname)}}
@@ -41,6 +61,7 @@ set_apache_server_name ()
 
 APP_HOME_DIR_TEMPLATE="/var/www/.app-skel"
 
+OPTS_APACHE_EXTENDED_STATUS_ENABLED="${APACHE_EXTENDED_STATUS_ENABLED:-false}"
 OPTS_APACHE_SERVER_ALIAS="${APACHE_SERVER_ALIAS:-}"
 OPTS_APACHE_SERVER_NAME="${APACHE_SERVER_NAME:-$(hostname)}"
 OPTS_APACHE_LOAD_MODULES="${APACHE_LOAD_MODULES:-authz_user_module log_config_module expires_module deflate_module headers_module setenvif_module mime_module status_module dir_module alias_module reqtimeout_module}"
@@ -93,6 +114,9 @@ fi
 
 # Add local hosts entries
 add_hosts_entry 127.0.0.1 ${OPTS_APACHE_SERVER_NAME}${OPTS_APACHE_SERVER_ALIAS:+ }${OPTS_APACHE_SERVER_ALIAS}
+
+# Set ExtendedStatus
+set_apache_extended_status ${OPTS_APACHE_EXTENDED_STATUS_ENABLED}
 
 # Add ServerName
 set_apache_server_name ${OPTS_APACHE_SERVER_NAME} 80

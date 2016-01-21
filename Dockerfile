@@ -230,6 +230,7 @@ ENV SERVICE_UNIT_INSTANCE 1
 # -----------------------------------------------------------------------------
 # Set default environment variables used to configure the service container
 # -----------------------------------------------------------------------------
+ENV APACHE_EXTENDED_STATUS_ENABLED false
 ENV APACHE_SERVER_ALIAS ""
 ENV APACHE_SERVER_NAME app-1.local
 ENV APACHE_LOAD_MODULES "authz_user_module log_config_module expires_module deflate_module headers_module setenvif_module mime_module status_module dir_module alias_module"
