@@ -157,11 +157,11 @@ else
 fi
 
 # Set the service user / service group user
-if getent passwd app && [[ ${OPTS_SERVICE_USER} != app ]]; then
+if [[ ${OPTS_SERVICE_USER} != app ]] && [[ -n $(getent passwd app) ]]; then
 	usermod -l ${OPTS_SERVICE_USER} app
 fi
 
-if getent passwd app-www && [[ ${OPTS_SERVICE_USER_GROUP} != app-www ]]; then
+if [[ ${OPTS_SERVICE_USER_GROUP} != app-www ]] && [[ -n $(getent passwd app-www) ]]; then
 	usermod -l ${OPTS_SERVICE_USER_GROUP} app-www
 fi
 
