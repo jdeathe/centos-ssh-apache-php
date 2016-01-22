@@ -66,6 +66,11 @@
           <a href="/_apc.php" class="btn btn-lg btn-default">APC info</a>
 <?php
   }
+  if ($_SERVER['REMOTE_ADDR'] === '127.0.0.1') {
+?>
+          <a href="/_httpdstatus" class="btn btn-lg btn-default">Apache status</a>
+<?php
+  }
 ?>
         </p>
       </div>
