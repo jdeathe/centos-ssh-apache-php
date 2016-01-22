@@ -59,6 +59,17 @@ set_apache_server_name ()
 		/etc/httpd/conf/httpd.conf
 }
 
+set_new_username ()
+{
+	local USER_FROM=${1:-app}
+	local USER_TO=${2:-app}
+
+	if [[ ${USER_TO} != root ]] && [[ ${USER_FROM} != root ]] && [[ ${USER_TO} != ${USER_FROM} ]] 
+		&& [[ -n $(getent passwd ${USER_FROM}) ]]; then
+		usermod -l ${USER_TO} ${USER_FROM}
+	fi
+}
+
 APP_HOME_DIR_TEMPLATE="/var/www/.app-skel"
 
 OPTS_APACHE_EXTENDED_STATUS_ENABLED="${APACHE_EXTENDED_STATUS_ENABLED:-false}"
@@ -157,13 +168,8 @@ else
 fi
 
 # Set the service user / service group user
-if getent passwd app && [[ ${OPTS_SERVICE_USER} != app ]]; then
-	usermod -l ${OPTS_SERVICE_USER} app
-fi
-
-if getent passwd app-www && [[ ${OPTS_SERVICE_USER_GROUP} != app-www ]]; then
-	usermod -l ${OPTS_SERVICE_USER_GROUP} app-www
-fi
+set_new_username app ${OPTS_SERVICE_USER}
+set_new_username app-www ${OPTS_SERVICE_USER_GROUP}
 
 # Set the Apache (run) service user/group
 if [[ ${OPTS_SUEXECUSERGROUP} == true ]]; then
