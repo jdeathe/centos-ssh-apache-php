@@ -46,14 +46,14 @@ $ docker run -d \
 
 Now point your browser to ```http://<docker-host>:8080``` where "```<docker-host>```" is the host name of your docker server and, if all went well, you should see the "Hello, world!" page.
 
-Next try with the elinks browser installed in the container. Because you are using the browser from the container you access the site over port 80.
+![Hello World Screen Shot](https://raw.github.com/jdeathe/centos-ssh-apache-php/centos-6/images/hello-world.png)
+
+Alternatively, try with the elinks browser installed in the container. Because you are using the browser from the container you access the site over port 80.
 
 ```
 $ docker exec -it apache-php.app-1.1.1 \
   elinks http://app-1.local
 ```
-
-![Hello World Screen Shot](https://raw.github.com/jdeathe/centos-ssh-apache-php/centos-6/images/hello-world.png)
 
 ## Instructions
 
