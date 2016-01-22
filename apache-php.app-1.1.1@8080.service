@@ -32,7 +32,13 @@ TimeoutStartSec=1200
 Environment="MOUNT_PATH_CONFIG=/etc/services-config"
 Environment="MOUNT_PATH_DATA=/var/services-data"
 Environment="DOCKER_IMAGE_NAME=jdeathe/centos-ssh-apache-php"
-Environment="DOCKER_IMAGE_TAG=centos-6-1.4.0"
+Environment="DOCKER_IMAGE_TAG=centos-6-1.4.1"
+Environment="SERVICE_UNIT_APP_GROUP=app-1"
+Environment="SERVICE_UNIT_LOCAL_ID=1"
+Environment="SERVICE_UNIT_INSTANCE=1"
+Environment="APACHE_SERVER_ALIAS=app-1"
+Environment="APACHE_SERVER_NAME=app-1.local"
+Environment="DATE_TIMEZONE=UTC"
 
 # Create a data container for the configuration volume
 ExecStartPre=/bin/sudo /bin/bash -c \
@@ -80,34 +86,43 @@ ExecStart=/bin/sudo /bin/bash -c \
       --name %p \
       -p %i:80 \
       -p 8580:8443 \
-      --env SERVICE_UNIT_INSTANCE=app-1 \
-      --env SERVICE_UNIT_LOCAL_ID=1 \
-      --env SERVICE_UNIT_INSTANCE=1 \
-      --env APACHE_SERVER_NAME=app-1.local \
-      --env APACHE_SERVER_ALIAS=app-1 \
-      --env DATE_TIMEZONE=UTC \
+      --env SERVICE_UNIT_APP_GROUP=${SERVICE_UNIT_APP_GROUP} \
+      --env SERVICE_UNIT_LOCAL_ID=${SERVICE_UNIT_LOCAL_ID} \
+      --env SERVICE_UNIT_INSTANCE=${SERVICE_UNIT_INSTANCE} \
+      --env APACHE_SERVER_ALIAS=${APACHE_SERVER_ALIAS} \
+      --env APACHE_SERVER_NAME=${APACHE_SERVER_NAME} \
+      --env DATE_TIMEZONE=${DATE_TIMEZONE} \
       --volumes-from volume-config.%p \
-      -v ${MOUNT_PATH_DATA}/apache-php/app-1:/var/www/app \
+      -v ${MOUNT_PATH_DATA}/apache-php/${SERVICE_UNIT_APP_GROUP}:/var/www/app \
       ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}; \
   else \
     /usr/bin/docker run \
       --name %p \
       -p %i:80 \
       -p 8580:8443 \
-      --env SERVICE_UNIT_INSTANCE=app-1 \
-      --env SERVICE_UNIT_LOCAL_ID=1 \
-      --env SERVICE_UNIT_INSTANCE=1 \
-      --env APACHE_SERVER_NAME=app-1.local \
-      --env APACHE_SERVER_ALIAS=app-1 \
-      --env DATE_TIMEZONE=UTC \
-      -v ${MOUNT_PATH_DATA}/apache-php/app-1:/var/www/app \
+      --env SERVICE_UNIT_APP_GROUP=${SERVICE_UNIT_APP_GROUP} \
+      --env SERVICE_UNIT_LOCAL_ID=${SERVICE_UNIT_LOCAL_ID} \
+      --env SERVICE_UNIT_INSTANCE=${SERVICE_UNIT_INSTANCE} \
+      --env APACHE_EXTENDED_STATUS_ENABLED=false \
+      --env APACHE_LOAD_MODULES='authz_user_module log_config_module expires_module deflate_module headers_module setenvif_module mime_module status_module dir_module alias_module' \
+      --env APACHE_MOD_SSL_ENABLED=false \
+      --env APACHE_SERVER_ALIAS=${APACHE_SERVER_ALIAS} \
+      --env APACHE_SERVER_NAME=${APACHE_SERVER_NAME} \
+      --env APP_HOME_DIR=/var/www/app \
+      --env DATE_TIMEZONE=${DATE_TIMEZONE} \
+      --env HTTPD=/usr/sbin/httpd \
+      --env SERVICE_USER=app \
+      --env SERVICE_USER_GROUP=app-www \
+      --env SERVICE_USER_PASSWORD= \
+      --env SUEXECUSERGROUP=false \
+      -v ${MOUNT_PATH_DATA}/apache-php/${SERVICE_UNIT_APP_GROUP}:/var/www/app \
       ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}; \
   fi"
 
-ExecStartPost=/usr/bin/etcdctl set /services/apache-php/app-1/1.1 %H:%i
+ExecStartPost=/usr/bin/etcdctl set /services/apache-php/${SERVICE_UNIT_APP_GROUP}/${SERVICE_UNIT_LOCAL_ID}.${SERVICE_UNIT_INSTANCE} %H:%i
 
 ExecStop=/usr/bin/docker stop --time 10 %p
-ExecStopPost=/usr/bin/etcdctl rm /services/apache-php/app-1/1.1
+ExecStopPost=/usr/bin/etcdctl rm /services/apache-php/${SERVICE_UNIT_APP_GROUP}/${SERVICE_UNIT_LOCAL_ID}.${SERVICE_UNIT_INSTANCE}
 
 [Install]
 WantedBy=multi-user.target
