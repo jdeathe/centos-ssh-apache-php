@@ -38,7 +38,6 @@ RUN openssl x509 -in /etc/pki/tls/certs/localhost.crt -text
 RUN sed -i \
 	-e 's~^ServerSignature On$~ServerSignature Off~g' \
 	-e 's~^ServerTokens OS$~ServerTokens Prod~g' \
-	-e 's~^#ExtendedStatus On$~ExtendedStatus On~g' \
 	-e 's~^DirectoryIndex \(.*\)$~DirectoryIndex \1 index.php~g' \
 	-e 's~^NameVirtualHost \(.*\)$~#NameVirtualHost \1~g' \
 	/etc/httpd/conf/httpd.conf
@@ -231,10 +230,11 @@ ENV SERVICE_UNIT_INSTANCE 1
 # -----------------------------------------------------------------------------
 # Set default environment variables used to configure the service container
 # -----------------------------------------------------------------------------
-ENV APACHE_SERVER_ALIAS ""
-ENV APACHE_SERVER_NAME app-1.local
+ENV APACHE_EXTENDED_STATUS_ENABLED false
 ENV APACHE_LOAD_MODULES "authz_user_module log_config_module expires_module deflate_module headers_module setenvif_module mime_module status_module dir_module alias_module"
 ENV APACHE_MOD_SSL_ENABLED false
+ENV APACHE_SERVER_ALIAS ""
+ENV APACHE_SERVER_NAME app-1.local
 ENV APP_HOME_DIR /var/www/app
 ENV DATE_TIMEZONE UTC
 ENV HTTPD /usr/sbin/httpd

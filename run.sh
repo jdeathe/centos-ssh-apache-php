@@ -139,10 +139,11 @@ docker run \
 	--env "SERVICE_UNIT_APP_GROUP=${SERVICE_UNIT_APP_GROUP}" \
 	--env "SERVICE_UNIT_LOCAL_ID=${SERVICE_UNIT_LOCAL_ID}" \
 	--env "SERVICE_UNIT_INSTANCE=${SERVICE_UNIT_INSTANCE}" \
-	--env "APACHE_SERVER_ALIAS=${APACHE_SERVER_ALIAS}" \
-	--env "APACHE_SERVER_NAME=${APACHE_SERVER_NAME}" \
+	--env "APACHE_EXTENDED_STATUS_ENABLED=${APACHE_EXTENDED_STATUS_ENABLED}" \
 	--env "APACHE_LOAD_MODULES=${APACHE_LOAD_MODULES}" \
 	--env "APACHE_MOD_SSL_ENABLED=${APACHE_MOD_SSL_ENABLED}" \
+	--env "APACHE_SERVER_ALIAS=${APACHE_SERVER_ALIAS}" \
+	--env "APACHE_SERVER_NAME=${APACHE_SERVER_NAME}" \
 	--env "APP_HOME_DIR=${APP_HOME_DIR}" \
 	--env "DATE_TIMEZONE=${DATE_TIMEZONE}" \
 	--env "HTTPD=${HTTPD}" \
@@ -168,10 +169,11 @@ docker run \
 # 	--env "SERVICE_UNIT_APP_GROUP=app-1" \
 # 	--env "SERVICE_UNIT_LOCAL_ID=1" \
 # 	--env "SERVICE_UNIT_INSTANCE=1" \
-# 	--env "APACHE_SERVER_ALIAS=app-1 www.app-1 www.app-1.local" \
-# 	--env "APACHE_SERVER_NAME=app-1.local" \
+# 	--env "APACHE_EXTENDED_STATUS_ENABLED=true"
 # 	--env "APACHE_LOAD_MODULES=${APACHE_LOAD_MODULES} rewrite_module" \
 # 	--env "APACHE_MOD_SSL_ENABLED=false" \
+# 	--env "APACHE_SERVER_ALIAS=app-1 www.app-1 www.app-1.local" \
+# 	--env "APACHE_SERVER_NAME=app-1.local" \
 # 	--env "APP_HOME_DIR=/var/www/app-1" \
 # 	--env "DATE_TIMEZONE=Europe/London" \
 # 	--env "HTTPD=/usr/sbin/httpd.worker" \
