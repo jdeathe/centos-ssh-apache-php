@@ -1,10 +1,10 @@
 # =============================================================================
 # jdeathe/centos-ssh-apache-php
 #
-# CentOS-6, Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1, Composer
+# CentOS-6, Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1
 # 
 # =============================================================================
-FROM jdeathe/centos-ssh:centos-6-1.4.0
+FROM jdeathe/centos-ssh:centos-6-1.4.1
 
 MAINTAINER James Deathe <james.deathe@gmail.com>
 
@@ -18,6 +18,7 @@ RUN rpm --rebuilddb \
 	mod_ssl-2.2.15-47.el6.centos \
 	php-5.3.3-46.el6_6 \
 	php-cli-5.3.3-46.el6_6 \
+	php-zts-5.3.3-46.el6_6 \
 	php-pecl-apc-3.1.9-2.el6 \
 	php-pecl-memcached-1.0.0-1.el6 \
 	&& yum versionlock add \
@@ -37,7 +38,6 @@ RUN openssl x509 -in /etc/pki/tls/certs/localhost.crt -text
 RUN sed -i \
 	-e 's~^ServerSignature On$~ServerSignature Off~g' \
 	-e 's~^ServerTokens OS$~ServerTokens Prod~g' \
-	-e 's~^#ExtendedStatus On$~ExtendedStatus On~g' \
 	-e 's~^DirectoryIndex \(.*\)$~DirectoryIndex \1 index.php~g' \
 	-e 's~^NameVirtualHost \(.*\)$~#NameVirtualHost \1~g' \
 	/etc/httpd/conf/httpd.conf
@@ -70,6 +70,7 @@ RUN sed -i \
 # -----------------------------------------------------------------------------
 RUN sed -i \
 	-e 's~^\(LoadModule .*\)$~#\1~g' \
+	-e 's~^\(#LoadModule version_module modules/mod_version.so\)$~\1\n#LoadModule reqtimeout_module modules/mod_reqtimeout.so~g' \
 	-e 's~^#LoadModule mime_module ~LoadModule mime_module ~g' \
 	-e 's~^#LoadModule log_config_module ~LoadModule log_config_module ~g' \
 	-e 's~^#LoadModule setenvif_module ~LoadModule setenvif_module ~g' \
@@ -81,41 +82,46 @@ RUN sed -i \
 	-e 's~^#LoadModule deflate_module ~LoadModule deflate_module ~g' \
 	-e 's~^#LoadModule headers_module ~LoadModule headers_module ~g' \
 	-e 's~^#LoadModule alias_module ~LoadModule alias_module ~g' \
-	-e 's~^\(#LoadModule version_module modules/mod_version.so\)$~\1\n#LoadModule reqtimeout_module modules/mod_reqtimeout.so~g' \
 	/etc/httpd/conf/httpd.conf
+
+# -----------------------------------------------------------------------------
+# Enable ServerStatus access via /_httpdstatus to local client
+# -----------------------------------------------------------------------------
+RUN sed -i \
+	-e '/#<Location \/server-status>/,/#<\/Location>/ s~^#~~' \
+	-e '/<Location \/server-status>/,/<\/Location>/ s~Allow from .example.com~Allow from localhost 127.0.0.1~' \
+	-e 's~<Location /server-status>~<Location /_httpdstatus>~g' \
+	/etc/httpd/conf/httpd.conf
+
+# -----------------------------------------------------------------------------
+# Disable the default SSL Virtual Host
+# -----------------------------------------------------------------------------
+RUN sed -i \
+	-e '/<VirtualHost _default_:443>/,/#<\/VirtualHost>/ s~^~#~' \
+	/etc/httpd/conf.d/ssl.conf
 
 # -----------------------------------------------------------------------------
 # Custom Apache configuration
 # -----------------------------------------------------------------------------
-RUN echo $'\n#\n# Custom configuration\n#' >> /etc/httpd/conf/httpd.conf \
-	&& echo 'Options -Indexes' >> /etc/httpd/conf/httpd.conf \
-	&& echo 'Listen 8443' >> /etc/httpd/conf/httpd.conf \
-	&& echo 'NameVirtualHost *:80' >> /etc/httpd/conf/httpd.conf \
-	&& echo 'NameVirtualHost *:8443' >> /etc/httpd/conf/httpd.conf \
-	&& echo '#NameVirtualHost *:443' >> /etc/httpd/conf/httpd.conf \
-	&& echo 'Include ${APP_HOME_DIR}/vhost.conf' >> /etc/httpd/conf/httpd.conf \
-	&& echo '#Include ${APP_HOME_DIR}/vhost-ssl.conf' >> /etc/httpd/conf/httpd.conf \
-	&& echo $'\n<Location /server-status>' >> /etc/httpd/conf/httpd.conf \
-	&& echo '    SetHandler server-status' >> /etc/httpd/conf/httpd.conf \
-	&& echo '    Order deny,allow' >> /etc/httpd/conf/httpd.conf \
-	&& echo '    Deny from all' >> /etc/httpd/conf/httpd.conf \
-	&& echo '    Allow from localhost 127.0.0.1' >> /etc/httpd/conf/httpd.conf \
-	&& echo '</Location>' >> /etc/httpd/conf/httpd.conf
-
-# -----------------------------------------------------------------------------
-# Limit process for the application user
-# -----------------------------------------------------------------------------
-RUN echo $'\napache\tsoft\tnproc\t30\napache\thard\tnproc\t50' >> /etc/security/limits.conf \
-	&& echo $'\napp-www\tsoft\tnproc\t30\napp-www\thard\tnproc\t50' >> /etc/security/limits.conf
-
-# -----------------------------------------------------------------------------
-# Disable the default SSL Virtual Host
-# 	Simplest approach is to use non-standard port instead of attempting to 
-# 	comment out or remove the necessary lines
-# -----------------------------------------------------------------------------
-RUN sed -i \
-	-e 's~^<VirtualHost _default_:443>$~<VirtualHost _default_:404>~g' \
-	/etc/httpd/conf.d/ssl.conf
+RUN { \
+		echo ''; \
+		echo '#'; \
+		echo '# Custom configuration'; \
+		echo '#'; \
+		echo 'Options -Indexes'; \
+		echo 'Listen 8443'; \
+		echo 'NameVirtualHost *:80'; \
+		echo 'NameVirtualHost *:8443'; \
+		echo 'Include ${APP_HOME_DIR}/vhost.conf'; \
+	} >> /etc/httpd/conf/httpd.conf \
+	&& { \
+		echo ''; \
+		echo '#'; \
+		echo '# Custom SSL configuration'; \
+		echo '#'; \
+		echo 'NameVirtualHost *:443'; \
+		echo 'Include ${APP_HOME_DIR}/vhost-ssl.conf'; \
+	} >> /etc/httpd/conf.d/ssl.conf
 
 # -----------------------------------------------------------------------------
 # Disable the SSL support by default
@@ -123,6 +129,17 @@ RUN sed -i \
 RUN mv /etc/httpd/conf.d/ssl.conf /etc/httpd/conf.d/ssl.conf.off \
 	&& touch /etc/httpd/conf.d/ssl.conf \
 	&& chmod 444 /etc/httpd/conf.d/ssl.conf
+
+# -----------------------------------------------------------------------------
+# Limit process for the application user
+# -----------------------------------------------------------------------------
+RUN { \
+		echo ''; \
+		echo $'apache\tsoft\tnproc\t30'; \
+		echo $'apache\thard\tnproc\t50'; \
+		echo $'app-www\tsoft\tnproc\t30'; \
+		echo $'app-www\thard\tnproc\t50'; \
+	} >> /etc/security/limits.conf
 
 # -----------------------------------------------------------------------------
 # Global PHP configuration changes
@@ -172,14 +189,8 @@ RUN echo '<?php phpinfo(); ?>' > /var/www/app/public_html/_phpinfo.php \
 # Create the SSL VirtualHosts configuration file
 # -----------------------------------------------------------------------------
 RUN sed -i \
-	-e 's~^<VirtualHost \*:80 \*:8443>$~#<VirtualHost \*:80 \*:8443>~g' \
-	-e 's~^#<VirtualHost \*:443>$~<VirtualHost \*:443>~g' \
-	-e 's~#SSLEngine \(.*\)$~SSLEngine \1~g' \
-	-e 's~#SSLOptions \(.*\)$~SSLOptions \1~g' \
-	-e 's~#SSLProtocol \(.*\)$~SSLProtocol \1~g' \
-	-e 's~#SSLCipherSuite \(.*\)$~SSLCipherSuite \1~g' \
-	-e 's~#SSLCertificateFile \(.*\)$~SSLCertificateFile \1~g' \
-	-e 's~#SSLCertificateKeyFile \(.*\)$~SSLCertificateKeyFile \1~g' \
+	-e 's~^<VirtualHost \*:80 \*:8443>$~<VirtualHost \*:443>~g' \
+	-e '/<IfModule mod_ssl.c>/,/<\/IfModule>/ s~^#~~' \
 	/var/www/app/vhost-ssl.conf
 
 # -----------------------------------------------------------------------------
@@ -219,12 +230,14 @@ ENV SERVICE_UNIT_INSTANCE 1
 # -----------------------------------------------------------------------------
 # Set default environment variables used to configure the service container
 # -----------------------------------------------------------------------------
-ENV APACHE_SERVER_ALIAS ""
-ENV APACHE_SERVER_NAME app-1.local
+ENV APACHE_EXTENDED_STATUS_ENABLED false
 ENV APACHE_LOAD_MODULES "authz_user_module log_config_module expires_module deflate_module headers_module setenvif_module mime_module status_module dir_module alias_module"
 ENV APACHE_MOD_SSL_ENABLED false
+ENV APACHE_SERVER_ALIAS ""
+ENV APACHE_SERVER_NAME app-1.local
 ENV APP_HOME_DIR /var/www/app
 ENV DATE_TIMEZONE UTC
+ENV HTTPD /usr/sbin/httpd
 ENV SERVICE_USER app
 ENV SERVICE_USER_GROUP app-www
 ENV SERVICE_USER_PASSWORD ""
