@@ -19,7 +19,7 @@ If enabling and configuring SSH access, it is by public key authentication and, 
 
 ### SSH Alternatives
 
-SSH is not required in order to access a terminal for the running container. The simplest method is to use the docker exec command to run bash (or sh) as follows: 
+SSH is not required in order to access a terminal for the running container. The simplest method is to use the docker exec command to run bash (or sh) as follows:
 
 ```
 $ docker exec -it <docker-name-or-id> bash
@@ -38,7 +38,6 @@ $ docker run -d \
   --env "SERVICE_UNIT_APP_GROUP=app-1" \
   --env "SERVICE_UNIT_LOCAL_ID=1" \
   --env "SERVICE_UNIT_INSTANCE=1" \
-  --env "APACHE_SERVER_ALIAS=app-1" \
   --env "APACHE_SERVER_NAME=app-1.local" \
   --env "DATE_TIMEZONE=UTC" \
   -v /var/services-data/apache-php/app-1:/var/www/app \
@@ -46,6 +45,13 @@ $ docker run -d \
 ```
 
 Now point your browser to ```http://<docker-host>:8080``` where "```<docker-host>```" is the host name of your docker server and, if all went well, you should see the "Hello, world!" page.
+
+Next try with the elinks browser installed in the container. Because you are using the browser from the container you access the site over port 80.
+
+```
+$ docker exec -it apache-php.app-1.1.1 \
+  elinks http://app-1.local
+```
 
 ![Hello World Screen Shot](https://raw.github.com/jdeathe/centos-ssh-apache-php/centos-6/images/hello-world.png)
 
@@ -92,10 +98,11 @@ $ docker run -d \
   --env "SERVICE_UNIT_INSTANCE=app-1" \
   --env "SERVICE_UNIT_LOCAL_ID=1" \
   --env "SERVICE_UNIT_INSTANCE=1" \
-  --env "APACHE_SERVER_ALIAS=app-1" \
-  --env "APACHE_SERVER_NAME=app-1.local" \
+  --env "APACHE_EXTENDED_STATUS_ENABLED=false" \
   --env "APACHE_LOAD_MODULES=authz_user_module log_config_module expires_module deflate_module headers_module setenvif_module mime_module status_module dir_module alias_module rewrite_module" \
   --env "APACHE_MOD_SSL_ENABLED=false" \
+  --env "APACHE_SERVER_ALIAS=app-1" \
+  --env "APACHE_SERVER_NAME=app-1.local" \
   --env "APP_HOME_DIR=/var/www/app-1" \
   --env "DATE_TIMEZONE=UTC" \
   --env "SERVICE_USER=app" \
@@ -163,7 +170,26 @@ The ```APACHE_SERVER_NAME``` and ```APACHE_SERVER_ALIAS``` environmental variabl
 
 from your browser you can then access it with ```http://app-1.local:8080``` assuming you have the IP address of your docker mapped to the hostname using your DNS server or a local hosts entry.
 
-##### 3. APACHE_LOAD_MODULES
+##### 3. APACHE_EXTENDED_STATUS_ENABLED
+
+The variable ```APACHE_EXTENDED_STATUS_ENABLED``` allows you to turn ExtendedStatus on. It is turned off by default as it has an impact on the server's performance but with it enabled you can gather more statistics.
+
+```
+...
+  --env "APACHE_EXTENDED_STATUS_ENABLED=true"
+...
+```
+
+You can view the output from Apache server-status either using the elinks browser from onboard the container or by using `watch` and `curl` to monitor status over time - the following command shows the server-status updated at a 1 second interval.
+
+```
+$ docker exec -it apache-php.app-1.1.1 \
+  env TERM=xterm \
+  watch -n 10 \
+  -d "curl -s http://app-1/_httpdstatus?auto"
+```
+
+##### 4. APACHE_LOAD_MODULES
 
 The variable ```APACHE_LOAD_MODULES``` defines all Apache modules to be loaded from */etc/httpd/conf/http.conf*. The default is the minimum required so you may need to add more as necessary. To add the "mod\_rewrite" Apache Module you would add it's identifier ```rewrite_module``` to the array as follows.
 
@@ -173,7 +199,7 @@ The variable ```APACHE_LOAD_MODULES``` defines all Apache modules to be loaded f
 ...
 ```
 
-##### 4. APACHE_MOD_SSL_ENABLED
+##### 5. APACHE_MOD_SSL_ENABLED
 
 By default SSL support is disabled but a second port, (mapped to 8443), is available for traffic that has been been through upstream SSL termination (SSL Offloading). If you want the container to support SSL directly then set ```APACHE_MOD_SSL_ENABLED=true``` this will then generate a self signed certificate and will update Apache to accept traffic on port 443.
 
@@ -197,7 +223,7 @@ $ docker run -d \
   jdeathe/centos-ssh-apache-php:latest
 ```
 
-##### 5. APP_HOME_DIR
+##### 6. APP_HOME_DIR
 
 The home directory of the service user and parent directory of the Apache DocumentRoot is  /var/www/app by default but can be changed if necessary using the ```APP_HOME_DIR``` environment variable. It is also necessary to change the target of the data volume mapping accordingly as in the following example where /var/www/app-1 is used.
 
@@ -208,7 +234,7 @@ The home directory of the service user and parent directory of the Apache Docume
 ...
 ```
 
-##### 6. DATE_TIMEZONE
+##### 7. DATE_TIMEZONE
 
 The default timezone for the container, and the PHP app, is UTC however the operator can set an appropriate timezone using the ```DATE_TIMEZONE``` variable. The value should be a timezone identifier, like UTC or Europe/London. The list of valid identifiers is available in the PHP [List of Supported Timezones](http://php.net/manual/en/timezones.php).
 
@@ -220,7 +246,7 @@ To set the timezone for the UK and account for British Summer Time you would use
 ...
 ```
 
-##### 7. SERVICE_USER, SERVICE_USER_GROUP & SERVICE_USER_PASSWORD
+##### 8. SERVICE_USER, SERVICE_USER_GROUP & SERVICE_USER_PASSWORD
 
 Use the ```SERVICE_USER```, ```SERVICE_USER_GROUP``` and ```SERVICE_USER_PASSWORD``` environment variables to define a custom service username, group and password respectively. If the password is left an empty string then it is automatically generated on first run which is the default.
 
