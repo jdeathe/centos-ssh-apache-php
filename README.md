@@ -48,7 +48,7 @@ Now point your browser to ```http://<docker-host>:8080``` where "```<docker-host
 
 ![Hello World Screen Shot - Chrome](https://raw.github.com/jdeathe/centos-ssh-apache-php/centos-6/images/hello-world-chrome.png)
 
-Alternatively, try with the elinks browser installed in the container. Because you are using the browser from the container you access the site over port 80.
+To be able to access the server using the "app-1.local" domain name you need to add a hosts file entry locally; such that the IP address of the Docker host resolves to the name "app-1.local". Alternatively, you can use the elinks browser installed in the container. Note that because you are using the browser from the container you access the site over port 80.
 
 ```
 $ docker exec -it apache-php.app-1.1.1 \
