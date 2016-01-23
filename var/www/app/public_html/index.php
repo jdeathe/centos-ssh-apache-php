@@ -68,7 +68,7 @@
   }
   if ($_SERVER['REMOTE_ADDR'] === '127.0.0.1') {
 ?>
-          <a href="/_httpdstatus" class="btn btn-lg btn-default">Apache status</a>
+          <a href="/server-status" class="btn btn-lg btn-default">Apache status</a>
 <?php
   }
 ?>

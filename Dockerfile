@@ -90,7 +90,6 @@ RUN sed -i \
 RUN sed -i \
 	-e '/#<Location \/server-status>/,/#<\/Location>/ s~^#~~' \
 	-e '/<Location \/server-status>/,/<\/Location>/ s~Allow from .example.com~Allow from localhost 127.0.0.1~' \
-	-e 's~<Location /server-status>~<Location /_httpdstatus>~g' \
 	/etc/httpd/conf/httpd.conf
 
 # -----------------------------------------------------------------------------
