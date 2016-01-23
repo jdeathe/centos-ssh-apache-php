@@ -4,7 +4,7 @@
 # CentOS-6, Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1
 # 
 # =============================================================================
-FROM jdeathe/centos-ssh:centos-6-1.4.1
+FROM jdeathe/centos-ssh:centos-6-1.4.2
 
 MAINTAINER James Deathe <james.deathe@gmail.com>
 
