@@ -83,7 +83,7 @@ OPTS_SERVICE_USER_GROUP_PASSWORD="${SERVICE_USER_GROUP_PASSWORD:-$(get_password 
 OPTS_SERVICE_USER_PASSWORD="${SERVICE_USER_PASSWORD:-$(get_password 8)}"
 OPTS_SUEXECUSERGROUP="${SUEXECUSERGROUP:-false}"
 
-if [[ ! -d ${OPTS_APP_HOME_DIR} ]] && [[ -d ${OPTS_APP_HOME_DIR_TEMPLATE} ]]; then
+if [[ ! -d ${OPTS_APP_HOME_DIR} ]] && [[ -d ${APP_HOME_DIR_TEMPLATE} ]]; then
 	echo "Recreate the ${OPTS_APP_HOME_DIR} directory."
 	mkdir -p ${OPTS_APP_HOME_DIR}
 fi
