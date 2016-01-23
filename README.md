@@ -13,7 +13,7 @@ This build of [Apache](https://httpd.apache.org/), (httpd CentOS package), uses 
 
 Included in the build are the [EPEL](http://fedoraproject.org/wiki/EPEL) and [IUS](https://ius.io/) repositories. Installed packages include [OpenSSH](http://www.openssh.com/portable.html) secure shell, [vim-minimal](http://www.vim.org/), [elinks](http://elinks.or.cz) (for fullstatus support), PHP [APC](http://pecl.php.net/package/APC), PHP [Memcached](http://pecl.php.net/package/memcached) are installed along with python-setuptools, [supervisor](http://supervisord.org/) and [supervisor-stdout](https://github.com/coderanger/supervisor-stdout).
 
-Supervisor is used to start httpd.worker daemon when a docker container based on this image is run. To enable simple viewing of stdout for the sshd subprocess, supervisor-stdout is included. This allows you to see output from the supervisord controlled subprocesses with ```docker logs <docker-container-name>```.
+Supervisor is used to start httpd.worker daemon when a docker container based on this image is run. To enable simple viewing of stdout for the service's subprocess, supervisor-stdout is included. This allows you to see output from the supervisord controlled subprocesses with ```docker logs <docker-container-name>```.
 
 If enabling and configuring SSH access, it is by public key authentication and, by default, the [Vagrant](http://www.vagrantup.com/) [insecure private key](https://github.com/mitchellh/vagrant/blob/master/keys/vagrant) is required.
 
@@ -40,7 +40,7 @@ $ docker run -d \
   --env "SERVICE_UNIT_INSTANCE=1" \
   --env "APACHE_SERVER_NAME=app-1.local" \
   --env "DATE_TIMEZONE=UTC" \
-  -v /var/services-data/apache-php/app-1:/var/www/app \
+  -v /var/www/app \
   jdeathe/centos-ssh-apache-php:latest
 ```
 
@@ -56,31 +56,132 @@ $ docker exec -it apache-php.app-1.1.1 \
 ```
 ![Hello World Screen Shot - eLinks](https://raw.github.com/jdeathe/centos-ssh-apache-php/centos-6/images/hello-world-elinks.png)
 
+To verify the container is initialised and running successfully by inspecting the container's logs.
+
+```
+$ docker logs apache-php.app-1.1.1
+```
+
+The Apache data is persistent across container restarts by setting the data directory ```/var/www/app``` as a data volume. No name or docker_host path was specified so Docker will give it a unique name and store it in ```/var/lib/docker/volumes/```; to find out where the data is stored on the Docker host you can use ```docker inspect```.
+
+```
+$ docker inspect \
+  --format '{{ json (index .Mounts 0).Source }}' \
+  apache-php.app-1.1.1
+```
+
+On first run, the bootstrap script, ([/etc/apache-bootstrap](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6/etc/apache-bootstrap)), will check if the DocumentRoot directory is empty and, if so, will populate it with the example app scripts and VirtualHost configuration files. If you place your own app in this directory it will not be overwritten but you must ensure to include at least a vhost.conf file and, if enabling SSL a vhost-ssl.conf file too.
+
+The ```apachectl``` command can be accessed as follows.
+
+```
+$ docker exec -it apache-php.app-1.1.1 apachectl -h
+```
+
 ## Instructions
 
 ### (Optional) Configuration Data Volume
 
-Create a "data volume" for configuration, this allows you to share the same configuration between multiple docker containers and, by mounting a host directory into the data volume you can override the default configuration files provided.
+A configuration "data volume" allows you to share the same configuration files between multiple docker containers. Docker mounts a host directory into the data volume allowing you to edit the default configuration files and have those changes persist.
 
-Make a directory on the docker host for storing container configuration files. This directory needs to contain everything from the directory [etc/services-config](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6/etc/services-config)
+Each service that requires a common set of configuration files could use a single Configuration Volume as illustrated in the following diagram:
 
 ```
-$ mkdir -p /etc/services-config/apache-php.app-1.1.1
++---------------------------------------------------+
+|                (Docker Host system)               |
+|                                                   |
+| /var/lib/docker/volumes/<volume-name>/_data       |
+|                         +                         |
+|                         |                         |
+|            +============*===========+             |
+|            |  Configuration Volume  |             |
+|            |    Service Container   |             |
+|            +============*===========+             |
+|                         |                         |
+|         +---------------*---------------+         |
+|         |               |               |         |
+|   +=====*=====+   +=====*=====+   +=====*=====+   |
+|   |  Service  |   |  Service  |   |  Service  |   |
+|   | Container |   | Container |   | Container |   |
+|   |    (1)    |   |    (2)    |   |    (n)    |   |
+|   +===========+   +===========+   +===========+   |
++---------------------------------------------------+
 ```
 
-Create the data volume, mounting our docker host's configuration directory to */etc/services-config/ssh* in the docker container. Docker will pull the busybox:latest image if you don't already have it available locally.
+#### Standard data volume container
+
+Naming of the container's volume is optional, it is possible to leave the naming up to Docker by simply specifying the container path only.
 
 ```
 $ docker run \
   --name volume-config.apache-php.app-1.1.1 \
-  -v /etc/services-config/ssh.pool-1/ssh:/etc/services-config/ssh \
-  -v /etc/services-config/apache-php.app-1.1.1/supervisor:/etc/services-config/supervisor \
-  -v /etc/services-config/apache-php.app-1.1.1/httpd:/etc/services-config/httpd \
-  -v /etc/services-config/apache-php.app-1.1.1/ssl/certs:/etc/services-config/ssl/certs \
-  -v /etc/services-config/apache-php.app-1.1.1/ssl/private:/etc/services-config/ssl/private \
-  busybox:latest \
+  -v /etc/services-config \
+  jdeathe/centos-ssh-apache-php:latest \
   /bin/true
 ```
+
+To identify the docker host directory path to the volume within the container ```volume-config.apache-php.app-1.1.1``` you can use ```docker inspect``` to view the Mounts.
+
+```
+$ docker inspect \
+  --format '{{ json (index .Mounts 0).Source }}' \
+  volume-config.apache-php.app-1.1.1
+```
+
+#### Named data volume container
+
+To create a named data volume, mounting our docker host's configuration directory /var/lib/docker/volumes/volume-config.apache-php.app-1.1.1 to /etc/services-config in the docker container use the following run command. Note that we use the same image as for the application container to reduce the number of images/layers required.
+
+```
+$ docker run \
+  --name volume-config.apache-php.app-1.1.1 \
+  -v volume-config.apache-php.app-1.1.1:/etc/services-config \
+  jdeathe/centos-ssh-apache-php:latest \
+  /bin/true
+```
+
+##### Populating Named configuration data volumes  
+When using named volumes the directory path from the docker host mounts the path on the container so we need to upload the configuration files. The simplest method of achieving this is to upload the contents of the [etc/services-config](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6/etc/services-config/) directory using ```docker cp```.
+
+```
+$ docker cp \
+  ./etc/services-config/. \
+  volume-config.apache-php.app-1.1.1:/etc/services-config
+```
+
+If you don't have a copy of the required configuration files locally you can run a temporary container as the source of the configuration files and use `docker cp` to stream the files into the named data volume container.
+
+```
+$ docker run -d \
+  --name apache-php.tmp \
+  jdeathe/centos-ssh-apache-php:latest \
+  /bin/sh -c 'while true; do echo -ne .; sleep 1; done';
+  && docker cp \
+  apache-php.tmp:/etc/services-config/. - | \
+  docker cp - \
+  volume-config.apache-php.app-1.1.1:/etc/services-config
+  && docker rm -f apache-php.tmp
+```
+
+#### Editing configuration
+
+To make changes to the configuration files you need a running container that uses the volumes from the configuration volume. To edit a single file you could use the following, where <path_to_file> can be one of the [required configuration files](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6/README.md#required-configuration-files), or you could run a ```bash``` shell and then make the changes required using ```vi```. On exiting the container it will be removed since we specify the ```--rm``` parameter.
+
+```
+$ docker run --rm -it \
+  --volumes-from volume-config.apache-php.app-1.1.1 \
+  jdeathe/centos-ssh-apache-php:latest \
+  vi /etc/services-config/<path_to_file>
+```
+
+##### Required configuration files
+
+The following configuration files are required to run the application container and should be located in the directory /etc/services-config/.
+
+- [httpd/conf/httpd.conf](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6/etc/services-config/httpd/conf/httpd.conf)
+- [httpd/conf.d/php.conf](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6/etc/services-config/httpd/conf.d/php.conf)
+- [httpd/conf.d/ssl.conf](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6/etc/services-config/httpd/conf.d/ssl.conf)
+- [supervisor/supervisord.conf](https://github.com/jdeathe/centos-ssh-mysql/blob/centos-6/etc/services-config/supervisor/supervisord.conf)
 
 ### Running
 
@@ -261,7 +362,7 @@ Use the ```SERVICE_USER```, ```SERVICE_USER_GROUP``` and ```SERVICE_USER_PASSWOR
 
 ### Custom Configuration
 
-If using the optional data volume for container configuration you are able to customise the configuration. In the following examples your custom docker configuration files should be located on the Docker host under the directory ```/etc/service-config/<container-name>/``` where ```<container-name>``` should match the applicable container name such as "apache-php.app-1.1.1" in the examples.
+If using the optional data volume for container configuration you are able to customise the configuration. In the following examples your custom docker configuration files should be located on the Docker host under the directory ```/var/lib/docker/volumes/<volume-name>/``` where ```<container-name>``` should match the applicable container name such as "apache-php.app-1.1.1" if using named volumes or will be an ID generated automatically by Docker. To identify the correct path on the Docker host use the ```docker inspect``` command.
 
 #### [httpd/apache-bootstrap.conf](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6/etc/services-config/httpd/apache-bootstrap.conf)
 
@@ -290,9 +391,3 @@ To override the SSLCertificateKeyFile add it to your config directory using the 
 #### [supervisor/supervisord.conf](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6/etc/services-config/supervisor/supervisord.conf)
 
 The supervisor service's configuration can also be overridden by editing the custom supervisord.conf file. It shouldn't be necessary to change the existing configuration here but you could include more [program:x] sections to run additional commands at startup.
-
-### Apache DocumentRoot - Data Directory
-
-In the previous example Docker run commands we mapped the Docker host directory ```/var/services-data/apache-php/app-1``` to ```/var/www/app``` in the Docker container, where ```/var/services-data/``` is the directory used to store persistent files and the subdirectory is used by an individual app's named container(s), ```apache-php.app-1.1.1```, in the previous examples.
-
-On first run, the bootstrap script, ([/etc/apache-bootstrap](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6/etc/apache-bootstrap)), will check if the DocumentRoot directory is empty and, if so, will populate it with the example app scripts and VirtualHost configuration files. If you place your own app in this directory it will not be overwritten but you must ensure to include at least a vhost.conf file and, if enabling SSL a vhost-ssl.conf file too.

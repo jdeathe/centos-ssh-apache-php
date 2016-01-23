@@ -50,43 +50,30 @@ remove_docker_container_name ()
 	fi
 }
 
-loading_counter ()
-{
-	local COUNTER=${1:-10}
-
-	while [[ ${COUNTER} -ge 1 ]]; do
-		echo -ne "Loading in: ${COUNTER} \r"
-		sleep 1
-		COUNTER=$[${COUNTER}-1]
-	done
-}
-
 OPT_SERVICE_NAME_FULL=${SERVICE_NAME_FULL:-apache-php.app-1.1.1@8080.service}
 OPT_SERVICE_NAME_SHORT=$(cut -d '@' -f1 <<< "${OPT_SERVICE_NAME_FULL}")
 
-# Add required configuration directories
-mkdir -p /etc/services-config/${OPT_SERVICE_NAME_SHORT}/{httpd,supervisor,ssl/{certs,private}}
-
-if [[ -z $(find /etc/services-config/${OPT_SERVICE_NAME_SHORT}/supervisor -maxdepth 1 -type f) ]]; then
-	cp -R etc/services-config/supervisor /etc/services-config/${OPT_SERVICE_NAME_SHORT}/
-fi
-
-if [[ -z $(find /etc/services-config/${OPT_SERVICE_NAME_SHORT}/httpd -maxdepth 1 -type f) ]]; then
-	cp -R etc/services-config/httpd /etc/services-config/${OPT_SERVICE_NAME_SHORT}/
-fi
-
-# Force 
+# Stop the service and remove containers.
 sudo systemctl stop ${OPT_SERVICE_NAME_FULL} &> /dev/null
 remove_docker_container_name volume-config.${OPT_SERVICE_NAME_SHORT}
 remove_docker_container_name ${OPT_SERVICE_NAME_SHORT}
 
+# Copy systemd definition into place and enable it.
 sudo cp ${OPT_SERVICE_NAME_FULL} /etc/systemd/system/
 sudo systemctl daemon-reload
 sudo systemctl enable /etc/systemd/system/${OPT_SERVICE_NAME_FULL}
 
-echo "WARNING: This may take a while if pulling large container images for the first time."
-sudo systemctl restart ${OPT_SERVICE_NAME_FULL}
+echo "This may take a while if pulling large container images."
+sudo systemctl restart ${OPT_SERVICE_NAME_FULL} &
 
-loading_counter 10
+# If we have the timeout command then use it, otherwise wait for use to cancel
+TIMEOUT=
+if type "timeout" &> /dev/null; then
+	TIMEOUT="timeout 30 "
+fi
 
-docker logs ${OPT_SERVICE_NAME_SHORT}
+# Tail the systemd unit logs to check progress.
+${TIMEOUT}journalctl -fu ${OPT_SERVICE_NAME_FULL}
+
+# Final service status report.
+sudo systemctl status -l ${OPT_SERVICE_NAME_FULL}
