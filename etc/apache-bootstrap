@@ -64,8 +64,7 @@ set_new_username ()
 	local USER_FROM=${1:-app}
 	local USER_TO=${2:-app}
 
-	if [[ ${USER_TO} != root ]] && [[ ${USER_FROM} != root ]] && [[ ${USER_TO} != ${USER_FROM} ]] 
-		&& [[ -n $(getent passwd ${USER_FROM}) ]]; then
+	if [[ ${USER_TO} != root ]] && [[ ${USER_FROM} != root ]] && [[ ${USER_TO} != ${USER_FROM} ]] && [[ -n $(getent passwd ${USER_FROM}) ]]; then
 		usermod -l ${USER_TO} ${USER_FROM}
 	fi
 }
