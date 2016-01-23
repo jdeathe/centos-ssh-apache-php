@@ -100,7 +100,7 @@ ExecStart=/bin/sudo /bin/bash -c \
       --env APACHE_SERVER_NAME=${APACHE_SERVER_NAME} \
       --env DATE_TIMEZONE=${DATE_TIMEZONE} \
       --volumes-from volume-config.%p \
-      -v ${MOUNT_PATH_DATA}/apache-php/${SERVICE_UNIT_APP_GROUP}:/var/www/app \
+      -v ${VOLUME_DATA_NAME}:/var/www/app \
       ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}; \
   else \
     /usr/bin/docker run \
@@ -122,7 +122,7 @@ ExecStart=/bin/sudo /bin/bash -c \
       --env SERVICE_USER_GROUP=app-www \
       --env SERVICE_USER_PASSWORD= \
       --env SUEXECUSERGROUP=false \
-      -v ${MOUNT_PATH_DATA}/apache-php/${SERVICE_UNIT_APP_GROUP}:/var/www/app \
+      -v ${VOLUME_DATA_NAME}:/var/www/app \
       ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}; \
   fi"
 
