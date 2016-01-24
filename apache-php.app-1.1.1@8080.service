@@ -2,20 +2,16 @@
 # Create a data container for the configuration volume: 
 #     docker run -v /config --name volume-config.<service-name> busybox /bin/true
 #
-# Optional configuration volume install: 
-#     mkdir -p /etc/services-config/<service-name>/{httpd,supervisor,ssl/{certs,private}}
-#     cp <container-path>/etc/services-config/supervisor/supervisord.conf /etc/services-config/<service-name>/supervisor/supervisord.conf
-#     cp <container-path>/etc/services-config/httpd/conf/httpd.conf /etc/services-config/<service-name>/httpd/conf/httpd.conf
-#     cp <container-path>/etc/services-config/httpd/conf.d/php.conf /etc/services-config/<service-name>/httpd/conf.d/php.conf
-#     cp <container-path>/etc/services-config/httpd/conf.d/ssl.conf /etc/services-config/<service-name>/httpd/conf.d/ssl.conf
-#
 # To install: 
 #     sudo cp <container-path>/<service-name>@<port>.service /etc/systemd/system/
 #     sudo systemctl daemon-reload
 #     sudo systemctl enable /etc/systemd/system/<service-name>@<port>.service
 # 
 # Start using: 
-#     sudo systemctl restart <service-name>@<port>.service
+#     sudo systemctl [start|stop|restart|kill|status] <service-name>@<port>.service
+#
+# Debugging: 
+#     journalctl -fn 50 u <service-name>@<port>.service
 # -----------------------------------------------------------------------------
 
 [Unit]
@@ -29,59 +25,70 @@ Requires=etcd2.service
 Restart=on-failure
 RestartSec=30
 TimeoutStartSec=1200
-Environment="MOUNT_PATH_CONFIG=/etc/services-config"
-Environment="MOUNT_PATH_DATA=/var/services-data"
+Environment="DOCKER_IMAGE_PACKAGE_PATH=/var/services-packages"
 Environment="DOCKER_IMAGE_NAME=jdeathe/centos-ssh-apache-php"
-Environment="DOCKER_IMAGE_TAG=centos-6-1.4.1"
+Environment="DOCKER_IMAGE_TAG=centos-6-1.4.2"
 Environment="SERVICE_UNIT_APP_GROUP=app-1"
 Environment="SERVICE_UNIT_LOCAL_ID=1"
 Environment="SERVICE_UNIT_INSTANCE=1"
+Environment="VOLUME_CONFIG_ENABLED=false"
+Environment="VOLUME_CONFIG_NAMED=false"
+Environment="VOLUME_CONFIG_NAME=volume-config.%p"
+Environment="VOLUME_DATA_NAME=volume-data.%p"
 Environment="APACHE_SERVER_ALIAS=app-1"
 Environment="APACHE_SERVER_NAME=app-1.local"
 Environment="DATE_TIMEZONE=UTC"
 
-# Create a data container for the configuration volume
+# Initialisation: Load image from local storage if available, otherwise pull.
 ExecStartPre=/bin/sudo /bin/bash -c \
-  "if [[ busybox != $(/usr/bin/docker images | /bin/grep -e '^busybox[ ]\{1,\}' | /bin/grep -o 'busybox') ]]; then \
-    if [[ -f /var/services-packages/busybox.latest-1.0.0.tar.xz ]]; then \
-      /usr/bin/xz /var/services-packages/busybox.latest-1.0.0.tar.xz | /usr/bin/docker load; \
-    else \
-      /usr/bin/docker pull busybox:latest; \
-    fi; \
-  fi; \
-  if [[ -n $(/usr/bin/find ${MOUNT_PATH_CONFIG}/%p/supervisor -maxdepth 1 -type f) ]] && [[ -n $(/usr/bin/find ${MOUNT_PATH_CONFIG}/%p/httpd -maxdepth 1 -type f) ]]; then \
-    if [[ volume-config.%p != $(/usr/bin/docker ps -a | /bin/awk -v pattern='^volume-config.%p$' '$NF ~ pattern { print $NF; }') ]]; then \
-      /usr/bin/docker run \
-        --name volume-config.%p \
-        -v ${MOUNT_PATH_CONFIG}/ssh.pool-1/ssh:/etc/services-config/ssh \
-        -v ${MOUNT_PATH_CONFIG}/%p/supervisor:/etc/services-config/supervisor \
-        -v ${MOUNT_PATH_CONFIG}/%p/httpd:/etc/services-config/httpd \
-        -v ${MOUNT_PATH_CONFIG}/%p/ssl/certs:/etc/services-config/ssl/certs \
-        -v ${MOUNT_PATH_CONFIG}/%p/ssl/private:/etc/services-config/ssl/private \
-        busybox:latest \
-        /bin/true; \
-    fi; \
-  fi"
-
-# Initialisation: Pull or build image if required
-ExecStartPre=/bin/sudo /bin/bash -c \
-  "if [[ ${DOCKER_IMAGE_NAME} != $(/usr/bin/docker images | /bin/grep -e \\\"^${DOCKER_IMAGE_NAME}[ ]\{1,\}\\\" | /bin/grep -o \\\"${DOCKER_IMAGE_NAME}\\\") ]]; then \
-    if [[ -f /var/services-packages/${DOCKER_IMAGE_NAME}.${DOCKER_IMAGE_TAG}.tar.xz ]]; then \
-      /usr/bin/xz -dc /var/services-packages/${DOCKER_IMAGE_NAME}.${DOCKER_IMAGE_TAG}.tar.xz | /usr/bin/docker load; \
+  "if [[ ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG} != $(/usr/bin/docker images | awk -v FS='[ ]+' -v pattern=\"^${DOCKER_IMAGE_NAME}[ ]+${DOCKER_IMAGE_TAG} \" '$0 ~ pattern { print $1\":\"$2; }') ]]; then \
+    if [[ -f ${DOCKER_IMAGE_PACKAGE_PATH}/${DOCKER_IMAGE_NAME}.${DOCKER_IMAGE_TAG}.tar.xz ]]; then \
+      /usr/bin/xz -dc ${DOCKER_IMAGE_PACKAGE_PATH}/${DOCKER_IMAGE_NAME}.${DOCKER_IMAGE_TAG}.tar.xz | /usr/bin/docker load; \
     else \
       /usr/bin/docker pull ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}; \
     fi; \
   fi"
 
-# Startup: Remove existing container (and stop if running) so it is re-created on startup but not removed on exit - to allow debugging if required
-ExecStart=/bin/sudo /bin/bash -c \
+# Create a data container for the configuration volume
+ExecStartPre=/bin/sudo /bin/bash -c \
+  "if [[ ${VOLUME_CONFIG_ENABLED} == true ]] && [[ ${VOLUME_CONFIG_NAMED} == true ]]; then \
+    if [[ ${VOLUME_CONFIG_NAME} != $(/usr/bin/docker ps -a | /bin/awk -v pattern=\"^${VOLUME_CONFIG_NAME}$\" '$NF ~ pattern { print $NF; }') ]]; then \
+      /usr/bin/docker run \
+        --name ${VOLUME_CONFIG_NAME}.tmp \
+        ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG} \
+        /bin/sh -c 'while true; do echo -ne .; sleep 1; done'; \
+      /usr/bin/docker run \
+        --name ${VOLUME_CONFIG_NAME} \
+        -v ${VOLUME_CONFIG_NAME}:/etc/services-config \
+        ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG} \
+        /bin/true; \
+      /usr/bin/docker cp ${VOLUME_CONFIG_NAME}.tmp:/etc/services-config/. \
+        /var/lib/docker/volumes/${VOLUME_CONFIG_NAME}/_data; \
+      /usr/bin/docker kill ${VOLUME_CONFIG_NAME}.tmp; \
+    fi; \
+  elif [[ ${VOLUME_CONFIG_ENABLED} == true ]] && [[ ${VOLUME_CONFIG_NAMED} != true ]]; then \
+    if [[ ${VOLUME_CONFIG_NAME} != $(/usr/bin/docker ps -a | /bin/awk -v pattern=\"^${VOLUME_CONFIG_NAME}$\" '$NF ~ pattern { print $NF; }') ]]; then \
+      /usr/bin/docker run \
+        --name ${VOLUME_CONFIG_NAME} \
+        -v /etc/services-config \
+        ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG} \
+        /bin/true; \
+    fi; \
+  fi"
+
+# Remove existing container (and stop if running). This allows it to 
+# be re-created on startup but not removed on exit as with --rm.
+ExecStartPre=/bin/sudo /bin/bash -c \
   "if [[ %p == $(/usr/bin/docker ps -a | /bin/awk -v pattern='^%p$' '$NF ~ pattern { print $NF; }') ]]; then \
     if [[ %p == $(/usr/bin/docker ps | /bin/awk -v pattern='^%p$' '$NF ~ pattern { print $NF; }') ]]; then \
       /usr/bin/docker stop %p; \
     fi; \
     /usr/bin/docker rm %p; \
-  fi; \
-  if [[ volume-config.%p == $(/usr/bin/docker ps -a | /bin/awk -v pattern='^volume-config.%p$' '$NF ~ pattern { print $NF; }') ]]; then \
+  fi"
+
+# Startup
+ExecStart=/bin/sudo /bin/bash -c \
+  "if [[ ${VOLUME_CONFIG_NAME} == $(/usr/bin/docker ps -a | /bin/awk -v pattern=\"^${VOLUME_CONFIG_NAME}$\" '$NF ~ pattern { print $NF; }') ]]; then \
     /usr/bin/docker run \
       --name %p \
       -p %i:80 \
@@ -93,7 +100,7 @@ ExecStart=/bin/sudo /bin/bash -c \
       --env APACHE_SERVER_NAME=${APACHE_SERVER_NAME} \
       --env DATE_TIMEZONE=${DATE_TIMEZONE} \
       --volumes-from volume-config.%p \
-      -v ${MOUNT_PATH_DATA}/apache-php/${SERVICE_UNIT_APP_GROUP}:/var/www/app \
+      -v ${VOLUME_DATA_NAME}:/var/www/app \
       ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}; \
   else \
     /usr/bin/docker run \
@@ -115,7 +122,7 @@ ExecStart=/bin/sudo /bin/bash -c \
       --env SERVICE_USER_GROUP=app-www \
       --env SERVICE_USER_PASSWORD= \
       --env SUEXECUSERGROUP=false \
-      -v ${MOUNT_PATH_DATA}/apache-php/${SERVICE_UNIT_APP_GROUP}:/var/www/app \
+      -v ${VOLUME_DATA_NAME}:/var/www/app \
       ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}; \
   fi"
 
