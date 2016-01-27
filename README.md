@@ -181,7 +181,7 @@ The following configuration files are required to run the application container 
 - [httpd/conf/httpd.conf](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6/etc/services-config/httpd/conf/httpd.conf)
 - [httpd/conf.d/php.conf](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6/etc/services-config/httpd/conf.d/php.conf)
 - [httpd/conf.d/ssl.conf](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6/etc/services-config/httpd/conf.d/ssl.conf)
-- [supervisor/supervisord.conf](https://github.com/jdeathe/centos-ssh-mysql/blob/centos-6/etc/services-config/supervisor/supervisord.conf)
+- [supervisor/supervisord.conf](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6/etc/services-config/supervisor/supervisord.conf)
 
 ### Running
 
