@@ -2,7 +2,7 @@
 # jdeathe/centos-ssh-apache-php
 #
 # CentOS-6, Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1
-# 
+#
 # =============================================================================
 FROM jdeathe/centos-ssh:centos-6-1.4.2
 
@@ -134,10 +134,10 @@ RUN mv /etc/httpd/conf.d/ssl.conf /etc/httpd/conf.d/ssl.conf.off \
 # -----------------------------------------------------------------------------
 RUN { \
 		echo ''; \
-		echo $'apache\tsoft\tnproc\t30'; \
-		echo $'apache\thard\tnproc\t50'; \
-		echo $'app-www\tsoft\tnproc\t30'; \
-		echo $'app-www\thard\tnproc\t50'; \
+		echo $'apache\tsoft\tnproc\t60'; \
+		echo $'apache\thard\tnproc\t100'; \
+		echo $'app-www\tsoft\tnproc\t60'; \
+		echo $'app-www\thard\tnproc\t100'; \
 	} >> /etc/security/limits.conf
 
 # -----------------------------------------------------------------------------
