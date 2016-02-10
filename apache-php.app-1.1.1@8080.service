@@ -1,17 +1,19 @@
 # -----------------------------------------------------------------------------
-# Create a data container for the configuration volume: 
-#     docker run -v /config --name volume-config.<service-name> busybox /bin/true
-#
-# To install: 
+# To install:
 #     sudo cp <container-path>/<service-name>@<port>.service /etc/systemd/system/
 #     sudo systemctl daemon-reload
-#     sudo systemctl enable /etc/systemd/system/<service-name>@<port>.service
-# 
-# Start using: 
+#     sudo systemctl enable -f /etc/systemd/system/<service-name>@<port>.service
+#
+# Start using:
 #     sudo systemctl [start|stop|restart|kill|status] <service-name>@<port>.service
 #
-# Debugging: 
+# Debugging:
 #     journalctl -fn 50 u <service-name>@<port>.service
+#
+# To uninstall:
+#     sudo systemctl disable -f /etc/systemd/system/<service-name>@<port>.service
+#     sudo systemctl stop /etc/systemd/system/<service-name>@<port>.service
+#     sudo docker rm <service-name>
 # -----------------------------------------------------------------------------
 
 [Unit]
@@ -76,7 +78,7 @@ ExecStartPre=/bin/sudo /bin/bash -c \
     fi; \
   fi"
 
-# Remove existing container (and stop if running). This allows it to 
+# Remove existing container (and stop if running). This allows it to
 # be re-created on startup but not removed on exit as with --rm.
 ExecStartPre=/bin/sudo /bin/bash -c \
   "if [[ %p == $(/usr/bin/docker ps -a | /bin/awk -v pattern='^%p$' '$NF ~ pattern { print $NF; }') ]]; then \
