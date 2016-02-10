@@ -37,9 +37,18 @@ Environment="VOLUME_CONFIG_ENABLED=false"
 Environment="VOLUME_CONFIG_NAMED=false"
 Environment="VOLUME_CONFIG_NAME=volume-config.%p"
 Environment="VOLUME_DATA_NAME=volume-data.%p"
+Environment="APACHE_EXTENDED_STATUS_ENABLED=false"
+Environment="APACHE_LOAD_MODULES=authz_user_module log_config_module expires_module deflate_module headers_module setenvif_module mime_module status_module dir_module alias_module"
+Environment="APACHE_MOD_SSL_ENABLED=false"
 Environment="APACHE_SERVER_ALIAS=app-1"
 Environment="APACHE_SERVER_NAME=app-1.local"
+Environment="APP_HOME_DIR=/var/www/app"
 Environment="DATE_TIMEZONE=UTC"
+Environment="HTTPD=/usr/sbin/httpd"
+Environment="SERVICE_USER=app"
+Environment="SERVICE_USER_GROUP=app-www"
+Environment="SERVICE_USER_PASSWORD="
+Environment="SUEXECUSERGROUP=false"
 
 # Initialisation: Load image from local storage if available, otherwise pull.
 ExecStartPre=/bin/sudo /bin/bash -c \
@@ -95,36 +104,36 @@ ExecStart=/bin/sudo /bin/bash -c \
       --name %p \
       -p %i:80 \
       -p 8580:8443 \
-      --env SERVICE_UNIT_APP_GROUP=${SERVICE_UNIT_APP_GROUP} \
-      --env SERVICE_UNIT_LOCAL_ID=${SERVICE_UNIT_LOCAL_ID} \
-      --env SERVICE_UNIT_INSTANCE=${SERVICE_UNIT_INSTANCE} \
-      --env APACHE_SERVER_ALIAS=${APACHE_SERVER_ALIAS} \
-      --env APACHE_SERVER_NAME=${APACHE_SERVER_NAME} \
-      --env DATE_TIMEZONE=${DATE_TIMEZONE} \
+      --env \"SERVICE_UNIT_APP_GROUP=${SERVICE_UNIT_APP_GROUP}\" \
+      --env \"SERVICE_UNIT_LOCAL_ID=${SERVICE_UNIT_LOCAL_ID}\" \
+      --env \"SERVICE_UNIT_INSTANCE=${SERVICE_UNIT_INSTANCE}\" \
+      --env \"APACHE_SERVER_ALIAS=${APACHE_SERVER_ALIAS}\" \
+      --env \"APACHE_SERVER_NAME=${APACHE_SERVER_NAME}\" \
+      --env \"DATE_TIMEZONE=${DATE_TIMEZONE}\" \
       --volumes-from volume-config.%p \
-      -v ${VOLUME_DATA_NAME}:/var/www/app \
+      -v ${VOLUME_DATA_NAME}:${APP_HOME_DIR} \
       ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}; \
   else \
     /usr/bin/docker run \
       --name %p \
       -p %i:80 \
       -p 8580:8443 \
-      --env SERVICE_UNIT_APP_GROUP=${SERVICE_UNIT_APP_GROUP} \
-      --env SERVICE_UNIT_LOCAL_ID=${SERVICE_UNIT_LOCAL_ID} \
-      --env SERVICE_UNIT_INSTANCE=${SERVICE_UNIT_INSTANCE} \
-      --env APACHE_EXTENDED_STATUS_ENABLED=false \
-      --env APACHE_LOAD_MODULES='authz_user_module log_config_module expires_module deflate_module headers_module setenvif_module mime_module status_module dir_module alias_module' \
-      --env APACHE_MOD_SSL_ENABLED=false \
-      --env APACHE_SERVER_ALIAS=${APACHE_SERVER_ALIAS} \
-      --env APACHE_SERVER_NAME=${APACHE_SERVER_NAME} \
-      --env APP_HOME_DIR=/var/www/app \
-      --env DATE_TIMEZONE=${DATE_TIMEZONE} \
-      --env HTTPD=/usr/sbin/httpd \
-      --env SERVICE_USER=app \
-      --env SERVICE_USER_GROUP=app-www \
-      --env SERVICE_USER_PASSWORD= \
-      --env SUEXECUSERGROUP=false \
-      -v ${VOLUME_DATA_NAME}:/var/www/app \
+      --env \"SERVICE_UNIT_APP_GROUP=${SERVICE_UNIT_APP_GROUP}\" \
+      --env \"SERVICE_UNIT_LOCAL_ID=${SERVICE_UNIT_LOCAL_ID}\" \
+      --env \"SERVICE_UNIT_INSTANCE=${SERVICE_UNIT_INSTANCE}\" \
+      --env \"APACHE_EXTENDED_STATUS_ENABLED=${APACHE_EXTENDED_STATUS_ENABLED}\" \
+      --env \"APACHE_LOAD_MODULES=${APACHE_LOAD_MODULES}\" \
+      --env \"APACHE_MOD_SSL_ENABLED=${APACHE_MOD_SSL_ENABLED}\" \
+      --env \"APACHE_SERVER_ALIAS=${APACHE_SERVER_ALIAS}\" \
+      --env \"APACHE_SERVER_NAME=${APACHE_SERVER_NAME}\" \
+      --env \"APP_HOME_DIR=${APP_HOME_DIR}\" \
+      --env \"DATE_TIMEZONE=${DATE_TIMEZONE}\" \
+      --env \"HTTPD=${HTTPD}\" \
+      --env \"SERVICE_USER=${SERVICE_USER}\" \
+      --env \"SERVICE_USER_GROUP=${SERVICE_USER_GROUP}\" \
+      --env \"SERVICE_USER_PASSWORD=\" \
+      --env \"SUEXECUSERGROUP=${SUEXECUSERGROUP}\" \
+      -v ${VOLUME_DATA_NAME}:${APP_HOME_DIR} \
       ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}; \
   fi"
 
