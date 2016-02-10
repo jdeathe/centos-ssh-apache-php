@@ -88,7 +88,7 @@ show_docker_image ()
 			'$0 ~ pattern { print $0; }'
 }
 
-SERVICE_UNIT_LONG_NAME=${SERVICE_UNIT_LONG_NAME:-apache-php.pool-1.1.1}
+SERVICE_UNIT_LONG_NAME=${SERVICE_UNIT_LONG_NAME:-apache-php.app-1.1.1}
 SERVICE_UNIT_FILE_NAME=${SERVICE_UNIT_FILE_NAME:-${SERVICE_UNIT_LONG_NAME}@8080.service}
 
 # Stop the service and remove containers.
