@@ -164,7 +164,7 @@ RUN sed -i \
 RUN useradd -u 501 -d /var/www/app -m app \
 	&& useradd -u 502 -d /var/www/app -M -s /sbin/nologin -G app app-www \
 	&& usermod -a -G app-www app \
-	&& usermod -a -G app-www apache
+	&& usermod -a -G app-www,app apache
 
 # -----------------------------------------------------------------------------
 # Add a symbolic link to the app users home within the home directory &
