@@ -131,15 +131,16 @@ set_apache_extended_status ${OPTS_APACHE_EXTENDED_STATUS_ENABLED}
 # Add ServerName
 set_apache_server_name ${OPTS_APACHE_SERVER_NAME} 80
 
-# If users need to change the vhost.conf the SSL version can be rebuilt if it is deleted
-if [[ ${OPTS_APACHE_MOD_SSL_ENABLED} == true ]] && [[ ! -f ${OPTS_APP_HOME_DIR}/vhost-ssl.conf ]] && [[ -f ${OPTS_APP_HOME_DIR}/vhost.conf ]]; then
-	echo "Rebuilding the SSL VirtualHost configuration."
-	cp -pf ${OPTS_APP_HOME_DIR}/vhost.conf ${OPTS_APP_HOME_DIR}/vhost-ssl.conf
+# Generate an SSL VirtualHost configuration if required
+if [[ ${OPTS_APACHE_MOD_SSL_ENABLED} == true ]] \
+	&& [[ ! -f ${OPTS_APP_HOME_DIR}/vhost-ssl.conf ]] \
+	&& [[ -f ${OPTS_APP_HOME_DIR}/vhost.conf ]]; then
+	echo "Generating SSL VirtualHost configuration."
 
-	# Enable the SSL VirtualHosts configuration
-	sed -i \
+	sed \
 		-e 's~^<VirtualHost \*:80 \*:8443>$~<VirtualHost \*:443>~g' \
 		-e '/<IfModule mod_ssl.c>/,/<\/IfModule>/ s~^#~~' \
+		${OPTS_APP_HOME_DIR}/vhost.conf > \
 		${OPTS_APP_HOME_DIR}/vhost-ssl.conf
 fi
 
