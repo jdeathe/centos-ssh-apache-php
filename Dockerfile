@@ -29,9 +29,6 @@ RUN rpm --rebuilddb \
 	&& rm -rf /var/cache/yum/* \
 	&& yum clean all
 
-# Display the contents of the new certificate for reference
-RUN openssl x509 -in /etc/pki/tls/certs/localhost.crt -text
-
 # -----------------------------------------------------------------------------
 # Global Apache configuration changes
 # -----------------------------------------------------------------------------
