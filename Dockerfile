@@ -196,7 +196,7 @@ RUN sed -i \
 # Set permissions (app:app-www === 501:502)
 # -----------------------------------------------------------------------------
 RUN chown -R 501:502 /var/www/app \
-	&& chmod 775 /var/www/app
+	&& chmod 770 /var/www/app
 
 # -----------------------------------------------------------------------------
 # Create the template directory
