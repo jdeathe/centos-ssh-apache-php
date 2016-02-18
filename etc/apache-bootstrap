@@ -90,7 +90,7 @@ fi
 
 if [[ -z $(find ${OPTS_APP_HOME_DIR} -maxdepth 1 -type f) ]] && [[ -d ${APP_HOME_DIR_TEMPLATE} ]]; then
 	echo "Home directory ${OPTS_APP_HOME_DIR} is empty - populate it using ${APP_HOME_DIR_TEMPLATE}."
-	cp -rf ${APP_HOME_DIR_TEMPLATE}/. ${OPTS_APP_HOME_DIR}/
+	cp -rpf ${APP_HOME_DIR_TEMPLATE}/. ${OPTS_APP_HOME_DIR}
 fi
 
 # Document root directory is required
