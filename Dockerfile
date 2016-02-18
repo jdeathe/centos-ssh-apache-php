@@ -182,14 +182,6 @@ RUN echo '<?php phpinfo(); ?>' > /var/www/app/public_html/_phpinfo.php \
 	&& cp /usr/share/php-pecl-apc/apc.php /var/www/app/public_html/_apc.php
 
 # -----------------------------------------------------------------------------
-# Create the SSL VirtualHosts configuration file
-# -----------------------------------------------------------------------------
-RUN sed -i \
-	-e 's~^<VirtualHost \*:80 \*:8443>$~<VirtualHost \*:443>~g' \
-	-e '/<IfModule mod_ssl.c>/,/<\/IfModule>/ s~^#~~' \
-	/var/www/app/vhost-ssl.conf
-
-# -----------------------------------------------------------------------------
 # Set permissions (app:app-www === 501:502)
 # -----------------------------------------------------------------------------
 RUN chown -R 501:502 /var/www/app \
