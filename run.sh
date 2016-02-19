@@ -151,6 +151,8 @@ docker run \
 	--env "APACHE_EXTENDED_STATUS_ENABLED=${APACHE_EXTENDED_STATUS_ENABLED}" \
 	--env "APACHE_LOAD_MODULES=${APACHE_LOAD_MODULES}" \
 	--env "APACHE_MOD_SSL_ENABLED=${APACHE_MOD_SSL_ENABLED}" \
+ 	--env "APACHE_RUN_GROUP=${APACHE_RUN_GROUP}" \
+ 	--env "APACHE_RUN_USER=${APACHE_RUN_USER}" \
 	--env "APACHE_SERVER_ALIAS=${APACHE_SERVER_ALIAS}" \
 	--env "APACHE_SERVER_NAME=${APACHE_SERVER_NAME}" \
 	--env "APP_HOME_DIR=${APP_HOME_DIR}" \
@@ -180,6 +182,8 @@ docker run \
 # 	--env "APACHE_EXTENDED_STATUS_ENABLED=true"
 # 	--env "APACHE_LOAD_MODULES=${APACHE_LOAD_MODULES} rewrite_module" \
 # 	--env "APACHE_MOD_SSL_ENABLED=false" \
+# 	--env "APACHE_RUN_GROUP=app-www" \
+# 	--env "APACHE_RUN_USER=www-app-1" \
 # 	--env "APACHE_SERVER_ALIAS=app-1 www.app-1 www.app-1.local" \
 # 	--env "APACHE_SERVER_NAME=app-1.local" \
 # 	--env "APP_HOME_DIR=/var/www/app-1" \
