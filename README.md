@@ -203,6 +203,8 @@ $ docker run -d \
   --env "APACHE_EXTENDED_STATUS_ENABLED=false" \
   --env "APACHE_LOAD_MODULES=authz_user_module log_config_module expires_module deflate_module headers_module setenvif_module mime_module status_module dir_module alias_module rewrite_module" \
   --env "APACHE_MOD_SSL_ENABLED=false" \
+  --env "APACHE_RUN_GROUP=app-www" \
+  --env "APACHE_RUN_USER=www-app-1" \
   --env "APACHE_SERVER_ALIAS=app-1" \
   --env "APACHE_SERVER_NAME=app-1.local" \
   --env "APP_HOME_DIR=/var/www/app-1" \
@@ -216,7 +218,7 @@ $ docker run -d \
 
 #### Using configuration volume
 
-The following example uses the settings from the optonal configuration volume volume-config.apache-php.app-1.1.1 and maps a data volume for persistent storage of the Apache app data on the docker host.
+The following example uses the settings from the optional configuration volume volume-config.apache-php.app-1.1.1 and maps a data volume for persistent storage of the Apache app data on the docker host.
 
 ```
 $ docker stop apache-php.app-1.1.1 && \
@@ -247,7 +249,7 @@ The output of the logs should show the Apache modules being loaded and auto-gene
 
 There are several environmental variables defined at runtime these allow the operator to customise the running container which may become necessary when running several on the same docker host, when clustering docker hosts or to simply set the timezone.
 
-##### 1. SERVICE_UNIT_INSTANCE, SERVICE_UNIT_LOCAL_ID & SERVICE_UNIT_INSTANCE
+##### SERVICE_UNIT_INSTANCE, SERVICE_UNIT_LOCAL_ID & SERVICE_UNIT_INSTANCE
 
 The ```SERVICE_UNIT_INSTANCE```, ```SERVICE_UNIT_LOCAL_ID``` and ```SERVICE_UNIT_INSTANCE``` environmental variables are used to set a response header named ```X-Service-Uid``` that lets you identify the container that is serving the content. This is useful when you have many containers running on a single host using different ports (i.e with different ```SERVICE_UNIT_LOCAL_ID``` values) or if you are running a cluster and need to identify which host the content is served from (i.e with different ```SERVICE_UNIT_INSTANCE``` values). The three values should map to the last 3 dotted values of the container name; in our case that is "app-1.1.1"
 
@@ -259,7 +261,7 @@ The ```SERVICE_UNIT_INSTANCE```, ```SERVICE_UNIT_LOCAL_ID``` and ```SERVICE_UNIT
 ...
 ```
 
-##### 2. APACHE_SERVER_NAME & APACHE_SERVER_ALIAS
+##### APACHE_SERVER_NAME & APACHE_SERVER_ALIAS
 
 The ```APACHE_SERVER_NAME``` and ```APACHE_SERVER_ALIAS``` environmental variables are used to set the VirtualHost ```ServerName``` and ```ServerAlias``` values respectively. In the following example the running container would respond to the host names ```app-1.local``` or ```app-1```:
 
@@ -272,7 +274,7 @@ The ```APACHE_SERVER_NAME``` and ```APACHE_SERVER_ALIAS``` environmental variabl
 
 from your browser you can then access it with ```http://app-1.local:8080``` assuming you have the IP address of your docker mapped to the hostname using your DNS server or a local hosts entry.
 
-##### 3. APACHE_EXTENDED_STATUS_ENABLED
+##### APACHE_EXTENDED_STATUS_ENABLED
 
 The variable ```APACHE_EXTENDED_STATUS_ENABLED``` allows you to turn ExtendedStatus on. It is turned off by default as it has an impact on the server's performance but with it enabled you can gather more statistics.
 
@@ -291,7 +293,7 @@ $ docker exec -it apache-php.app-1.1.1 \
   -d "curl -s http://app-1/_httpdstatus?auto"
 ```
 
-##### 4. APACHE_LOAD_MODULES
+##### APACHE_LOAD_MODULES
 
 The variable ```APACHE_LOAD_MODULES``` defines all Apache modules to be loaded from */etc/httpd/conf/http.conf*. The default is the minimum required so you may need to add more as necessary. To add the "mod\_rewrite" Apache Module you would add it's identifier ```rewrite_module``` to the array as follows.
 
@@ -301,7 +303,7 @@ The variable ```APACHE_LOAD_MODULES``` defines all Apache modules to be loaded f
 ...
 ```
 
-##### 5. APACHE_MOD_SSL_ENABLED
+##### APACHE_MOD_SSL_ENABLED
 
 By default SSL support is disabled but a second port, (mapped to 8443), is available for traffic that has been been through upstream SSL termination (SSL Offloading). If you want the container to support SSL directly then set ```APACHE_MOD_SSL_ENABLED=true``` this will then generate a self signed certificate and will update Apache to accept traffic on port 443.
 
@@ -325,7 +327,18 @@ $ docker run -d \
   jdeathe/centos-ssh-apache-php:latest
 ```
 
-##### 6. APP_HOME_DIR
+##### APACHE_RUN_USER & APACHE_RUN_GROUP
+
+The Apache process is run by the User and Group defined by ```APACHE_RUN_USER``` and ```APACHE_RUN_GROUP``` respectively.
+
+```
+...
+  --env "APACHE_RUN_GROUP=app-www" \
+  --env "APACHE_RUN_USER=www-app-1" \
+...
+```
+
+##### APP_HOME_DIR
 
 The home directory of the service user and parent directory of the Apache DocumentRoot is  /var/www/app by default but can be changed if necessary using the ```APP_HOME_DIR``` environment variable. It is also necessary to change the target of the data volume mapping accordingly as in the following example where /var/www/app-1 is used.
 
@@ -336,7 +349,7 @@ The home directory of the service user and parent directory of the Apache Docume
 ...
 ```
 
-##### 7. DATE_TIMEZONE
+##### DATE_TIMEZONE
 
 The default timezone for the container, and the PHP app, is UTC however the operator can set an appropriate timezone using the ```DATE_TIMEZONE``` variable. The value should be a timezone identifier, like UTC or Europe/London. The list of valid identifiers is available in the PHP [List of Supported Timezones](http://php.net/manual/en/timezones.php).
 
@@ -348,7 +361,7 @@ To set the timezone for the UK and account for British Summer Time you would use
 ...
 ```
 
-##### 8. SERVICE_USER, SERVICE_USER_GROUP & SERVICE_USER_PASSWORD
+##### SERVICE_USER, SERVICE_USER_GROUP & SERVICE_USER_PASSWORD
 
 Use the ```SERVICE_USER```, ```SERVICE_USER_GROUP``` and ```SERVICE_USER_PASSWORD``` environment variables to define a custom service username, group and password respectively. If the password is left an empty string then it is automatically generated on first run which is the default.
 
