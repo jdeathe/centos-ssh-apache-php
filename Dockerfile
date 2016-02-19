@@ -37,6 +37,8 @@ RUN sed -i \
 	-e 's~^ServerTokens OS$~ServerTokens Prod~g' \
 	-e 's~^DirectoryIndex \(.*\)$~DirectoryIndex \1 index.php~g' \
 	-e 's~^NameVirtualHost \(.*\)$~#NameVirtualHost \1~g' \
+	-e 's~^User .*$~User ${APACHE_RUN_USER}~g' \
+	-e 's~^Group .*$~Group ${APACHE_RUN_GROUP}~g' \
 	/etc/httpd/conf/httpd.conf
 
 # -----------------------------------------------------------------------------
@@ -127,14 +129,12 @@ RUN mv /etc/httpd/conf.d/ssl.conf /etc/httpd/conf.d/ssl.conf.off \
 	&& chmod 444 /etc/httpd/conf.d/ssl.conf
 
 # -----------------------------------------------------------------------------
-# Limit process for the application user
+# Limit threads for the application user
 # -----------------------------------------------------------------------------
 RUN { \
 		echo ''; \
-		echo $'apache\tsoft\tnproc\t60'; \
-		echo $'apache\thard\tnproc\t100'; \
-		echo $'app-www\tsoft\tnproc\t60'; \
-		echo $'app-www\thard\tnproc\t100'; \
+		echo -e '@apache\tsoft\tnproc\t60'; \
+		echo -e '@apache\thard\tnproc\t100'; \
 	} >> /etc/security/limits.conf
 
 # -----------------------------------------------------------------------------
@@ -159,7 +159,7 @@ RUN sed -i \
 # Add default service users
 # -----------------------------------------------------------------------------
 RUN useradd -u 501 -d /var/www/app -m app \
-	&& useradd -u 502 -d /var/www/app -M -s /sbin/nologin -G app app-www \
+	&& useradd -u 502 -d /var/www/app -M -s /sbin/nologin -G apache,app app-www \
 	&& usermod -a -G app-www app \
 	&& usermod -a -G app-www,app apache
 
@@ -221,13 +221,15 @@ ENV SERVICE_UNIT_INSTANCE 1
 ENV APACHE_EXTENDED_STATUS_ENABLED false
 ENV APACHE_LOAD_MODULES "authz_user_module log_config_module expires_module deflate_module headers_module setenvif_module mime_module status_module dir_module alias_module"
 ENV APACHE_MOD_SSL_ENABLED false
+ENV APACHE_RUN_GROUP app-www
+ENV APACHE_RUN_USER app-www
 ENV APACHE_SERVER_ALIAS ""
 ENV APACHE_SERVER_NAME app-1.local
 ENV APP_HOME_DIR /var/www/app
 ENV DATE_TIMEZONE UTC
 ENV HTTPD /usr/sbin/httpd
 ENV SERVICE_USER app
-ENV SERVICE_USER_GROUP app-www
+ENV SERVICE_USER_GROUP ${APACHE_RUN_GROUP}
 ENV SERVICE_USER_PASSWORD ""
 ENV SUEXECUSERGROUP false
 

@@ -171,29 +171,23 @@ fi
 set_new_username app ${OPTS_SERVICE_USER}
 set_new_username app-www ${OPTS_SERVICE_USER_GROUP}
 
+
+VIRTUAL_HOST_CONFIGURATION_FILES="${OPTS_APP_HOME_DIR}/vhost.conf"
+if [[ ${OPTS_APACHE_MOD_SSL_ENABLED} == true ]]; then
+	VIRTUAL_HOST_CONFIGURATION_FILES+=" ${OPTS_APP_HOME_DIR}/vhost-ssl.conf"
+fi
+
 # Set the Apache (run) service user/group
 if [[ ${OPTS_SUEXECUSERGROUP} == true ]]; then
 	sed -i \
-		-e "s~^User .*$~User ${OPTS_SERVICE_USER_GROUP}~g" \
-		-e "s~^Group .*$~Group ${OPTS_SERVICE_USER_GROUP}~g" \
-		/etc/httpd/conf/httpd.conf
-	sed -i \
 		-e 's~#SuexecUserGroup \(.*\)$~SuexecUserGroup \1~g' \
 		-e 's~app/bin/php-wrapper~app-bin/php-wrapper~g' \
-		${OPTS_APP_HOME_DIR}/vhost.conf \
-		${OPTS_APP_HOME_DIR}/vhost-ssl.conf
-	chown -R 502:502 /var/{www/app-bin,run/mod_fcgid}
+		${VIRTUAL_HOST_CONFIGURATION_FILES}
 else
-	sed -i \
-		-e "s~^User .*$~User apache~g" \
-		-e "s~^Group .*$~Group apache~g" \
-		/etc/httpd/conf/httpd.conf
 	sed -i \
 		-e 's~\([^#]\)SuexecUserGroup \(.*\)$~\1#SuexecUserGroup \2~g' \
 		-e 's~app/bin/php-wrapper~app-bin/php-wrapper~g' \
-		${OPTS_APP_HOME_DIR}/vhost.conf \
-		${OPTS_APP_HOME_DIR}/vhost-ssl.conf
-	chown -R apache:apache /var/{www/app-bin,run/mod_fcgid}
+		${VIRTUAL_HOST_CONFIGURATION_FILES}
 fi
 
 echo "Loading Apache modules."
