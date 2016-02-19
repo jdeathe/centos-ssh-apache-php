@@ -160,7 +160,6 @@ docker run \
 	--env "HTTPD=${HTTPD}" \
 	--env "SERVICE_USER=${SERVICE_USER}" \
 	--env "SERVICE_USER_GROUP=${SERVICE_USER_GROUP}" \
-	--env "SERVICE_USER_PASSWORD=${SERVICE_USER_PASSWORD}" \
 	--env "SUEXECUSERGROUP=${SUEXECUSERGROUP}" \
 	${DOCKER_VOLUMES_FROM:-} \
 	${DOCKER_IMAGE_REPOSITORY_NAME}${@:+ -c }"${@}"
@@ -191,7 +190,6 @@ docker run \
 # 	--env "HTTPD=/usr/sbin/httpd.worker" \
 # 	--env "SERVICE_USER=app" \
 # 	--env "SERVICE_USER_GROUP=app-www" \
-# 	--env "SERVICE_USER_PASSWORD=" \
 # 	--env "SUEXECUSERGROUP=false" \
 # 	${DOCKER_VOLUMES_FROM:-} \
 # 	${DOCKER_IMAGE_REPOSITORY_NAME}${@:+ -c }"${@}"

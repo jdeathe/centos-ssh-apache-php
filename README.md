@@ -211,7 +211,6 @@ $ docker run -d \
   --env "DATE_TIMEZONE=UTC" \
   --env "SERVICE_USER=app" \
   --env "SERVICE_USER_GROUP=app-www" \
-  --env "SERVICE_USER_PASSWORD=" \
   -v volume-data.apache-php.app-1.1.1:/var/www/app-1 \
   jdeathe/centos-ssh-apache-php:latest
 ```
@@ -361,15 +360,14 @@ To set the timezone for the UK and account for British Summer Time you would use
 ...
 ```
 
-##### SERVICE_USER, SERVICE_USER_GROUP & SERVICE_USER_PASSWORD
+##### SERVICE_USER & SERVICE_USER_GROUP
 
-Use the ```SERVICE_USER```, ```SERVICE_USER_GROUP``` and ```SERVICE_USER_PASSWORD``` environment variables to define a custom service username, group and password respectively. If the password is left an empty string then it is automatically generated on first run which is the default.
+Use the ```SERVICE_USER``` and ```SERVICE_USER_GROUP``` environment variables to define a custom service username, group and password respectively. If the password is left an empty string then it is automatically generated on first run which is the default.
 
 ```
 ...
   --env "SERVICE_USER=apacheUser" \
   --env "SERVICE_USER_GROUP=apacheGroup" \
-  --env "SERVICE_USER_PASSWORD=userPassword123" \
 ...
 ```
 
