@@ -26,7 +26,16 @@ add_hosts_entry ()
 
 get_password ()
 {
-	echo $(head -n 4096 /dev/urandom | tr -cd '[:alnum:]' | head -c ${1})
+	local PASSWORD_LENGTH=${1:-16}
+	local PASSWORD=$(
+		head -n 4096 /dev/urandom 2> /dev/null | \
+		tr -cd '[:alnum:]' 2> /dev/null | \
+		head -c ${PASSWORD_LENGTH} 2> /dev/null
+	)
+
+	printf -- "%s" "${PASSWORD}"
+
+	return 0
 }
 
 set_apache_extended_status ()
@@ -81,8 +90,6 @@ OPTS_APACHE_SERVER_NAME="${APACHE_SERVER_NAME:-$(hostname)}"
 OPTS_APP_HOME_DIR="${APP_HOME_DIR:-/var/www/app}"
 OPTS_SERVICE_USER="${SERVICE_USER:-app}"
 OPTS_SERVICE_USER_GROUP="${SERVICE_USER_GROUP:-app-www}"
-OPTS_SERVICE_USER_GROUP_PASSWORD="${SERVICE_USER_GROUP_PASSWORD:-$(get_password 8)}"
-OPTS_SERVICE_USER_PASSWORD="${SERVICE_USER_PASSWORD:-$(get_password 8)}"
 OPTS_SUEXECUSERGROUP="${SUEXECUSERGROUP:-false}"
 
 if [[ ! -d ${OPTS_APP_HOME_DIR} ]] && [[ -d ${APP_HOME_DIR_TEMPLATE} ]]; then
@@ -201,16 +208,16 @@ for MODULE in ${APACHE_LOAD_MODULES}; do
 done
 
 # Set user passwords
-echo "${OPTS_SERVICE_USER}:${OPTS_SERVICE_USER_PASSWORD}" | chpasswd
-echo "${OPTS_SERVICE_USER_GROUP}:${OPTS_SERVICE_USER_GROUP_PASSWORD}" | chpasswd
+echo "${OPTS_SERVICE_USER}:$(get_password)" | chpasswd
+echo "${OPTS_SERVICE_USER_GROUP}:$(get_password)" | chpasswd
 
 	cat <<-EOT
 
 		================================================================================
 		Apache Details
 		--------------------------------------------------------------------------------
-		${OPTS_SERVICE_USER} : ${OPTS_SERVICE_USER_PASSWORD}
-		${OPTS_SERVICE_USER_GROUP} : ${OPTS_SERVICE_USER_GROUP_PASSWORD}
+		system user : ${OPTS_SERVICE_USER}
+		system group : ${OPTS_SERVICE_USER_GROUP}
 		run user : ${OPTS_APACHE_RUN_USER}
 		run group : ${OPTS_APACHE_RUN_GROUP}
 		server name : ${OPTS_APACHE_SERVER_NAME}
