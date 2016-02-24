@@ -158,8 +158,8 @@ RUN sed -i \
 # -----------------------------------------------------------------------------
 # Add default system users
 # -----------------------------------------------------------------------------
-RUN useradd -r -d /var/www/app -m app \
-	&& useradd -r -d /var/www/app -M -s /sbin/nologin -G apache,app app-www \
+RUN useradd -r -m -d /var/www/app -s /sbin/nologin -k /dev/null app \
+	&& useradd -r -M -d /var/www/app -s /sbin/nologin -G apache,app app-www \
 	&& usermod -a -G app-www app \
 	&& usermod -a -G app-www,app apache
 
