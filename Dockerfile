@@ -156,10 +156,10 @@ RUN sed -i \
 	/usr/share/php-pecl-apc/apc.php
 
 # -----------------------------------------------------------------------------
-# Add default service users
+# Add default system users
 # -----------------------------------------------------------------------------
-RUN useradd -u 501 -d /var/www/app -m app \
-	&& useradd -u 502 -d /var/www/app -M -s /sbin/nologin -G apache,app app-www \
+RUN useradd -r -d /var/www/app -m app \
+	&& useradd -r -d /var/www/app -M -s /sbin/nologin -G apache,app app-www \
 	&& usermod -a -G app-www app \
 	&& usermod -a -G app-www,app apache
 
@@ -182,9 +182,9 @@ RUN echo '<?php phpinfo(); ?>' > /var/www/app/public_html/_phpinfo.php \
 	&& cp /usr/share/php-pecl-apc/apc.php /var/www/app/public_html/_apc.php
 
 # -----------------------------------------------------------------------------
-# Set permissions (app:app-www === 501:502)
+# Set install directory permissions
 # -----------------------------------------------------------------------------
-RUN chown -R 501:502 /var/www/app \
+RUN chown -R app:app-www /var/www/app \
 	&& chmod 770 /var/www/app
 
 # -----------------------------------------------------------------------------
