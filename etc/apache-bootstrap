@@ -80,6 +80,19 @@ set_apache_server_name ()
 		/etc/httpd/conf/httpd.conf
 }
 
+update_group_name ()
+{
+	local GROUP_FROM=${1}
+	local GROUP_TO=${2}
+
+	if [[ ${GROUP_TO} != ${GROUP_FROM} ]] \
+		&& [[ ${GROUP_TO} != root ]] \
+		&& [[ ${GROUP_FROM} != root ]] \
+		&& [[ -n $(getent group "${GROUP_FROM}") ]]; then
+		groupmod -n "${GROUP_TO}" "${GROUP_FROM}"
+	fi
+}
+
 update_user_login ()
 {
 	local USER_FROM=${1}
@@ -88,9 +101,9 @@ update_user_login ()
 	if [[ ${USER_TO} != ${USER_FROM} ]] \
 		&& is_valid_user_login "${USER_TO}" \
 		&& is_valid_user_login "${USER_FROM}" \
-		&& [[ -z $(getent passwd ${USER_TO}) ]] \
-		&& [[ -n $(getent passwd ${USER_FROM}) ]]; then
-		usermod -l ${USER_TO} ${USER_FROM}
+		&& [[ -z $(getent passwd "${USER_TO}") ]] \
+		&& [[ -n $(getent passwd "${USER_FROM}") ]]; then
+		usermod -l "${USER_TO}" "${USER_FROM}"
 	fi
 }
 
@@ -194,7 +207,9 @@ fi
 
 # Set the service user / service group user
 update_user_login app ${OPTS_SERVICE_USER}
+update_group_name app ${OPTS_SERVICE_USER}
 update_user_login app-www ${OPTS_SERVICE_USER_GROUP}
+update_group_name app-www ${OPTS_SERVICE_USER_GROUP}
 
 VIRTUAL_HOST_CONFIGURATION_FILES="${OPTS_APP_HOME_DIR}/vhost.conf"
 if [[ ${OPTS_APACHE_MOD_SSL_ENABLED} == true ]]; then
