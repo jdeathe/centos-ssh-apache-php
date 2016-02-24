@@ -181,15 +181,15 @@ docker run \
 # 	--env "APACHE_EXTENDED_STATUS_ENABLED=true"
 # 	--env "APACHE_LOAD_MODULES=${APACHE_LOAD_MODULES} rewrite_module" \
 # 	--env "APACHE_MOD_SSL_ENABLED=false" \
-# 	--env "APACHE_RUN_GROUP=www-app-1" \
-# 	--env "APACHE_RUN_USER=www-app-1" \
+# 	--env "APACHE_RUN_GROUP=www-app" \
+# 	--env "APACHE_RUN_USER=www-app" \
 # 	--env "APACHE_SERVER_ALIAS=app-1 www.app-1 www.app-1.local" \
 # 	--env "APACHE_SERVER_NAME=app-1.local" \
 # 	--env "APP_HOME_DIR=/var/www/app-1" \
 # 	--env "DATE_TIMEZONE=Europe/London" \
 # 	--env "HTTPD=/usr/sbin/httpd.worker" \
 # 	--env "SERVICE_USER=app" \
-# 	--env "SERVICE_USER_GROUP=www-app-1" \
+# 	--env "SERVICE_USER_GROUP=www-app" \
 # 	--env "SUEXECUSERGROUP=false" \
 # 	${DOCKER_VOLUMES_FROM:-} \
 # 	${DOCKER_IMAGE_REPOSITORY_NAME}${@:+ -c }"${@}"
