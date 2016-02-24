@@ -366,8 +366,8 @@ Use the ```SERVICE_USER``` and ```SERVICE_USER_GROUP``` environment variables to
 
 ```
 ...
-  --env "SERVICE_USER=apacheUser" \
-  --env "SERVICE_USER_GROUP=apacheGroup" \
+  --env "SERVICE_USER=app-1" \
+  --env "SERVICE_USER_GROUP=www-app" \
 ...
 ```
 
