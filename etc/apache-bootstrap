@@ -108,17 +108,19 @@ update_user_login ()
 }
 
 APP_HOME_DIR_TEMPLATE="/var/www/.app-skel"
+DEFAULT_SYSTEM_USER=app
+DEFAULT_APACHE_USER=app-www
+PASSWORD_LENGTH=16
 
 OPTS_APACHE_EXTENDED_STATUS_ENABLED="${APACHE_EXTENDED_STATUS_ENABLED:-false}"
 OPTS_APACHE_LOAD_MODULES="${APACHE_LOAD_MODULES:-authz_user_module log_config_module expires_module deflate_module headers_module setenvif_module mime_module status_module dir_module alias_module reqtimeout_module}"
 OPTS_APACHE_MOD_SSL_ENABLED="${APACHE_MOD_SSL_ENABLED:-false}"
-OPTS_APACHE_RUN_GROUP="${APACHE_RUN_GROUP:-app-www}"
-OPTS_APACHE_RUN_USER="${APACHE_RUN_USER:-app-www}"
+OPTS_APACHE_RUN_GROUP="${APACHE_RUN_GROUP:-${DEFAULT_APACHE_USER}}"
+OPTS_APACHE_RUN_USER="${APACHE_RUN_USER:-${DEFAULT_APACHE_USER}}"
 OPTS_APACHE_SERVER_ALIAS="${APACHE_SERVER_ALIAS:-}"
 OPTS_APACHE_SERVER_NAME="${APACHE_SERVER_NAME:-$(hostname)}"
 OPTS_APP_HOME_DIR="${APP_HOME_DIR:-/var/www/app}"
-OPTS_SERVICE_USER="${SERVICE_USER:-app}"
-OPTS_SERVICE_USER_GROUP="${SERVICE_USER_GROUP:-app-www}"
+OPTS_SERVICE_USER="${SERVICE_USER:-${DEFAULT_SYSTEM_USER}}"
 OPTS_SUEXECUSERGROUP="${SUEXECUSERGROUP:-false}"
 
 if [[ ! -d ${OPTS_APP_HOME_DIR} ]] && [[ -d ${APP_HOME_DIR_TEMPLATE} ]]; then
@@ -205,11 +207,15 @@ else
 	> /etc/httpd/conf.d/ssl.conf
 fi
 
-# Set the service user / service group user
-update_user_login app ${OPTS_SERVICE_USER}
-update_group_name app ${OPTS_SERVICE_USER}
-update_user_login app-www ${OPTS_SERVICE_USER_GROUP}
-update_group_name app-www ${OPTS_SERVICE_USER_GROUP}
+# Set the system user passwords
+echo "${DEFAULT_SYSTEM_USER}:$(get_password ${PASSWORD_LENGTH})" | chpasswd
+echo "${DEFAULT_APACHE_USER}:$(get_password ${PASSWORD_LENGTH})" | chpasswd
+
+# Set the system user's login names and groups
+update_user_login ${DEFAULT_SYSTEM_USER} ${OPTS_SERVICE_USER}
+update_group_name ${DEFAULT_SYSTEM_USER} ${OPTS_SERVICE_USER}
+update_user_login ${DEFAULT_APACHE_USER} ${OPTS_APACHE_RUN_USER}
+update_group_name ${DEFAULT_APACHE_USER} ${OPTS_APACHE_RUN_USER}
 
 VIRTUAL_HOST_CONFIGURATION_FILES="${OPTS_APP_HOME_DIR}/vhost.conf"
 if [[ ${OPTS_APACHE_MOD_SSL_ENABLED} == true ]]; then
@@ -237,23 +243,18 @@ for MODULE in ${APACHE_LOAD_MODULES}; do
 		/etc/httpd/conf/httpd.conf
 done
 
-# Set user passwords
-echo "${OPTS_SERVICE_USER}:$(get_password)" | chpasswd
-echo "${OPTS_SERVICE_USER_GROUP}:$(get_password)" | chpasswd
+cat <<-EOT
 
-	cat <<-EOT
+	================================================================================
+	Apache Details
+	--------------------------------------------------------------------------------
+	system user : ${OPTS_SERVICE_USER}
+	run user : ${OPTS_APACHE_RUN_USER}
+	run group : ${OPTS_APACHE_RUN_GROUP}
+	server name : ${OPTS_APACHE_SERVER_NAME}
+	server alias : ${OPTS_APACHE_SERVER_ALIAS}
+	--------------------------------------------------------------------------------
 
-		================================================================================
-		Apache Details
-		--------------------------------------------------------------------------------
-		system user : ${OPTS_SERVICE_USER}
-		system group : ${OPTS_SERVICE_USER_GROUP}
-		run user : ${OPTS_APACHE_RUN_USER}
-		run group : ${OPTS_APACHE_RUN_GROUP}
-		server name : ${OPTS_APACHE_SERVER_NAME}
-		server alias : ${OPTS_APACHE_SERVER_ALIAS}
-		--------------------------------------------------------------------------------
-		
-	EOT
+EOT
 
 exit 0
