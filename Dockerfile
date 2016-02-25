@@ -164,11 +164,9 @@ RUN useradd -r -m -d /var/www/app -s /sbin/nologin -k /dev/null app \
 	&& usermod -a -G app-www,app apache
 
 # -----------------------------------------------------------------------------
-# Add a symbolic link to the app users home within the home directory &
 # Create the initial directory structure
 # -----------------------------------------------------------------------------
-RUN ln -s /var/www/app /home/app \
-	&& mkdir -p /var/www/app/{public_html,src,var/{log,session,tmp}}
+RUN mkdir -p /var/www/app/{public_html,src,var/{log,session,tmp}}
 
 # -----------------------------------------------------------------------------
 # Populate the app home directory

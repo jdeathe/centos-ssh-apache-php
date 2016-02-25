@@ -139,10 +139,6 @@ if [[ ! -d ${OPTS_APP_HOME_DIR}/public_html ]]; then
 	exit 1
 fi
 
-if [[ ${OPTS_APP_HOME_DIR} != /var/www/app ]]; then
-	unlink /home/app && ln -s ${OPTS_APP_HOME_DIR} /home/app
-fi
-
 # Server MPM
 HTTPD_MPM_PREFORK=/usr/sbin/httpd
 HTTPD_MPM_WORKER=/usr/sbin/httpd.worker
