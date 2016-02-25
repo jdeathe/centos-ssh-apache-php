@@ -164,19 +164,11 @@ RUN useradd -r -m -d /var/www/app -s /sbin/nologin -k /dev/null app \
 	&& usermod -a -G app-www,app apache
 
 # -----------------------------------------------------------------------------
-# Create the initial directory structure
+# Populate the app install directory
 # -----------------------------------------------------------------------------
-RUN mkdir -p /var/www/app/{public_html,src,var/{log,session,tmp}}
-
-# -----------------------------------------------------------------------------
-# Populate the app home directory
-# -----------------------------------------------------------------------------
-ADD var/www/app/vhost.conf /var/www/app/vhost.conf
-ADD var/www/app/vhost.conf /var/www/app/vhost-ssl.conf
-ADD var/www/app/public_html/index.php /var/www/app/public_html/index.php
-
-# Add PHP Info _phpinfo.php and Add APC Control Panel _apc.php
-RUN echo '<?php phpinfo(); ?>' > /var/www/app/public_html/_phpinfo.php \
+ADD mkdir -p /var/www/app \
+	&& var/www/app /var/www/app \
+	&& echo '<?php phpinfo(); ?>' > /var/www/app/public_html/_phpinfo.php \
 	&& cp /usr/share/php-pecl-apc/apc.php /var/www/app/public_html/_apc.php
 
 # -----------------------------------------------------------------------------

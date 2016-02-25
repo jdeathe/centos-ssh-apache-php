@@ -1,7 +1,7 @@
 {
-	"name": "jdeathe/apache-php-app-demo",
+	"name": "jdeathe/apache-php--hello-world",
 	"require": {
-		"php": "5.3.*",
+		"php": "~5.3",
 		"ext-apc": "*",
 		"ext-memcached": "*",
 		"ext-mysqli": "*"
