@@ -159,7 +159,6 @@ docker run \
 	--env "DATE_TIMEZONE=${DATE_TIMEZONE}" \
 	--env "HTTPD=${HTTPD}" \
 	--env "SERVICE_USER=${SERVICE_USER}" \
-	--env "SERVICE_USER_GROUP=${SERVICE_USER_GROUP}" \
 	--env "SUEXECUSERGROUP=${SUEXECUSERGROUP}" \
 	${DOCKER_VOLUMES_FROM:-} \
 	${DOCKER_IMAGE_REPOSITORY_NAME}${@:+ -c }"${@}"
@@ -189,7 +188,6 @@ docker run \
 # 	--env "DATE_TIMEZONE=Europe/London" \
 # 	--env "HTTPD=/usr/sbin/httpd.worker" \
 # 	--env "SERVICE_USER=app" \
-# 	--env "SERVICE_USER_GROUP=www-app" \
 # 	--env "SUEXECUSERGROUP=false" \
 # 	${DOCKER_VOLUMES_FROM:-} \
 # 	${DOCKER_IMAGE_REPOSITORY_NAME}${@:+ -c }"${@}"

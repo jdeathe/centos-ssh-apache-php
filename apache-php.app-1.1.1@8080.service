@@ -48,7 +48,6 @@ Environment="APP_HOME_DIR=/var/www/app"
 Environment="DATE_TIMEZONE=UTC"
 Environment="HTTPD=/usr/sbin/httpd"
 Environment="SERVICE_USER=app"
-Environment="SERVICE_USER_GROUP=app-www"
 Environment="SUEXECUSERGROUP=false"
 
 # Initialisation: Load image from local storage if available, otherwise pull.
@@ -133,7 +132,6 @@ ExecStart=/bin/sudo /bin/bash -c \
       --env \"DATE_TIMEZONE=${DATE_TIMEZONE}\" \
       --env \"HTTPD=${HTTPD}\" \
       --env \"SERVICE_USER=${SERVICE_USER}\" \
-      --env \"SERVICE_USER_GROUP=${SERVICE_USER_GROUP}\" \
       --env \"SUEXECUSERGROUP=${SUEXECUSERGROUP}\" \
       -v ${VOLUME_DATA_NAME}:${APP_HOME_DIR} \
       ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}; \
