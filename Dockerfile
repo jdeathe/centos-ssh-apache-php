@@ -164,18 +164,21 @@ RUN useradd -r -m -d /var/www/app -s /sbin/nologin -k /dev/null app \
 	&& usermod -a -G app-www,app apache
 
 # -----------------------------------------------------------------------------
-# Populate the app install directory
+# Create and populate the install directory
 # -----------------------------------------------------------------------------
-ADD mkdir -p /var/www/app \
-	&& var/www/app /var/www/app \
+RUN mkdir -p /var/www/app
+ADD var/www/app /var/www/app
+RUN find /var/www/app -name '*.gitkeep' -type f -delete \
 	&& echo '<?php phpinfo(); ?>' > /var/www/app/public_html/_phpinfo.php \
 	&& cp /usr/share/php-pecl-apc/apc.php /var/www/app/public_html/_apc.php
 
 # -----------------------------------------------------------------------------
-# Set install directory permissions
+# Set install directory/file permissions
 # -----------------------------------------------------------------------------
 RUN chown -R app:app-www /var/www/app \
-	&& chmod 770 /var/www/app
+	&& find /var/www/app -type d -exec chmod 750 {} + \
+	&& find /var/www/app/var -type d -exec chmod 770 {} + \
+	&& find /var/www/app -type f -exec chmod 640 {} +
 
 # -----------------------------------------------------------------------------
 # Create the template directory
