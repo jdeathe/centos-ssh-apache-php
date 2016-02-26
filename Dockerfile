@@ -173,10 +173,12 @@ RUN find /var/www/app -name '*.gitkeep' -type f -delete \
 	&& cp /usr/share/php-pecl-apc/apc.php /var/www/app/public_html/_apc.php
 
 # -----------------------------------------------------------------------------
-# Set install directory permissions
+# Set install directory/file permissions
 # -----------------------------------------------------------------------------
 RUN chown -R app:app-www /var/www/app \
-	&& chmod 770 /var/www/app
+	&& find /var/www/app -type d -exec chmod 750 {} + \
+	&& find /var/www/app/var -type d -exec chmod 770 {} + \
+	&& find /var/www/app -type f -exec chmod 640 {} +
 
 # -----------------------------------------------------------------------------
 # Create the template directory
