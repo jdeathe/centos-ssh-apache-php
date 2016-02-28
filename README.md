@@ -40,7 +40,7 @@ $ docker run -d \
   --env "SERVICE_UNIT_INSTANCE=1" \
   --env "APACHE_SERVER_NAME=app-1.local" \
   --env "DATE_TIMEZONE=UTC" \
-  -v /var/www/app \
+  -v /var/www \
   jdeathe/centos-ssh-apache-php:latest
 ```
 
@@ -62,7 +62,7 @@ To verify the container is initialised and running successfully by inspecting th
 $ docker logs apache-php.app-1.1.1
 ```
 
-The Apache data is persistent across container restarts by setting the data directory ```/var/www/app``` as a data volume. No name or docker_host path was specified so Docker will give it a unique name and store it in ```/var/lib/docker/volumes/```; to find out where the data is stored on the Docker host you can use ```docker inspect```.
+The Apache data is persistent across container restarts by setting the data directory ```/var/www``` as a data volume. No name or docker_host path was specified so Docker will give it a unique name and store it in ```/var/lib/docker/volumes/```; to find out where the data is stored on the Docker host you can use ```docker inspect```.
 
 ```
 $ docker inspect \
@@ -207,10 +207,10 @@ $ docker run -d \
   --env "APACHE_RUN_USER=www-app" \
   --env "APACHE_SERVER_ALIAS=app-1" \
   --env "APACHE_SERVER_NAME=app-1.local" \
-  --env "APP_HOME_DIR=/var/www/app-1" \
+  --env "APACHE_SERVER_ROOT=/var/www/app-1" \
   --env "DATE_TIMEZONE=UTC" \
   --env "SERVICE_USER=app" \
-  -v volume-data.apache-php.app-1.1.1:/var/www/app-1 \
+  -v volume-data.apache-php.app-1.1.1:/var/www \
   jdeathe/centos-ssh-apache-php:latest
 ```
 
@@ -231,7 +231,7 @@ $ docker run -d \
   --env "APACHE_SERVER_NAME=app-1.local" \
   --env "DATE_TIMEZONE=UTC" \
   --volumes-from volume-config.apache-php.app-1.1.1 \
-  -v volume-data.apache-php.app-1.1.1:/var/www/app \
+  -v volume-data.apache-php.app-1.1.1:/var/www \
   jdeathe/centos-ssh-apache-php:latest
 ```
 
@@ -321,7 +321,7 @@ $ docker run -d \
   --env "APACHE_SERVER_NAME=app-1.local" \
   --env "APACHE_MOD_SSL_ENABLED=true" \
   --env "DATE_TIMEZONE=UTC" \
-  -v volume-data.apache-php.app-1.1.1:/var/www/app \
+  -v volume-data.apache-php.app-1.1.1:/var/www \
   jdeathe/centos-ssh-apache-php:latest
 ```
 
@@ -336,14 +336,13 @@ The Apache process is run by the User and Group defined by ```APACHE_RUN_USER```
 ...
 ```
 
-##### APP_HOME_DIR
+##### APACHE_SERVER_ROOT
 
-The home directory of the service user and parent directory of the Apache DocumentRoot is  /var/www/app by default but can be changed if necessary using the ```APP_HOME_DIR``` environment variable. It is also necessary to change the target of the data volume mapping accordingly as in the following example where /var/www/app-1 is used.
+The home directory of the service user and parent directory of the Apache DocumentRoot is  /var/www/app by default but can be changed if necessary using the ```APACHE_SERVER_ROOT``` environment variable.
 
 ```
 ...
-  --env "APP_HOME_DIR=/var/www/app-1" \
-  -v volume-data.apache-php.app-1.1.1:/var/www/app-1 \
+  --env "APACHE_SERVER_ROOT=/var/www/app-1" \
 ...
 ```
 

@@ -83,11 +83,13 @@ if [[ ${VOLUME_CONFIG_ENABLED} == true ]] && ! have_docker_container_name ${VOLU
 	fi
 fi
 
+APACHE_SERVER_HOME=$(dirname "${APACHE_SERVER_ROOT:-/var/www/app}")
+
 # Data volume mapping
 if [[ ${VOLUME_DATA_NAMED} == true ]]; then
-	DOCKER_DATA_VOLUME_MAPPING=${VOLUME_DATA_NAME}:/var/www/app
+	DOCKER_DATA_VOLUME_MAPPING=${VOLUME_DATA_NAME}:${APACHE_SERVER_HOME}
 else
-	DOCKER_DATA_VOLUME_MAPPING=/var/www/app
+	DOCKER_DATA_VOLUME_MAPPING=${APACHE_SERVER_HOME}
 fi
 
 # Data volume container
@@ -155,7 +157,7 @@ docker run \
  	--env "APACHE_RUN_USER=${APACHE_RUN_USER}" \
 	--env "APACHE_SERVER_ALIAS=${APACHE_SERVER_ALIAS}" \
 	--env "APACHE_SERVER_NAME=${APACHE_SERVER_NAME}" \
-	--env "APP_HOME_DIR=${APP_HOME_DIR}" \
+	--env "APACHE_SERVER_ROOT=${APACHE_SERVER_ROOT}" \
 	--env "DATE_TIMEZONE=${DATE_TIMEZONE}" \
 	--env "HTTPD=${HTTPD}" \
 	--env "SERVICE_USER=${SERVICE_USER}" \
@@ -184,7 +186,7 @@ docker run \
 # 	--env "APACHE_RUN_USER=www-app" \
 # 	--env "APACHE_SERVER_ALIAS=app-1 www.app-1 www.app-1.local" \
 # 	--env "APACHE_SERVER_NAME=app-1.local" \
-# 	--env "APP_HOME_DIR=/var/www/app-1" \
+# 	--env "APACHE_SERVER_ROOT=/var/www/app-1" \
 # 	--env "DATE_TIMEZONE=Europe/London" \
 # 	--env "HTTPD=/usr/sbin/httpd.worker" \
 # 	--env "SERVICE_USER=app" \

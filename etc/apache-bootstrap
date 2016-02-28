@@ -38,6 +38,18 @@ get_password ()
 	return 0
 }
 
+is_valid_apache_server_root ()
+{
+	local HOME_DIRECTORY="${1:-}"
+	local SAFE_DIRECTORY='^\/(?!\/|bin|dev|etc|lib|lib64|lost+found|media|proc|root|sbin|sys|tmp|usr).+$'
+
+	if [[ -n $(grep -oP ${SAFE_DIRECTORY} <<< ${HOME_DIRECTORY}) ]]; then
+		return 0
+	fi
+
+	return 1
+}
+
 is_valid_user_login ()
 {
 	local LOGIN=${1}
@@ -80,6 +92,18 @@ set_apache_server_name ()
 		/etc/httpd/conf/httpd.conf
 }
 
+get_apache_server_root ()
+{
+	local DEFAULT_VALUE="${1:-/var/www/app}"
+	local VALUE="${APACHE_SERVER_ROOT:-}"
+
+	if [[ -z ${VALUE} ]] || ! is_valid_apache_server_root "${VALUE}"; then
+		VALUE="${DEFAULT_VALUE}"
+	fi
+
+	printf "%s" "${VALUE}"
+}
+
 update_group_name ()
 {
 	local GROUP_FROM=${1}
@@ -107,11 +131,12 @@ update_user_login ()
 	fi
 }
 
-APP_HOME_DIR_TEMPLATE="/var/www/.app-skel"
 DEFAULT_SYSTEM_USER=app
 DEFAULT_APACHE_USER=app-www
+PACKAGE_PATH=${PACKAGE_PATH:-/opt/app}
 PASSWORD_LENGTH=16
 
+OPTS_APACHE_DOCUMENT_ROOT="$(get_apache_server_root)/public_html"
 OPTS_APACHE_EXTENDED_STATUS_ENABLED="${APACHE_EXTENDED_STATUS_ENABLED:-false}"
 OPTS_APACHE_LOAD_MODULES="${APACHE_LOAD_MODULES:-authz_user_module log_config_module expires_module deflate_module headers_module setenvif_module mime_module status_module dir_module alias_module reqtimeout_module}"
 OPTS_APACHE_MOD_SSL_ENABLED="${APACHE_MOD_SSL_ENABLED:-false}"
@@ -119,23 +144,38 @@ OPTS_APACHE_RUN_GROUP="${APACHE_RUN_GROUP:-${DEFAULT_APACHE_USER}}"
 OPTS_APACHE_RUN_USER="${APACHE_RUN_USER:-${DEFAULT_APACHE_USER}}"
 OPTS_APACHE_SERVER_ALIAS="${APACHE_SERVER_ALIAS:-}"
 OPTS_APACHE_SERVER_NAME="${APACHE_SERVER_NAME:-$(hostname)}"
-OPTS_APP_HOME_DIR="${APP_HOME_DIR:-/var/www/app}"
+OPTS_APACHE_SERVER_ROOT="$(get_apache_server_root)"
 OPTS_SERVICE_USER="${SERVICE_USER:-${DEFAULT_SYSTEM_USER}}"
 OPTS_SUEXECUSERGROUP="${SUEXECUSERGROUP:-false}"
 
-if [[ ! -d ${OPTS_APP_HOME_DIR} ]] && [[ -d ${APP_HOME_DIR_TEMPLATE} ]]; then
-	echo "Recreate the ${OPTS_APP_HOME_DIR} directory."
-	mkdir -p ${OPTS_APP_HOME_DIR}
+# Verify package installation directory exists
+if [[ ! -d ${PACKAGE_PATH} ]]; then
+	echo "ERROR: ${PACKAGE_PATH} not found."
+	exit 1
 fi
 
-if [[ -z $(find ${OPTS_APP_HOME_DIR} -maxdepth 1 -type f) ]] && [[ -d ${APP_HOME_DIR_TEMPLATE} ]]; then
-	echo "Home directory ${OPTS_APP_HOME_DIR} is empty - populate it using ${APP_HOME_DIR_TEMPLATE}."
-	cp -rpf ${APP_HOME_DIR_TEMPLATE}/. ${OPTS_APP_HOME_DIR}
+# Initialise Apache server root directory.
+APACHE_SERVER_HOME=$(dirname "${OPTS_APACHE_SERVER_ROOT}")
+if [[ ! -d ${APACHE_SERVER_HOME} ]]; then
+	echo "Create home directory ${APACHE_SERVER_HOME}."
+	mkdir -p -m 755 ${APACHE_SERVER_HOME}
 fi
 
-# Document root directory is required
-if [[ ! -d ${OPTS_APP_HOME_DIR}/public_html ]]; then
-	echo "ERROR: ${OPTS_APP_HOME_DIR}/public_html not found."
+if [[ ! -d ${OPTS_APACHE_SERVER_ROOT} ]]; then
+	echo "Linking install directory ${PACKAGE_PATH} > ${OPTS_APACHE_SERVER_ROOT}."
+	ln -s ${PACKAGE_PATH} ${OPTS_APACHE_SERVER_ROOT}
+fi
+
+if [[ -d ${OPTS_APACHE_SERVER_ROOT} ]] \
+	&& [[ ! -h ${OPTS_APACHE_SERVER_ROOT} ]] \
+	&& [[ -z $(find ${OPTS_APACHE_SERVER_ROOT} -maxdepth 1 -type f) ]]; then
+	echo "Populating install directory ${PACKAGE_PATH} > ${OPTS_APACHE_SERVER_ROOT}."
+	cp -rpf ${PACKAGE_PATH}/. ${OPTS_APACHE_SERVER_ROOT}
+fi
+
+# Verify Apache DocumentRoot directory exists
+if [[ ! -d ${OPTS_APACHE_DOCUMENT_ROOT} ]]; then
+	echo "ERROR: ${OPTS_APACHE_DOCUMENT_ROOT} not found."
 	exit 1
 fi
 
@@ -169,15 +209,15 @@ set_apache_server_name ${OPTS_APACHE_SERVER_NAME} 80
 
 # Generate an SSL VirtualHost configuration if required
 if [[ ${OPTS_APACHE_MOD_SSL_ENABLED} == true ]] \
-	&& [[ ! -f ${OPTS_APP_HOME_DIR}/vhost-ssl.conf ]] \
-	&& [[ -f ${OPTS_APP_HOME_DIR}/vhost.conf ]]; then
+	&& [[ ! -f ${OPTS_APACHE_SERVER_ROOT}/vhost-ssl.conf ]] \
+	&& [[ -f ${OPTS_APACHE_SERVER_ROOT}/vhost.conf ]]; then
 	echo "Generating SSL VirtualHost configuration."
 
 	sed \
 		-e 's~^<VirtualHost \*:80 \*:8443>$~<VirtualHost \*:443>~g' \
 		-e '/<IfModule mod_ssl.c>/,/<\/IfModule>/ s~^#~~' \
-		${OPTS_APP_HOME_DIR}/vhost.conf > \
-		${OPTS_APP_HOME_DIR}/vhost-ssl.conf
+		${OPTS_APACHE_SERVER_ROOT}/vhost.conf > \
+		${OPTS_APACHE_SERVER_ROOT}/vhost-ssl.conf
 fi
 
 # Enable/Disable SSL support
@@ -213,9 +253,9 @@ update_group_name ${DEFAULT_SYSTEM_USER} ${OPTS_SERVICE_USER}
 update_user_login ${DEFAULT_APACHE_USER} ${OPTS_APACHE_RUN_USER}
 update_group_name ${DEFAULT_APACHE_USER} ${OPTS_APACHE_RUN_USER}
 
-VIRTUAL_HOST_CONFIGURATION_FILES="${OPTS_APP_HOME_DIR}/vhost.conf"
+VIRTUAL_HOST_CONFIGURATION_FILES="${OPTS_APACHE_SERVER_ROOT}/vhost.conf"
 if [[ ${OPTS_APACHE_MOD_SSL_ENABLED} == true ]]; then
-	VIRTUAL_HOST_CONFIGURATION_FILES+=" ${OPTS_APP_HOME_DIR}/vhost-ssl.conf"
+	VIRTUAL_HOST_CONFIGURATION_FILES+=" ${OPTS_APACHE_SERVER_ROOT}/vhost-ssl.conf"
 fi
 
 # Set the Apache (run) service user/group
@@ -249,6 +289,7 @@ cat <<-EOT
 	run group : ${OPTS_APACHE_RUN_GROUP}
 	server name : ${OPTS_APACHE_SERVER_NAME}
 	server alias : ${OPTS_APACHE_SERVER_ALIAS}
+	document root : ${OPTS_APACHE_DOCUMENT_ROOT}
 	--------------------------------------------------------------------------------
 
 EOT

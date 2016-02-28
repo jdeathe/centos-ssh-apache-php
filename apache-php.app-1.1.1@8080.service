@@ -43,8 +43,9 @@ Environment="APACHE_MOD_SSL_ENABLED=false"
 Environment="APACHE_RUN_GROUP=app-www"
 Environment="APACHE_RUN_USER=app-www"
 Environment="APACHE_SERVER_ALIAS=app-1"
+Environment="APACHE_SERVER_HOME=/var/www"
 Environment="APACHE_SERVER_NAME=app-1.local"
-Environment="APP_HOME_DIR=/var/www/app"
+Environment="APACHE_SERVER_ROOT=/var/www/app"
 Environment="DATE_TIMEZONE=UTC"
 Environment="HTTPD=/usr/sbin/httpd"
 Environment="SERVICE_USER=app"
@@ -111,7 +112,7 @@ ExecStart=/bin/sudo /bin/bash -c \
       --env \"APACHE_SERVER_NAME=${APACHE_SERVER_NAME}\" \
       --env \"DATE_TIMEZONE=${DATE_TIMEZONE}\" \
       --volumes-from volume-config.%p \
-      -v ${VOLUME_DATA_NAME}:${APP_HOME_DIR} \
+      -v ${VOLUME_DATA_NAME}:${APACHE_SERVER_HOME} \
       ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}; \
   else \
     /usr/bin/docker run \
@@ -128,12 +129,12 @@ ExecStart=/bin/sudo /bin/bash -c \
       --env \"APACHE_RUN_USER=${APACHE_RUN_USER}\" \
       --env \"APACHE_SERVER_ALIAS=${APACHE_SERVER_ALIAS}\" \
       --env \"APACHE_SERVER_NAME=${APACHE_SERVER_NAME}\" \
-      --env \"APP_HOME_DIR=${APP_HOME_DIR}\" \
+      --env \"APACHE_SERVER_ROOT=${APACHE_SERVER_ROOT}\" \
       --env \"DATE_TIMEZONE=${DATE_TIMEZONE}\" \
       --env \"HTTPD=${HTTPD}\" \
       --env \"SERVICE_USER=${SERVICE_USER}\" \
       --env \"SUEXECUSERGROUP=${SUEXECUSERGROUP}\" \
-      -v ${VOLUME_DATA_NAME}:${APP_HOME_DIR} \
+      -v ${VOLUME_DATA_NAME}:${APACHE_SERVER_HOME} \
       ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}; \
   fi"
 
