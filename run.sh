@@ -83,7 +83,7 @@ if [[ ${VOLUME_CONFIG_ENABLED} == true ]] && ! have_docker_container_name ${VOLU
 	fi
 fi
 
-APACHE_SERVER_HOME=$(dirname "${APACHE_SERVER_ROOT:-/var/www/app}")
+APACHE_SERVER_HOME=$(dirname "${APACHE_CONTENT_ROOT}")
 
 # Data volume mapping
 if [[ ${VOLUME_DATA_NAMED} == true ]]; then
@@ -150,6 +150,7 @@ docker run \
 	--env "SERVICE_UNIT_APP_GROUP=${SERVICE_UNIT_APP_GROUP}" \
 	--env "SERVICE_UNIT_LOCAL_ID=${SERVICE_UNIT_LOCAL_ID}" \
 	--env "SERVICE_UNIT_INSTANCE=${SERVICE_UNIT_INSTANCE}" \
+	--env "APACHE_CONTENT_ROOT=${APACHE_CONTENT_ROOT}" \
 	--env "APACHE_EXTENDED_STATUS_ENABLED=${APACHE_EXTENDED_STATUS_ENABLED}" \
 	--env "APACHE_LOAD_MODULES=${APACHE_LOAD_MODULES}" \
 	--env "APACHE_MOD_SSL_ENABLED=${APACHE_MOD_SSL_ENABLED}" \
@@ -157,7 +158,6 @@ docker run \
  	--env "APACHE_RUN_USER=${APACHE_RUN_USER}" \
 	--env "APACHE_SERVER_ALIAS=${APACHE_SERVER_ALIAS}" \
 	--env "APACHE_SERVER_NAME=${APACHE_SERVER_NAME}" \
-	--env "APACHE_SERVER_ROOT=${APACHE_SERVER_ROOT}" \
 	--env "DATE_TIMEZONE=${DATE_TIMEZONE}" \
 	--env "HTTPD=${HTTPD}" \
 	--env "SERVICE_USER=${SERVICE_USER}" \
@@ -179,6 +179,7 @@ docker run \
 # 	--env "SERVICE_UNIT_APP_GROUP=app-1" \
 # 	--env "SERVICE_UNIT_LOCAL_ID=1" \
 # 	--env "SERVICE_UNIT_INSTANCE=1" \
+# 	--env "APACHE_CONTENT_ROOT=/var/www/app-1" \
 # 	--env "APACHE_EXTENDED_STATUS_ENABLED=true"
 # 	--env "APACHE_LOAD_MODULES=${APACHE_LOAD_MODULES} rewrite_module" \
 # 	--env "APACHE_MOD_SSL_ENABLED=false" \
@@ -186,7 +187,6 @@ docker run \
 # 	--env "APACHE_RUN_USER=www-app" \
 # 	--env "APACHE_SERVER_ALIAS=app-1 www.app-1 www.app-1.local" \
 # 	--env "APACHE_SERVER_NAME=app-1.local" \
-# 	--env "APACHE_SERVER_ROOT=/var/www/app-1" \
 # 	--env "DATE_TIMEZONE=Europe/London" \
 # 	--env "HTTPD=/usr/sbin/httpd.worker" \
 # 	--env "SERVICE_USER=app" \

@@ -207,7 +207,7 @@ $ docker run -d \
   --env "APACHE_RUN_USER=www-app" \
   --env "APACHE_SERVER_ALIAS=app-1" \
   --env "APACHE_SERVER_NAME=app-1.local" \
-  --env "APACHE_SERVER_ROOT=/var/www/app-1" \
+  --env "APACHE_CONTENT_ROOT=/var/www/app-1" \
   --env "DATE_TIMEZONE=UTC" \
   --env "SERVICE_USER=app" \
   -v volume-data.apache-php.app-1.1.1:/var/www \
@@ -336,13 +336,13 @@ The Apache process is run by the User and Group defined by ```APACHE_RUN_USER```
 ...
 ```
 
-##### APACHE_SERVER_ROOT
+##### APACHE_CONTENT_ROOT
 
-The home directory of the service user and parent directory of the Apache DocumentRoot is  /var/www/app by default but can be changed if necessary using the ```APACHE_SERVER_ROOT``` environment variable.
+The home directory of the service user and parent directory of the Apache DocumentRoot is  /var/www/app by default but can be changed if necessary using the ```APACHE_CONTENT_ROOT``` environment variable.
 
 ```
 ...
-  --env "APACHE_SERVER_ROOT=/var/www/app-1" \
+  --env "APACHE_CONTENT_ROOT=/var/www/app-1" \
 ...
 ```
 

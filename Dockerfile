@@ -114,7 +114,7 @@ RUN { \
 		echo 'Listen 8443'; \
 		echo 'NameVirtualHost *:80'; \
 		echo 'NameVirtualHost *:8443'; \
-		echo 'Include ${APACHE_SERVER_ROOT}/vhost.conf'; \
+		echo 'Include ${APACHE_CONTENT_ROOT}/vhost.conf'; \
 	} >> /etc/httpd/conf/httpd.conf \
 	&& { \
 		echo ''; \
@@ -122,7 +122,7 @@ RUN { \
 		echo '# Custom SSL configuration'; \
 		echo '#'; \
 		echo 'NameVirtualHost *:443'; \
-		echo 'Include ${APACHE_SERVER_ROOT}/vhost-ssl.conf'; \
+		echo 'Include ${APACHE_CONTENT_ROOT}/vhost-ssl.conf'; \
 	} >> /etc/httpd/conf.d/ssl.conf
 
 # -----------------------------------------------------------------------------
@@ -210,6 +210,7 @@ ENV SERVICE_UNIT_INSTANCE 1
 # -----------------------------------------------------------------------------
 # Set default environment variables used to configure the service container
 # -----------------------------------------------------------------------------
+ENV APACHE_CONTENT_ROOT /var/www/${PACKAGE_NAME}
 ENV APACHE_EXTENDED_STATUS_ENABLED false
 ENV APACHE_LOAD_MODULES "authz_user_module log_config_module expires_module deflate_module headers_module setenvif_module mime_module status_module dir_module alias_module"
 ENV APACHE_MOD_SSL_ENABLED false
@@ -217,7 +218,6 @@ ENV APACHE_RUN_GROUP app-www
 ENV APACHE_RUN_USER app-www
 ENV APACHE_SERVER_ALIAS ""
 ENV APACHE_SERVER_NAME app-1.local
-ENV APACHE_SERVER_ROOT /var/www/${PACKAGE_NAME}
 ENV PACKAGE_PATH ${PACKAGE_PATH}
 ENV DATE_TIMEZONE UTC
 ENV HTTPD /usr/sbin/httpd
