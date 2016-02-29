@@ -8,6 +8,10 @@ FROM jdeathe/centos-ssh:centos-6-1.4.2
 
 MAINTAINER James Deathe <james.deathe@gmail.com>
 
+# Use the form ([{fqdn}-]{package-name}|[{fqdn}-]{provider-name})
+ARG PACKAGE_NAME="app"
+ARG PACKAGE_PATH="/opt/${PACKAGE_NAME}"
+
 # -----------------------------------------------------------------------------
 # Base Apache, PHP
 # -----------------------------------------------------------------------------
@@ -110,7 +114,7 @@ RUN { \
 		echo 'Listen 8443'; \
 		echo 'NameVirtualHost *:80'; \
 		echo 'NameVirtualHost *:8443'; \
-		echo 'Include ${APP_HOME_DIR}/vhost.conf'; \
+		echo 'Include ${APACHE_CONTENT_ROOT}/vhost.conf'; \
 	} >> /etc/httpd/conf/httpd.conf \
 	&& { \
 		echo ''; \
@@ -118,7 +122,7 @@ RUN { \
 		echo '# Custom SSL configuration'; \
 		echo '#'; \
 		echo 'NameVirtualHost *:443'; \
-		echo 'Include ${APP_HOME_DIR}/vhost-ssl.conf'; \
+		echo 'Include ${APACHE_CONTENT_ROOT}/vhost-ssl.conf'; \
 	} >> /etc/httpd/conf.d/ssl.conf
 
 # -----------------------------------------------------------------------------
@@ -158,7 +162,7 @@ RUN sed -i \
 # -----------------------------------------------------------------------------
 # Add default system users
 # -----------------------------------------------------------------------------
-RUN useradd -r -m -d /var/www/app -s /sbin/nologin -k /dev/null app \
+RUN useradd -r -M -d /var/www/app -s /sbin/nologin app \
 	&& useradd -r -M -d /var/www/app -s /sbin/nologin -G apache,app app-www \
 	&& usermod -a -G app-www app \
 	&& usermod -a -G app-www,app apache
@@ -166,24 +170,19 @@ RUN useradd -r -m -d /var/www/app -s /sbin/nologin -k /dev/null app \
 # -----------------------------------------------------------------------------
 # Create and populate the install directory
 # -----------------------------------------------------------------------------
-RUN mkdir -p /var/www/app
-ADD var/www/app /var/www/app
-RUN find /var/www/app -name '*.gitkeep' -type f -delete \
-	&& echo '<?php phpinfo(); ?>' > /var/www/app/public_html/_phpinfo.php \
-	&& cp /usr/share/php-pecl-apc/apc.php /var/www/app/public_html/_apc.php
+RUN mkdir -p -m 750 ${PACKAGE_PATH}
+ADD var/www/app ${PACKAGE_PATH}
+RUN find ${PACKAGE_PATH} -name '*.gitkeep' -type f -delete \
+	&& echo '<?php phpinfo(); ?>' > ${PACKAGE_PATH}/public_html/_phpinfo.php \
+	&& cp /usr/share/php-pecl-apc/apc.php ${PACKAGE_PATH}/public_html/_apc.php
 
 # -----------------------------------------------------------------------------
 # Set install directory/file permissions
 # -----------------------------------------------------------------------------
-RUN chown -R app:app-www /var/www/app \
-	&& find /var/www/app -type d -exec chmod 750 {} + \
-	&& find /var/www/app/var -type d -exec chmod 770 {} + \
-	&& find /var/www/app -type f -exec chmod 640 {} +
-
-# -----------------------------------------------------------------------------
-# Create the template directory
-# -----------------------------------------------------------------------------
-RUN cp -rpf /var/www/app /var/www/.app-skel
+RUN chown -R app:app-www ${PACKAGE_PATH} \
+	&& find ${PACKAGE_PATH} -type d -exec chmod 750 {} + \
+	&& find ${PACKAGE_PATH}/var -type d -exec chmod 770 {} + \
+	&& find ${PACKAGE_PATH} -type f -exec chmod 640 {} +
 
 # -----------------------------------------------------------------------------
 # Copy files into place
@@ -211,6 +210,7 @@ ENV SERVICE_UNIT_INSTANCE 1
 # -----------------------------------------------------------------------------
 # Set default environment variables used to configure the service container
 # -----------------------------------------------------------------------------
+ENV APACHE_CONTENT_ROOT /var/www/${PACKAGE_NAME}
 ENV APACHE_EXTENDED_STATUS_ENABLED false
 ENV APACHE_LOAD_MODULES "authz_user_module log_config_module expires_module deflate_module headers_module setenvif_module mime_module status_module dir_module alias_module"
 ENV APACHE_MOD_SSL_ENABLED false
@@ -218,7 +218,7 @@ ENV APACHE_RUN_GROUP app-www
 ENV APACHE_RUN_USER app-www
 ENV APACHE_SERVER_ALIAS ""
 ENV APACHE_SERVER_NAME app-1.local
-ENV APP_HOME_DIR /var/www/app
+ENV PACKAGE_PATH ${PACKAGE_PATH}
 ENV DATE_TIMEZONE UTC
 ENV HTTPD /usr/sbin/httpd
 ENV SERVICE_USER app
