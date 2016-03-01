@@ -39,7 +39,7 @@ $ docker run -d \
   --env "SERVICE_UNIT_LOCAL_ID=1" \
   --env "SERVICE_UNIT_INSTANCE=1" \
   --env "APACHE_SERVER_NAME=app-1.local" \
-  --env "DATE_TIMEZONE=UTC" \
+  --env "PHP_OPTIONS_DATE_TIMEZONE=UTC" \
   -v /var/www \
   jdeathe/centos-ssh-apache-php:latest
 ```
@@ -200,6 +200,7 @@ $ docker run -d \
   --env "SERVICE_UNIT_INSTANCE=app-1" \
   --env "SERVICE_UNIT_LOCAL_ID=1" \
   --env "SERVICE_UNIT_INSTANCE=1" \
+  --env "APACHE_CONTENT_ROOT=/var/www/app-1" \
   --env "APACHE_EXTENDED_STATUS_ENABLED=false" \
   --env "APACHE_LOAD_MODULES=authz_user_module log_config_module expires_module deflate_module headers_module setenvif_module mime_module status_module dir_module alias_module rewrite_module" \
   --env "APACHE_MOD_SSL_ENABLED=false" \
@@ -207,9 +208,8 @@ $ docker run -d \
   --env "APACHE_RUN_USER=www-app" \
   --env "APACHE_SERVER_ALIAS=app-1" \
   --env "APACHE_SERVER_NAME=app-1.local" \
-  --env "APACHE_CONTENT_ROOT=/var/www/app-1" \
-  --env "DATE_TIMEZONE=UTC" \
-  --env "SERVICE_USER=app" \
+  --env "APACHE_SYSTEM_USER=app" \
+  --env "PHP_OPTIONS_DATE_TIMEZONE=UTC" \
   -v volume-data.apache-php.app-1.1.1:/var/www \
   jdeathe/centos-ssh-apache-php:latest
 ```
@@ -229,7 +229,7 @@ $ docker run -d \
   --env "SERVICE_UNIT_INSTANCE=1" \
   --env "APACHE_SERVER_ALIAS=app-1" \
   --env "APACHE_SERVER_NAME=app-1.local" \
-  --env "DATE_TIMEZONE=UTC" \
+  --env "PHP_OPTIONS_DATE_TIMEZONE=UTC" \
   --volumes-from volume-config.apache-php.app-1.1.1 \
   -v volume-data.apache-php.app-1.1.1:/var/www \
   jdeathe/centos-ssh-apache-php:latest
@@ -320,7 +320,7 @@ $ docker run -d \
   --env "APACHE_SERVER_ALIAS=app-1" \
   --env "APACHE_SERVER_NAME=app-1.local" \
   --env "APACHE_MOD_SSL_ENABLED=true" \
-  --env "DATE_TIMEZONE=UTC" \
+  --env "PHP_OPTIONS_DATE_TIMEZONE=UTC" \
   -v volume-data.apache-php.app-1.1.1:/var/www \
   jdeathe/centos-ssh-apache-php:latest
 ```
@@ -356,25 +356,25 @@ The public directory is relative to the ```APACHE_CONTENT_ROOT``` and together t
 ...
 ```
 
-##### DATE_TIMEZONE
+##### PHP_OPTIONS_DATE_TIMEZONE
 
-The default timezone for the container, and the PHP app, is UTC however the operator can set an appropriate timezone using the ```DATE_TIMEZONE``` variable. The value should be a timezone identifier, like UTC or Europe/London. The list of valid identifiers is available in the PHP [List of Supported Timezones](http://php.net/manual/en/timezones.php).
+The default timezone for the container, and the PHP app, is UTC however the operator can set an appropriate timezone using the ```PHP_OPTIONS_DATE_TIMEZONE``` variable. The value should be a timezone identifier, like UTC or Europe/London. The list of valid identifiers is available in the PHP [List of Supported Timezones](http://php.net/manual/en/timezones.php).
 
 To set the timezone for the UK and account for British Summer Time you would use:
 
 ```
 ...
-  --env "DATE_TIMEZONE=Europe/London" \
+  --env "PHP_OPTIONS_DATE_TIMEZONE=Europe/London" \
 ...
 ```
 
-##### SERVICE_USER
+##### APACHE_SYSTEM_USER
 
-Use the ```SERVICE_USER``` environment variable to define a custom service username.
+Use the ```APACHE_SYSTEM_USER``` environment variable to define a custom service username.
 
 ```
 ...
-  --env "SERVICE_USER=app-1" \
+  --env "APACHE_SYSTEM_USER=app-1" \
 ...
 ```
 

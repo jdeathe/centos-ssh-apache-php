@@ -159,10 +159,10 @@ docker run \
  	--env "APACHE_RUN_USER=${APACHE_RUN_USER}" \
 	--env "APACHE_SERVER_ALIAS=${APACHE_SERVER_ALIAS}" \
 	--env "APACHE_SERVER_NAME=${APACHE_SERVER_NAME}" \
-	--env "DATE_TIMEZONE=${DATE_TIMEZONE}" \
+	--env "APACHE_SUEXEC_USER_GROUP=${APACHE_SUEXEC_USER_GROUP}" \
+	--env "APACHE_SYSTEM_USER=${APACHE_SYSTEM_USER}" \
 	--env "HTTPD=${HTTPD}" \
-	--env "SERVICE_USER=${SERVICE_USER}" \
-	--env "SUEXECUSERGROUP=${SUEXECUSERGROUP}" \
+	--env "PHP_OPTIONS_DATE_TIMEZONE=${PHP_OPTIONS_DATE_TIMEZONE}" \
 	${DOCKER_VOLUMES_FROM:-} \
 	${DOCKER_IMAGE_REPOSITORY_NAME}${@:+ -c }"${@}"
 )
@@ -189,10 +189,10 @@ docker run \
 # 	--env "APACHE_RUN_USER=www-app" \
 # 	--env "APACHE_SERVER_ALIAS=app-1 www.app-1 www.app-1.local" \
 # 	--env "APACHE_SERVER_NAME=app-1.local" \
-# 	--env "DATE_TIMEZONE=Europe/London" \
+# 	--env "APACHE_SYSTEM_USER=app" \
 # 	--env "HTTPD=/usr/sbin/httpd.worker" \
-# 	--env "SERVICE_USER=app" \
-# 	--env "SUEXECUSERGROUP=false" \
+# 	--env "PHP_OPTIONS_DATE_TIMEZONE=Europe/London" \
+# 	--env "APACHE_SUEXEC_USER_GROUP=false" \
 # 	${DOCKER_VOLUMES_FROM:-} \
 # 	${DOCKER_IMAGE_REPOSITORY_NAME}${@:+ -c }"${@}"
 # )
