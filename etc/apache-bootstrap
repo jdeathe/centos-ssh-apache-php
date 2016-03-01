@@ -40,10 +40,27 @@ get_password ()
 
 is_valid_apache_content_root ()
 {
-	local HOME_DIRECTORY="${1:-}"
-	local SAFE_DIRECTORY='^\/(?!\/|bin|dev|etc|lib|lib64|lost+found|media|proc|root|sbin|sys|tmp|usr).+$'
+	local DIRECTORY_PATH="${1:-}"
+	local VALID_DIRECTORY='^\/(?!\/|bin|dev|etc|lib|lib64|lost+found|media|proc|root|sbin|sys|tmp|usr).+$'
 
-	if [[ -n $(grep -oP ${SAFE_DIRECTORY} <<< ${HOME_DIRECTORY}) ]]; then
+	if [[ -n $(grep -oP ${VALID_DIRECTORY} <<< $(real_directory_path "${DIRECTORY_PATH}")) ]]; then
+		return 0
+	fi
+
+	return 1
+}
+
+is_valid_apache_public_directory ()
+{
+	local DIRECTORY="${1:-}"
+	local VALID_DIRECTORY='^\/(?!\/|bin|dev|etc|lib|lib64|lost+found|media|proc|root|sbin|sys|tmp|usr).+$'
+	local VALID_SUBDIRECTORY='^[^\/\\].+$'
+
+	if [[ -n $(grep -oP ${VALID_DIRECTORY} <<< $(real_directory_path "$(get_apache_content_root)/${DIRECTORY}")) ]]; then
+		return 0
+	fi
+
+	if [[ -n $(grep -oP ${VALID_SUBDIRECTORY} <<< ${DIRECTORY}) ]]; then
 		return 0
 	fi
 
@@ -104,6 +121,31 @@ get_apache_content_root ()
 	printf "%s" "${VALUE}"
 }
 
+get_apache_public_directory ()
+{
+	local DEFAULT_VALUE="${1:-public_html}"
+	local VALUE="${APACHE_PUBLIC_DIRECTORY:-}"
+
+	if [[ -z ${VALUE} ]] || ! is_valid_apache_public_directory "${VALUE}"; then
+		VALUE="${DEFAULT_VALUE}"
+	fi
+
+	printf "%s" "${VALUE}"
+}
+
+real_directory_path ()
+{
+	local PATH=${1:-}
+	local VALUE=""
+
+	if [[ -n ${PATH} ]]; then
+		cd ${PATH}
+		VALUE=${PWD}
+	fi
+
+	printf "%s" "${VALUE}"
+}
+
 update_group_name ()
 {
 	local GROUP_FROM=${1}
@@ -137,7 +179,7 @@ PACKAGE_PATH=${PACKAGE_PATH:-/opt/app}
 PASSWORD_LENGTH=16
 
 OPTS_APACHE_CONTENT_ROOT="$(get_apache_content_root)"
-OPTS_APACHE_DOCUMENT_ROOT="$(get_apache_content_root)/public_html"
+OPTS_APACHE_DOCUMENT_ROOT="${OPTS_APACHE_CONTENT_ROOT}/$(get_apache_public_directory)"
 OPTS_APACHE_EXTENDED_STATUS_ENABLED="${APACHE_EXTENDED_STATUS_ENABLED:-false}"
 OPTS_APACHE_LOAD_MODULES="${APACHE_LOAD_MODULES:-authz_user_module log_config_module expires_module deflate_module headers_module setenvif_module mime_module status_module dir_module alias_module reqtimeout_module}"
 OPTS_APACHE_MOD_SSL_ENABLED="${APACHE_MOD_SSL_ENABLED:-false}"

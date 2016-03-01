@@ -214,6 +214,7 @@ ENV APACHE_CONTENT_ROOT /var/www/${PACKAGE_NAME}
 ENV APACHE_EXTENDED_STATUS_ENABLED false
 ENV APACHE_LOAD_MODULES "authz_user_module log_config_module expires_module deflate_module headers_module setenvif_module mime_module status_module dir_module alias_module"
 ENV APACHE_MOD_SSL_ENABLED false
+ENV APACHE_PUBLIC_DIRECTORY public_html
 ENV APACHE_RUN_GROUP app-www
 ENV APACHE_RUN_USER app-www
 ENV APACHE_SERVER_ALIAS ""
