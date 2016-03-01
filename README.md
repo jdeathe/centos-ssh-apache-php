@@ -338,11 +338,21 @@ The Apache process is run by the User and Group defined by ```APACHE_RUN_USER```
 
 ##### APACHE_CONTENT_ROOT
 
-The home directory of the service user and parent directory of the Apache DocumentRoot is  /var/www/app by default but can be changed if necessary using the ```APACHE_CONTENT_ROOT``` environment variable.
+The home directory of the service user and parent directory of the Apache DocumentRoot is /var/www/app by default but can be changed if necessary using the ```APACHE_CONTENT_ROOT``` environment variable.
 
 ```
 ...
   --env "APACHE_CONTENT_ROOT=/var/www/app-1" \
+...
+```
+
+##### APACHE_PUBLIC_DIRECTORY
+
+The public directory is relative to the ```APACHE_CONTENT_ROOT``` and together they form the Apache DocumentRoot path. The default value is `public_html` and should not be changed unless changes are made to the source of the app to include an alternative public directory such as `web` or `public`.
+
+```
+...
+  --env "APACHE_PUBLIC_DIRECTORY=web" \
 ...
 ```
 
