@@ -2,140 +2,351 @@
 
 source /etc/apache-bootstrap.conf
 
-get_password ()
+add_hosts_entry ()
 {
-	echo $(head -n 4096 /dev/urandom | tr -cd '[:alnum:]' | head -c ${1})
+	local IP=${1:-127.0.0.1}
+	local HOSTS
+	local USAGE="Usage: $0 ip_address hostname [hostname ...]"
+
+	shift
+	if [[ ${#} -eq 0 ]]; then
+		echo ${USAGE}
+		exit 1
+	fi
+
+	while (( ${#} )); do
+		if [[ ${1} != 'localhost' ]] && [[ ${1} != '127.0.0.1' ]] && [[ ${1} != ${IP} ]]; then
+			HOSTS+=" ${1}"
+		fi
+		shift
+	done
+
+	printf -- "%s\t%s\n" "${IP}" "${HOSTS}" >> /etc/hosts
 }
 
-OPTS_SERVICE_USER="${SERVICE_USER:-app}"
-OPTS_SERVICE_USER_GROUP="${SERVICE_USER_GROUP:-app-www}"
-OPTS_SERVICE_USER_PASSWORD="${SERVICE_USER_PASSWORD:-$(get_password 8)}"
-OPTS_SERVICE_USER_GROUP_PASSWORD="${SERVICE_USER_GROUP_PASSWORD:-$(get_password 8)}"
-# Should always be false for mod_php
-OPTS_SUEXECUSERGROUP="false"
+get_password ()
+{
+	local PASSWORD_LENGTH=${1:-16}
+	local PASSWORD=$(
+		head -n 4096 /dev/urandom 2> /dev/null | \
+		tr -cd '[:alnum:]' 2> /dev/null | \
+		head -c ${PASSWORD_LENGTH} 2> /dev/null
+	)
 
-OPTS_APACHE_SERVER_NAME="${APACHE_SERVER_NAME:-$(hostname)}"
+	printf -- "%s" "${PASSWORD}"
+
+	return 0
+}
+
+is_valid_apache_content_root ()
+{
+	local DIRECTORY_PATH="${1:-}"
+	local VALID_DIRECTORY='^\/(?!\/|bin|dev|etc|lib|lib64|lost+found|media|proc|root|sbin|sys|tmp|usr).+$'
+
+	if [[ -n $(grep -oP ${VALID_DIRECTORY} <<< $(real_directory_path "${DIRECTORY_PATH}")) ]]; then
+		return 0
+	fi
+
+	return 1
+}
+
+is_valid_apache_public_directory ()
+{
+	local DIRECTORY="${1:-}"
+	local VALID_DIRECTORY='^\/(?!\/|bin|dev|etc|lib|lib64|lost+found|media|proc|root|sbin|sys|tmp|usr).+$'
+	local VALID_SUBDIRECTORY='^[^\/\\].+$'
+
+	if [[ -n $(grep -oP ${VALID_DIRECTORY} <<< $(real_directory_path "$(get_apache_content_root)/${DIRECTORY}")) ]]; then
+		return 0
+	fi
+
+	if [[ -n $(grep -oP ${VALID_SUBDIRECTORY} <<< ${DIRECTORY}) ]]; then
+		return 0
+	fi
+
+	return 1
+}
+
+is_valid_user_login ()
+{
+	local LOGIN=${1}
+	local SAFE_LOGIN='^[a-z_][a-z0-9_-]{0,29}[$a-z0-9_]?$'
+
+	if [[ ${LOGIN} != root ]] && [[ ${LOGIN} =~ ${SAFE_LOGIN} ]]; then
+		return 0
+	fi
+
+	return 1
+}
+
+set_apache_extended_status ()
+{
+	local ENABLED=${1:-false}
+	local PATTERN_FROM
+	local PATTERN_TO
+
+	if [[ ${ENABLED} == true ]]; then
+		echo "Enabling ExtendedStatus."
+		PATTERN_FROM="^[#]?ExtendedStatus (On|on|Off|off)$"
+		PATTERN_TO="ExtendedStatus On"
+	else
+		PATTERN_FROM="^ExtendedStatus (On|on)$"
+		PATTERN_TO="#ExtendedStatus On"
+	fi
+
+	sed -i \
+		-re "s~${PATTERN_FROM}~${PATTERN_TO}~g" \
+		/etc/httpd/conf/httpd.conf
+}
+
+set_apache_server_name ()
+{
+	local HOST_NAME=${1:-${APACHE_SERVER_NAME:-$(hostname)}}
+	local PORT=${2:-80}
+
+	sed -i \
+		-e "s~^#ServerName \(.*\):80$~ServerName ${HOST_NAME}:${PORT}~g" \
+		/etc/httpd/conf/httpd.conf
+}
+
+get_apache_content_root ()
+{
+	local DEFAULT_VALUE="${1:-/var/www/app}"
+	local VALUE="${APACHE_CONTENT_ROOT:-}"
+
+	if [[ -z ${VALUE} ]] || ! is_valid_apache_content_root "${VALUE}"; then
+		VALUE="${DEFAULT_VALUE}"
+	fi
+
+	printf "%s" "${VALUE}"
+}
+
+get_apache_public_directory ()
+{
+	local DEFAULT_VALUE="${1:-public_html}"
+	local VALUE="${APACHE_PUBLIC_DIRECTORY:-}"
+
+	if [[ -z ${VALUE} ]] || ! is_valid_apache_public_directory "${VALUE}"; then
+		VALUE="${DEFAULT_VALUE}"
+	fi
+
+	printf "%s" "${VALUE}"
+}
+
+real_directory_path ()
+{
+	local PATH=${1:-}
+	local VALUE=""
+
+	if [[ -n ${PATH} ]]; then
+		cd ${PATH}
+		VALUE=${PWD}
+	fi
+
+	printf "%s" "${VALUE}"
+}
+
+update_group_name ()
+{
+	local GROUP_FROM=${1}
+	local GROUP_TO=${2}
+
+	if [[ ${GROUP_TO} != ${GROUP_FROM} ]] \
+		&& [[ ${GROUP_TO} != root ]] \
+		&& [[ ${GROUP_FROM} != root ]] \
+		&& [[ -n $(getent group "${GROUP_FROM}") ]]; then
+		groupmod -n "${GROUP_TO}" "${GROUP_FROM}"
+	fi
+}
+
+update_user_login ()
+{
+	local USER_FROM=${1}
+	local USER_TO=${2}
+
+	if [[ ${USER_TO} != ${USER_FROM} ]] \
+		&& is_valid_user_login "${USER_TO}" \
+		&& is_valid_user_login "${USER_FROM}" \
+		&& [[ -z $(getent passwd "${USER_TO}") ]] \
+		&& [[ -n $(getent passwd "${USER_FROM}") ]]; then
+		usermod -l "${USER_TO}" "${USER_FROM}"
+	fi
+}
+
+DEFAULT_SYSTEM_USER=app
+DEFAULT_APACHE_USER=app-www
+PACKAGE_PATH=${PACKAGE_PATH:-/opt/app}
+PASSWORD_LENGTH=16
+
+OPTS_APACHE_CONTENT_ROOT="$(get_apache_content_root)"
+OPTS_APACHE_DOCUMENT_ROOT="${OPTS_APACHE_CONTENT_ROOT}/$(get_apache_public_directory)"
+OPTS_APACHE_EXTENDED_STATUS_ENABLED="${APACHE_EXTENDED_STATUS_ENABLED:-false}"
+OPTS_APACHE_LOAD_MODULES="${APACHE_LOAD_MODULES:-authz_user_module log_config_module expires_module deflate_module headers_module setenvif_module mime_module status_module dir_module alias_module reqtimeout_module}"
 OPTS_APACHE_MOD_SSL_ENABLED="${APACHE_MOD_SSL_ENABLED:-false}"
+OPTS_APACHE_RUN_GROUP="${APACHE_RUN_GROUP:-${DEFAULT_APACHE_USER}}"
+OPTS_APACHE_RUN_USER="${APACHE_RUN_USER:-${DEFAULT_APACHE_USER}}"
+OPTS_APACHE_SERVER_ALIAS="${APACHE_SERVER_ALIAS:-}"
+OPTS_APACHE_SERVER_NAME="${APACHE_SERVER_NAME:-$(hostname)}"
+OPTS_APACHE_SUEXEC_USER_GROUP="${APACHE_SUEXEC_USER_GROUP:-false}"
+OPTS_APACHE_SYSTEM_USER="${APACHE_SYSTEM_USER:-${DEFAULT_SYSTEM_USER}}"
 
-if [[ ! -d ${APP_HOME_DIR} ]] && [[ -d ${APP_HOME_DIR_TEMPLATE} ]]; then
-	echo Recreate the ${APP_HOME_DIR} directory...
-	mkdir -p ${APP_HOME_DIR}
-fi
-
-if [[ ! -n $(find ${APP_HOME_DIR} -maxdepth 1 -type f) ]] && [[ -d ${APP_HOME_DIR_TEMPLATE} ]]; then
-	echo Home directory ${APP_HOME_DIR} exists but is empty - populate it using ${APP_HOME_DIR_TEMPLATE}...
-	cp -rf ${APP_HOME_DIR_TEMPLATE}/. ${APP_HOME_DIR}/
-elif [[ ! -d ${APP_HOME_DIR}/public_html ]]; then
-	echo ERROR: ${APP_HOME_DIR}/public_html not found.
+# Verify package installation directory exists
+if [[ ! -d ${PACKAGE_PATH} ]]; then
+	echo "ERROR: ${PACKAGE_PATH} not found."
 	exit 1
 fi
 
-# If users need to change the vhost.conf the SSL version can be rebuilt if it is deleted
-if [[ ${OPTS_APACHE_MOD_SSL_ENABLED} == "true" ]] && [[ ! -f ${APP_HOME_DIR}/vhost-ssl.conf ]] && [[ -f ${APP_HOME_DIR}/vhost.conf ]]; then
-	echo Rebuilding the SSL VirtualHost configuration...
-	cp -pf ${APP_HOME_DIR}/vhost.conf ${APP_HOME_DIR}/vhost-ssl.conf
+# Initialise Apache server root directory.
+APACHE_SERVER_HOME=$(dirname "${OPTS_APACHE_CONTENT_ROOT}")
+if [[ ! -d ${APACHE_SERVER_HOME} ]]; then
+	echo "Create home directory ${APACHE_SERVER_HOME}."
+	mkdir -p -m 755 ${APACHE_SERVER_HOME}
+fi
 
-	# Enable the SSL VirtualHosts configuration
+if [[ ! -d ${OPTS_APACHE_CONTENT_ROOT} ]]; then
+	echo "Linking install directory ${PACKAGE_PATH} > ${OPTS_APACHE_CONTENT_ROOT}."
+	ln -s ${PACKAGE_PATH} ${OPTS_APACHE_CONTENT_ROOT}
+fi
+
+if [[ -d ${OPTS_APACHE_CONTENT_ROOT} ]] \
+	&& [[ ! -h ${OPTS_APACHE_CONTENT_ROOT} ]] \
+	&& [[ -z $(find ${OPTS_APACHE_CONTENT_ROOT} -maxdepth 1 -type f) ]]; then
+	echo "Populating install directory ${PACKAGE_PATH} > ${OPTS_APACHE_CONTENT_ROOT}."
+	cp -rpf ${PACKAGE_PATH}/. ${OPTS_APACHE_CONTENT_ROOT}
+fi
+
+# Verify Apache DocumentRoot directory exists
+if [[ ! -d ${OPTS_APACHE_DOCUMENT_ROOT} ]]; then
+	echo "ERROR: ${OPTS_APACHE_DOCUMENT_ROOT} not found."
+	exit 1
+fi
+
+# Server MPM
+HTTPD_MPM_PREFORK=/usr/sbin/httpd
+HTTPD_MPM_WORKER=/usr/sbin/httpd.worker
+HTTPD=${HTTPD:-${HTTPD_MPM_PREFORK}}
+if [[ ${HTTPD} == ${HTTPD_MPM_PREFORK} ]]; then
+	echo "Apache Server MPM: Prefork"
 	sed -i \
-		-e 's~^<VirtualHost \*:80>$~#<VirtualHost \*:80>~g' \
-		-e 's~^#<VirtualHost \*:443>$~<VirtualHost \*:443>~g' \
-		-e 's~#SSLEngine \(.*\)$~SSLEngine \1~g' \
-		-e 's~#SSLOptions \(.*\)$~SSLOptions \1~g' \
-		-e 's~#SSLProtocol \(.*\)$~SSLProtocol \1~g' \
-		-e 's~#SSLCipherSuite \(.*\)$~SSLCipherSuite \1~g' \
-		-e 's~#SSLCertificateFile \(.*\)$~SSLCertificateFile \1~g' \
-		-e 's~#SSLCertificateKeyFile \(.*\)$~SSLCertificateKeyFile \1~g' \
-		/var/www/app/vhost-ssl.conf
+	-e "s~HTTPD=${HTTPD_MPM_WORKER}~#HTTPD=${HTTPD_MPM_WORKER}~g" \
+	/etc/sysconfig/httpd
+elif [[ ${HTTPD} == ${HTTPD_MPM_WORKER} ]]; then
+	echo "Apache Server MPM: Worker"
+	sed -i \
+	-e "s~#HTTPD=${HTTPD_MPM_WORKER}~HTTPD=${HTTPD_MPM_WORKER}~g" \
+	/etc/sysconfig/httpd
+else
+	echo "ERROR: Apache Server MPM (${HTTPD}) unknown."
+	exit 1
+fi
+
+# Add local hosts entries
+add_hosts_entry 127.0.0.1 ${OPTS_APACHE_SERVER_NAME}${OPTS_APACHE_SERVER_ALIAS:+ }${OPTS_APACHE_SERVER_ALIAS}
+
+# Set ExtendedStatus
+set_apache_extended_status ${OPTS_APACHE_EXTENDED_STATUS_ENABLED}
+
+# Add ServerName
+set_apache_server_name ${OPTS_APACHE_SERVER_NAME} 80
+
+# Generate an SSL VirtualHost configuration if required
+if [[ ${OPTS_APACHE_MOD_SSL_ENABLED} == true ]] \
+	&& [[ ! -f ${OPTS_APACHE_CONTENT_ROOT}/vhost-ssl.conf ]] \
+	&& [[ -f ${OPTS_APACHE_CONTENT_ROOT}/vhost.conf ]]; then
+	echo "Generating SSL VirtualHost configuration."
+
+	sed \
+		-e 's~^<VirtualHost \*:80 \*:8443>$~<VirtualHost \*:443>~g' \
+		-e '/<IfModule mod_ssl.c>/,/<\/IfModule>/ s~^#~~' \
+		${OPTS_APACHE_CONTENT_ROOT}/vhost.conf > \
+		${OPTS_APACHE_CONTENT_ROOT}/vhost-ssl.conf
 fi
 
 # Enable/Disable SSL support
-if [[ ${OPTS_APACHE_MOD_SSL_ENABLED} == "true" ]]; then
-	echo Enabling SSL support...
+if [[ ${OPTS_APACHE_MOD_SSL_ENABLED} == true ]]; then
+	echo "Enabling SSL support."
 	cat /etc/httpd/conf.d/ssl.conf.off > /etc/httpd/conf.d/ssl.conf
 
-	sed -i \
-		-e 's~^#NameVirtualHost \*:443$~NameVirtualHost \*:443~g' \
-		-e 's~^#Include /var/www/app/vhost-ssl.conf$~Include /var/www/app/vhost-ssl.conf~g' \
-		/etc/httpd/conf/httpd.conf
-
 	if [[ ! -f /etc/services-config/ssl/private/localhost.key ]] || [[ ! -f /etc/services-config/ssl/certs/localhost.crt ]]; then
-		echo Generating new certificate...
-		openssl req -x509 -nodes -newkey rsa:4096 \
-		-days 365 \
-		-subj "/C=--/ST=STATE/L=LOCALITY/O=ORGANIZATION/CN=${OPTS_APACHE_SERVER_NAME}" \
-		-keyout /etc/services-config/ssl/private/localhost.key \
-		-out /etc/services-config/ssl/certs/localhost.crt
+		echo "Generating new certificate."
+		openssl req \
+			-x509 \
+			-nodes \
+			-newkey rsa:4096 \
+			-days 365 \
+			-subj "/C=--/ST=STATE/L=LOCALITY/O=ORGANIZATION/CN=${OPTS_APACHE_SERVER_NAME}" \
+			-keyout /etc/services-config/ssl/private/localhost.key \
+			-out /etc/services-config/ssl/certs/localhost.crt
 	fi
 
 	openssl x509 -in /etc/services-config/ssl/certs/localhost.crt -text
 else
-	echo Disabling SSL support...
+	echo "Disabling SSL support."
 	> /etc/httpd/conf.d/ssl.conf
-
-	sed -i \
-		-e 's~^NameVirtualHost \*:443$~#NameVirtualHost \*:443~g' \
-		-e 's~^Include /var/www/app/vhost-ssl.conf$~#Include /var/www/app/vhost-ssl.conf~g' \
-		/etc/httpd/conf/httpd.conf
 fi
 
-if [[ $(df -PT ${APP_HOME_DIR} | awk 'NR>1 { print $2 }') == "nfs" ]]; then
-	echo DocumentRoot mounted on NFS filesystem - Setting EnableSendfile off...
+if [[ $(df -PT ${OPTS_APACHE_CONTENT_ROOT} | awk 'NR>1 { print $2 }') == "nfs" ]]; then
+	echo "DocumentRoot mounted on NFS filesystem - Setting EnableSendfile Off."
 	sed -i \
-		-e 's~^#EnableSendfile [o|O]n$~EnableSendfile off~g' \
-		-e 's~^EnableSendfile [o|O]n$~EnableSendfile off~g' \
+		-e 's~^#EnableSendfile [o|O]n$~EnableSendfile Off~g' \
+		-e 's~^EnableSendfile [o|O]n$~EnableSendfile Off~g' \
 		/etc/httpd/conf/httpd.conf
 else
-	echo DocumentRoot mounted on non-NFS filesystem - Setting EnableSendfile off...
+	echo "DocumentRoot mounted on non-NFS filesystem - Setting EnableSendfile On."
 	sed -i \
-		-e 's~^EnableSendfile [o|O]ff$~#EnableSendfile on~g' \
+		-e 's~^EnableSendfile [o|O]ff$~#EnableSendfile On~g' \
 		/etc/httpd/conf/httpd.conf
 fi
 
-# Set the service user / service group user
-if getent passwd app && [[ ${OPTS_SERVICE_USER} != "app" ]]; then
-	usermod -l ${OPTS_SERVICE_USER} app
-fi
+# Set the system user passwords
+echo "${DEFAULT_SYSTEM_USER}:$(get_password ${PASSWORD_LENGTH})" | chpasswd
+echo "${DEFAULT_APACHE_USER}:$(get_password ${PASSWORD_LENGTH})" | chpasswd
 
-if getent passwd app-www && [[ ${OPTS_SERVICE_USER_GROUP} != "app-www" ]]; then
-	usermod -l ${OPTS_SERVICE_USER_GROUP} app-www
+# Set the system user's login names and groups
+update_user_login ${DEFAULT_SYSTEM_USER} ${OPTS_APACHE_SYSTEM_USER}
+update_group_name ${DEFAULT_SYSTEM_USER} ${OPTS_APACHE_SYSTEM_USER}
+update_user_login ${DEFAULT_APACHE_USER} ${OPTS_APACHE_RUN_USER}
+update_group_name ${DEFAULT_APACHE_USER} ${OPTS_APACHE_RUN_USER}
+
+VIRTUAL_HOST_CONFIGURATION_FILES="${OPTS_APACHE_CONTENT_ROOT}/vhost.conf"
+if [[ ${OPTS_APACHE_MOD_SSL_ENABLED} == true ]]; then
+	VIRTUAL_HOST_CONFIGURATION_FILES+=" ${OPTS_APACHE_CONTENT_ROOT}/vhost-ssl.conf"
 fi
 
 # Set the Apache (run) service user/group
-if [[ ${OPTS_SUEXECUSERGROUP} == "true" ]]; then
-	sed -i -e "s~^User .*$~User ${OPTS_SERVICE_USER_GROUP}~g" -e "s~^Group .*$~Group ${OPTS_SERVICE_USER_GROUP}~g" /etc/httpd/conf/httpd.conf
-	sed -i -e 's~#SuexecUserGroup \(.*\)$~SuexecUserGroup \1~g' /var/www/app/vhost.conf
-	sed -i -e 's~#SuexecUserGroup \(.*\)$~SuexecUserGroup \1~g' /var/www/app/vhost-ssl.conf
-	chown -R 502:502 /var/{www/app/bin,www/.app-skel/bin,run/mod_fcgid}
+if [[ ${OPTS_APACHE_SUEXEC_USER_GROUP} == true ]]; then
+	sed -i \
+		-e 's~#SuexecUserGroup \(.*\)$~SuexecUserGroup \1~g' \
+		-e 's~app/bin/php-wrapper~app-bin/php-wrapper~g' \
+		${VIRTUAL_HOST_CONFIGURATION_FILES}
 else
-	sed -i -e "s~^User .*$~User apache~g" -e "s~^Group .*$~Group apache~g" /etc/httpd/conf/httpd.conf
-	sed -i -e 's~\([^#]\)SuexecUserGroup \(.*\)$~\1#SuexecUserGroup \2~g' /var/www/app/vhost.conf
-	sed -i -e 's~\([^#]\)SuexecUserGroup \(.*\)$~\1#SuexecUserGroup \2~g' /var/www/app/vhost-ssl.conf
-	chown -R apache:apache /var/{www/app/bin,www/.app-skel/bin,run/mod_fcgid}
+	sed -i \
+		-e 's~\([^#]\)SuexecUserGroup \(.*\)$~\1#SuexecUserGroup \2~g' \
+		-e 's~app/bin/php-wrapper~app-bin/php-wrapper~g' \
+		${VIRTUAL_HOST_CONFIGURATION_FILES}
 fi
 
-echo Loading Apache modules...
-for MODULE in ${APACHE_LOAD_MODULES}
-do
+echo "Loading Apache modules."
+for MODULE in ${APACHE_LOAD_MODULES}; do
 	echo " - ${MODULE}"
 	sed -i \
 		-e "s~^#LoadModule ${MODULE} ~LoadModule ${MODULE} ~g" \
 		/etc/httpd/conf/httpd.conf
 done
 
-# Set user passwords
-echo "${OPTS_SERVICE_USER}:${OPTS_SERVICE_USER_PASSWORD}" | chpasswd
-echo "${OPTS_SERVICE_USER_GROUP}:${OPTS_SERVICE_USER_GROUP_PASSWORD}" | chpasswd
+cat <<-EOT
 
-echo
-echo "================================================================================"
-echo "Apache Credentials"
-echo "--------------------------------------------------------------------------------"
-echo "${OPTS_SERVICE_USER} : ${OPTS_SERVICE_USER_PASSWORD}"
-echo "${OPTS_SERVICE_USER_GROUP} : ${OPTS_SERVICE_USER_GROUP_PASSWORD}"
-echo "--------------------------------------------------------------------------------"
-echo
+	================================================================================
+	Apache Details
+	--------------------------------------------------------------------------------
+	system user : ${OPTS_APACHE_SYSTEM_USER}
+	run user : ${OPTS_APACHE_RUN_USER}
+	run group : ${OPTS_APACHE_RUN_GROUP}
+	server name : ${OPTS_APACHE_SERVER_NAME}
+	server alias : ${OPTS_APACHE_SERVER_ALIAS}
+	document root : ${OPTS_APACHE_DOCUMENT_ROOT}
+	--------------------------------------------------------------------------------
 
-# Allow some time for supervisor_stdout to start
-sleep 2
+EOT
 
 exit 0

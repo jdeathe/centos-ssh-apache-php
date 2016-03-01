@@ -1,86 +1,149 @@
 # -----------------------------------------------------------------------------
-# Create a data container for the configuration volume: 
-#     docker run -v /config --name volume-config.<service-name> busybox /bin/true
-#
-# To install: 
+# To install:
 #     sudo cp <container-path>/<service-name>@<port>.service /etc/systemd/system/
 #     sudo systemctl daemon-reload
-#     sudo systemctl enable /etc/systemd/system/<service-name>@<port>.service
-# 
-# Start using: 
-#     sudo systemctl restart <service-name>@<port>.service
+#     sudo systemctl enable -f /etc/systemd/system/<service-name>@<port>.service
+#
+# Start using:
+#     sudo systemctl [start|stop|restart|kill|status] <service-name>@<port>.service
+#
+# Debugging:
+#     journalctl -fn 50 u <service-name>@<port>.service
+#
+# To uninstall:
+#     sudo systemctl disable -f /etc/systemd/system/<service-name>@<port>.service
+#     sudo systemctl stop /etc/systemd/system/<service-name>@<port>.service
+#     sudo docker rm <service-name>
 # -----------------------------------------------------------------------------
 
 [Unit]
 Description=CentOS-6 / Apache / PHP (Standard) // app-1.1.1
-After=etcd.service
+After=etcd2.service
 After=docker.service
 Requires=docker.service
-Requires=etcd.service
+Requires=etcd2.service
 
 [Service]
 Restart=on-failure
 RestartSec=30
 TimeoutStartSec=1200
+Environment="DOCKER_IMAGE_PACKAGE_PATH=/var/services-packages"
+Environment="DOCKER_IMAGE_NAME=jdeathe/centos-ssh-apache-php"
+Environment="DOCKER_IMAGE_TAG=centos-6-1.4.2"
+Environment="SERVICE_UNIT_APP_GROUP=app-1"
+Environment="SERVICE_UNIT_LOCAL_ID=1"
+Environment="SERVICE_UNIT_INSTANCE=1"
+Environment="VOLUME_CONFIG_ENABLED=false"
+Environment="VOLUME_CONFIG_NAMED=false"
+Environment="VOLUME_CONFIG_NAME=volume-config.%p"
+Environment="VOLUME_DATA_NAME=volume-data.%p"
+Environment="APACHE_CONTENT_ROOT=/var/www/app"
+Environment="APACHE_EXTENDED_STATUS_ENABLED=false"
+Environment="APACHE_LOAD_MODULES=authz_user_module log_config_module expires_module deflate_module headers_module setenvif_module mime_module status_module dir_module alias_module"
+Environment="APACHE_MOD_SSL_ENABLED=false"
+Environment="APACHE_PUBLIC_DIRECTORY=public_html"
+Environment="APACHE_RUN_GROUP=app-www"
+Environment="APACHE_RUN_USER=app-www"
+Environment="APACHE_SERVER_ALIAS=app-1"
+Environment="APACHE_SERVER_HOME=/var/www"
+Environment="APACHE_SERVER_NAME=app-1.local"
+Environment="APACHE_SUEXEC_USER_GROUP=false"
+Environment="APACHE_SYSTEM_USER=app"
+Environment="HTTPD=/usr/sbin/httpd"
+Environment="PHP_OPTIONS_DATE_TIMEZONE=UTC"
+
+# Initialisation: Load image from local storage if available, otherwise pull.
+ExecStartPre=/bin/sudo /bin/bash -c \
+  "if [[ ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG} != $(/usr/bin/docker images | awk -v FS='[ ]+' -v pattern=\"^${DOCKER_IMAGE_NAME}[ ]+${DOCKER_IMAGE_TAG} \" '$0 ~ pattern { print $1\":\"$2; }') ]]; then \
+    if [[ -f ${DOCKER_IMAGE_PACKAGE_PATH}/${DOCKER_IMAGE_NAME}.${DOCKER_IMAGE_TAG}.tar.xz ]]; then \
+      /usr/bin/xz -dc ${DOCKER_IMAGE_PACKAGE_PATH}/${DOCKER_IMAGE_NAME}.${DOCKER_IMAGE_TAG}.tar.xz | /usr/bin/docker load; \
+    else \
+      /usr/bin/docker pull ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}; \
+    fi; \
+  fi"
 
 # Create a data container for the configuration volume
 ExecStartPre=/bin/sudo /bin/bash -c \
-  "if [ ! \"busybox\" == \"$(/usr/bin/docker images | /bin/grep -e '^busybox[ ]\{1,\}' | /bin/grep -o 'busybox')\" ]; then \
-    if [ -f /var/services-packages/busybox.latest-1.0.0.tar.xz ]; then \
-      /usr/bin/xz -dc /var/services-packages/busybox.latest-1.0.0.tar.xz | /usr/bin/docker load; \
-    else \
-      /usr/bin/docker pull busybox:latest; \
+  "if [[ ${VOLUME_CONFIG_ENABLED} == true ]] && [[ ${VOLUME_CONFIG_NAMED} == true ]]; then \
+    if [[ ${VOLUME_CONFIG_NAME} != $(/usr/bin/docker ps -a | /bin/awk -v pattern=\"^${VOLUME_CONFIG_NAME}$\" '$NF ~ pattern { print $NF; }') ]]; then \
+      /usr/bin/docker run \
+        --name ${VOLUME_CONFIG_NAME}.tmp \
+        ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG} \
+        /bin/sh -c 'while true; do echo -ne .; sleep 1; done'; \
+      /usr/bin/docker run \
+        --name ${VOLUME_CONFIG_NAME} \
+        -v ${VOLUME_CONFIG_NAME}:/etc/services-config \
+        ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG} \
+        /bin/true; \
+      /usr/bin/docker cp ${VOLUME_CONFIG_NAME}.tmp:/etc/services-config/. \
+        /var/lib/docker/volumes/${VOLUME_CONFIG_NAME}/_data; \
+      /usr/bin/docker kill ${VOLUME_CONFIG_NAME}.tmp; \
     fi; \
-  fi; \
-  if [ ! \"volume-config.%p\" == \"$(/usr/bin/docker ps -a | /bin/grep -v -e \\\"volume-config.%p/.*,.*\\\" | /bin/grep -e '[ ]\{1,\}'volume-config.%p | /bin/grep -o volume-config.%p)\" ]; then \
-    /usr/bin/docker run \
-      --name volume-config.%p \
-      -v /etc/services-config/ssh.pool-1:/etc/services-config/ssh \
-      -v /etc/services-config/%p/supervisor:/etc/services-config/supervisor \
-      -v /etc/services-config/%p/httpd:/etc/services-config/httpd \
-      -v /etc/services-config/%p/ssl/certs:/etc/services-config/ssl/certs \
-      -v /etc/services-config/%p/ssl/private:/etc/services-config/ssl/private \
-      busybox:latest \
-      /bin/true; \
+  elif [[ ${VOLUME_CONFIG_ENABLED} == true ]] && [[ ${VOLUME_CONFIG_NAMED} != true ]]; then \
+    if [[ ${VOLUME_CONFIG_NAME} != $(/usr/bin/docker ps -a | /bin/awk -v pattern=\"^${VOLUME_CONFIG_NAME}$\" '$NF ~ pattern { print $NF; }') ]]; then \
+      /usr/bin/docker run \
+        --name ${VOLUME_CONFIG_NAME} \
+        -v /etc/services-config \
+        ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG} \
+        /bin/true; \
+    fi; \
   fi"
 
-# Initialisation: Pull or build image if required
+# Remove existing container (and stop if running). This allows it to
+# be re-created on startup but not removed on exit as with --rm.
 ExecStartPre=/bin/sudo /bin/bash -c \
-  "if [ ! \"jdeathe/centos-ssh-apache-php\" == \"$(/usr/bin/docker images | /bin/grep -e '^jdeathe/centos-ssh-apache-php[ ]\{1,\}' | /bin/grep -o 'jdeathe/centos-ssh-apache-php')\" ]; then \
-    if [ -f /var/services-packages/jdeathe/centos-ssh-apache-php.centos-6-1.2.1.tar.xz ]; then \
-      /usr/bin/xz -dc /var/services-packages/jdeathe/centos-ssh-apache-php.centos-6-1.2.1.tar.xz | /usr/bin/docker load; \
-    else \
-      /usr/bin/docker pull jdeathe/centos-ssh-apache-php:centos-6-1.2.1; \
-    fi; \
-  fi"
-
-# Startup: Remove existing container (and stop if running) so it is re-created on startup but not removed on exit - to allow debugging if required
-ExecStart=/bin/sudo /bin/bash -c \
-  "if [ \"%p\" == \"$(/usr/bin/docker ps -a | /bin/grep -v -e \\\"%p/.*,.*\\\" | /bin/grep -e '[ ]\{1,\}'%p | /bin/grep -o %p)\" ]; then \
-    if [ \"%p\" == \"$(/usr/bin/docker ps | /bin/grep -v -e \\\"%p/.*,.*\\\" | /bin/grep -e '[ ]\{1,\}'%p | /bin/grep -o %p)\" ]; then \
+  "if [[ %p == $(/usr/bin/docker ps -a | /bin/awk -v pattern='^%p$' '$NF ~ pattern { print $NF; }') ]]; then \
+    if [[ %p == $(/usr/bin/docker ps | /bin/awk -v pattern='^%p$' '$NF ~ pattern { print $NF; }') ]]; then \
       /usr/bin/docker stop %p; \
     fi; \
     /usr/bin/docker rm %p; \
-  fi; \
-  /usr/bin/docker run \
-    --privileged \
-    --name %p \
-    -p %i:80 \
-    -p 8580:8443 \
-    --env SERVICE_UNIT_INSTANCE=app-1 \
-    --env SERVICE_UNIT_LOCAL_ID=1 \
-    --env SERVICE_UNIT_INSTANCE=1 \
-    --env APACHE_SERVER_NAME=app-1.local \
-    --env APACHE_SERVER_ALIAS=app-1 \
-    --env DATE_TIMEZONE=UTC \
-    --volumes-from volume-config.%p \
-    -v /var/services-data/apache-php/app-1:/var/www/app \
-    jdeathe/centos-ssh-apache-php:centos-6-1.2.1"
+  fi"
 
-ExecStartPost=/usr/bin/etcdctl set /services/apache-php/app-1/1.1 %H:%i
+# Startup
+ExecStart=/bin/sudo /bin/bash -c \
+  "if [[ ${VOLUME_CONFIG_NAME} == $(/usr/bin/docker ps -a | /bin/awk -v pattern=\"^${VOLUME_CONFIG_NAME}$\" '$NF ~ pattern { print $NF; }') ]]; then \
+    /usr/bin/docker run \
+      --name %p \
+      -p %i:80 \
+      -p 8580:8443 \
+      --env \"SERVICE_UNIT_APP_GROUP=${SERVICE_UNIT_APP_GROUP}\" \
+      --env \"SERVICE_UNIT_LOCAL_ID=${SERVICE_UNIT_LOCAL_ID}\" \
+      --env \"SERVICE_UNIT_INSTANCE=${SERVICE_UNIT_INSTANCE}\" \
+      --env \"APACHE_SERVER_ALIAS=${APACHE_SERVER_ALIAS}\" \
+      --env \"APACHE_SERVER_NAME=${APACHE_SERVER_NAME}\" \
+      --env \"PHP_OPTIONS_DATE_TIMEZONE=${PHP_OPTIONS_DATE_TIMEZONE}\" \
+      --volumes-from volume-config.%p \
+      -v ${VOLUME_DATA_NAME}:${APACHE_SERVER_HOME} \
+      ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}; \
+  else \
+    /usr/bin/docker run \
+      --name %p \
+      -p %i:80 \
+      -p 8580:8443 \
+      --env \"SERVICE_UNIT_APP_GROUP=${SERVICE_UNIT_APP_GROUP}\" \
+      --env \"SERVICE_UNIT_LOCAL_ID=${SERVICE_UNIT_LOCAL_ID}\" \
+      --env \"SERVICE_UNIT_INSTANCE=${SERVICE_UNIT_INSTANCE}\" \
+      --env \"APACHE_CONTENT_ROOT=${APACHE_CONTENT_ROOT}\" \
+      --env \"APACHE_EXTENDED_STATUS_ENABLED=${APACHE_EXTENDED_STATUS_ENABLED}\" \
+      --env \"APACHE_LOAD_MODULES=${APACHE_LOAD_MODULES}\" \
+      --env \"APACHE_MOD_SSL_ENABLED=${APACHE_MOD_SSL_ENABLED}\" \
+      --env \"APACHE_PUBLIC_DIRECTORY=${APACHE_PUBLIC_DIRECTORY}\" \
+      --env \"APACHE_RUN_GROUP=${APACHE_RUN_GROUP}\" \
+      --env \"APACHE_RUN_USER=${APACHE_RUN_USER}\" \
+      --env \"APACHE_SERVER_ALIAS=${APACHE_SERVER_ALIAS}\" \
+      --env \"APACHE_SERVER_NAME=${APACHE_SERVER_NAME}\" \
+      --env \"APACHE_SUEXEC_USER_GROUP=${APACHE_SUEXEC_USER_GROUP}\" \
+      --env \"APACHE_SYSTEM_USER=${APACHE_SYSTEM_USER}\" \
+      --env \"HTTPD=${HTTPD}\" \
+      --env \"PHP_OPTIONS_DATE_TIMEZONE=${PHP_OPTIONS_DATE_TIMEZONE}\" \
+      -v ${VOLUME_DATA_NAME}:${APACHE_SERVER_HOME} \
+      ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}; \
+  fi"
+
+ExecStartPost=/usr/bin/etcdctl set /services/apache-php/${SERVICE_UNIT_APP_GROUP}/${SERVICE_UNIT_LOCAL_ID}.${SERVICE_UNIT_INSTANCE} %H:%i
 
 ExecStop=/usr/bin/docker stop --time 10 %p
-ExecStopPost=/usr/bin/etcdctl rm /services/apache-php/app-1/1.1
+ExecStopPost=/usr/bin/etcdctl rm /services/apache-php/${SERVICE_UNIT_APP_GROUP}/${SERVICE_UNIT_LOCAL_ID}.${SERVICE_UNIT_INSTANCE}
 
 [Install]
 WantedBy=multi-user.target

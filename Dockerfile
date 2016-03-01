@@ -1,29 +1,37 @@
 # =============================================================================
 # jdeathe/centos-ssh-apache-php
 #
-# CentOS-6, Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1, Composer
-# 
+# CentOS-6, Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1
+#
 # =============================================================================
-FROM jdeathe/centos-ssh:centos-6
+FROM jdeathe/centos-ssh:centos-6-1.4.2
 
 MAINTAINER James Deathe <james.deathe@gmail.com>
+
+# Use the form ([{fqdn}-]{package-name}|[{fqdn}-]{provider-name})
+ARG PACKAGE_NAME="app"
+ARG PACKAGE_PATH="/opt/${PACKAGE_NAME}"
 
 # -----------------------------------------------------------------------------
 # Base Apache, PHP
 # -----------------------------------------------------------------------------
-RUN yum --setopt=tsflags=nodocs -y install \
+RUN rpm --rebuilddb \
+	&& yum --setopt=tsflags=nodocs -y install \
+	elinks-0.12-0.21.pre5.el6_3 \
+	httpd-2.2.15-47.el6.centos \
+	mod_ssl-2.2.15-47.el6.centos \
+	php-5.3.3-46.el6_6 \
+	php-cli-5.3.3-46.el6_6 \
+	php-zts-5.3.3-46.el6_6 \
+	php-pecl-apc-3.1.9-2.el6 \
+	php-pecl-memcached-1.0.0-1.el6 \
+	&& yum versionlock add \
 	elinks \
 	httpd \
 	mod_ssl \
-	php \
-	php-cli \
-	php-pecl-apc \
-	php-pecl-memcached \
+	php* \
 	&& rm -rf /var/cache/yum/* \
 	&& yum clean all
-
-# Display the contents of the new certificate for reference
-RUN openssl x509 -in /etc/pki/tls/certs/localhost.crt -text
 
 # -----------------------------------------------------------------------------
 # Global Apache configuration changes
@@ -31,9 +39,10 @@ RUN openssl x509 -in /etc/pki/tls/certs/localhost.crt -text
 RUN sed -i \
 	-e 's~^ServerSignature On$~ServerSignature Off~g' \
 	-e 's~^ServerTokens OS$~ServerTokens Prod~g' \
-	-e 's~^#ExtendedStatus On$~ExtendedStatus On~g' \
 	-e 's~^DirectoryIndex \(.*\)$~DirectoryIndex \1 index.php~g' \
 	-e 's~^NameVirtualHost \(.*\)$~#NameVirtualHost \1~g' \
+	-e 's~^User .*$~User ${APACHE_RUN_USER}~g' \
+	-e 's~^Group .*$~Group ${APACHE_RUN_GROUP}~g' \
 	/etc/httpd/conf/httpd.conf
 
 # -----------------------------------------------------------------------------
@@ -64,6 +73,7 @@ RUN sed -i \
 # -----------------------------------------------------------------------------
 RUN sed -i \
 	-e 's~^\(LoadModule .*\)$~#\1~g' \
+	-e 's~^\(#LoadModule version_module modules/mod_version.so\)$~\1\n#LoadModule reqtimeout_module modules/mod_reqtimeout.so~g' \
 	-e 's~^#LoadModule mime_module ~LoadModule mime_module ~g' \
 	-e 's~^#LoadModule log_config_module ~LoadModule log_config_module ~g' \
 	-e 's~^#LoadModule setenvif_module ~LoadModule setenvif_module ~g' \
@@ -78,37 +88,42 @@ RUN sed -i \
 	/etc/httpd/conf/httpd.conf
 
 # -----------------------------------------------------------------------------
-# Custom Apache configuration
+# Enable ServerStatus access via /_httpdstatus to local client
 # -----------------------------------------------------------------------------
-RUN echo $'\n#\n# Custom configuration\n#' >> /etc/httpd/conf/httpd.conf \
-	&& echo 'Options -Indexes' >> /etc/httpd/conf/httpd.conf \
-	&& echo 'Listen 8443' >> /etc/httpd/conf/httpd.conf \
-	&& echo 'NameVirtualHost *:80' >> /etc/httpd/conf/httpd.conf \
-	&& echo 'NameVirtualHost *:8443' >> /etc/httpd/conf/httpd.conf \
-	&& echo '#NameVirtualHost *:443' >> /etc/httpd/conf/httpd.conf \
-	&& echo 'Include /var/www/app/vhost.conf' >> /etc/httpd/conf/httpd.conf \
-	&& echo '#Include /var/www/app/vhost-ssl.conf' >> /etc/httpd/conf/httpd.conf \
-	&& echo $'\n<Location /server-status>' >> /etc/httpd/conf/httpd.conf \
-	&& echo '    SetHandler server-status' >> /etc/httpd/conf/httpd.conf \
-	&& echo '    Order deny,allow' >> /etc/httpd/conf/httpd.conf \
-	&& echo '    Deny from all' >> /etc/httpd/conf/httpd.conf \
-	&& echo '    Allow from localhost 127.0.0.1' >> /etc/httpd/conf/httpd.conf \
-	&& echo '</Location>' >> /etc/httpd/conf/httpd.conf
-
-# -----------------------------------------------------------------------------
-# Limit process for the application user
-# -----------------------------------------------------------------------------
-RUN echo $'\napache\tsoft\tnproc\t30\napache\thard\tnproc\t50' >> /etc/security/limits.conf \
-	&& echo $'\napp-www\tsoft\tnproc\t30\napp-www\thard\tnproc\t50' >> /etc/security/limits.conf
+RUN sed -i \
+	-e '/#<Location \/server-status>/,/#<\/Location>/ s~^#~~' \
+	-e '/<Location \/server-status>/,/<\/Location>/ s~Allow from .example.com~Allow from localhost 127.0.0.1~' \
+	/etc/httpd/conf/httpd.conf
 
 # -----------------------------------------------------------------------------
 # Disable the default SSL Virtual Host
-# 	Simplest approach is to use non-standard port instead of attempting to 
-# 	comment out or remove the necessary lines
 # -----------------------------------------------------------------------------
 RUN sed -i \
-	-e 's~^<VirtualHost _default_:443>$~<VirtualHost _default_:404>~g' \
+	-e '/<VirtualHost _default_:443>/,/#<\/VirtualHost>/ s~^~#~' \
 	/etc/httpd/conf.d/ssl.conf
+
+# -----------------------------------------------------------------------------
+# Custom Apache configuration
+# -----------------------------------------------------------------------------
+RUN { \
+		echo ''; \
+		echo '#'; \
+		echo '# Custom configuration'; \
+		echo '#'; \
+		echo 'Options -Indexes'; \
+		echo 'Listen 8443'; \
+		echo 'NameVirtualHost *:80'; \
+		echo 'NameVirtualHost *:8443'; \
+		echo 'Include ${APACHE_CONTENT_ROOT}/vhost.conf'; \
+	} >> /etc/httpd/conf/httpd.conf \
+	&& { \
+		echo ''; \
+		echo '#'; \
+		echo '# Custom SSL configuration'; \
+		echo '#'; \
+		echo 'NameVirtualHost *:443'; \
+		echo 'Include ${APACHE_CONTENT_ROOT}/vhost-ssl.conf'; \
+	} >> /etc/httpd/conf.d/ssl.conf
 
 # -----------------------------------------------------------------------------
 # Disable the SSL support by default
@@ -116,6 +131,15 @@ RUN sed -i \
 RUN mv /etc/httpd/conf.d/ssl.conf /etc/httpd/conf.d/ssl.conf.off \
 	&& touch /etc/httpd/conf.d/ssl.conf \
 	&& chmod 444 /etc/httpd/conf.d/ssl.conf
+
+# -----------------------------------------------------------------------------
+# Limit threads for the application user
+# -----------------------------------------------------------------------------
+RUN { \
+		echo ''; \
+		echo -e '@apache\tsoft\tnproc\t60'; \
+		echo -e '@apache\thard\tnproc\t100'; \
+	} >> /etc/security/limits.conf
 
 # -----------------------------------------------------------------------------
 # Global PHP configuration changes
@@ -136,55 +160,29 @@ RUN sed -i \
 	/usr/share/php-pecl-apc/apc.php
 
 # -----------------------------------------------------------------------------
-# Add default service users
+# Add default system users
 # -----------------------------------------------------------------------------
-RUN useradd -u 501 -d /var/www/app -m app \
-	&& useradd -u 502 -d /var/www/app -M -s /sbin/nologin -G app app-www \
+RUN useradd -r -M -d /var/www/app -s /sbin/nologin app \
+	&& useradd -r -M -d /var/www/app -s /sbin/nologin -G apache,app app-www \
 	&& usermod -a -G app-www app \
-	&& usermod -a -G app-www apache
+	&& usermod -a -G app-www,app apache
 
 # -----------------------------------------------------------------------------
-# Add a symbolic link to the app users home within the home directory &
-# Create the initial directory structure
+# Create and populate the install directory
 # -----------------------------------------------------------------------------
-RUN ln -s /var/www/app /home/app \
-	&& mkdir -p /var/www/app/{public_html,src,var/{log,session,tmp}}
+RUN mkdir -p -m 750 ${PACKAGE_PATH}
+ADD var/www/app ${PACKAGE_PATH}
+RUN find ${PACKAGE_PATH} -name '*.gitkeep' -type f -delete \
+	&& echo '<?php phpinfo(); ?>' > ${PACKAGE_PATH}/public_html/_phpinfo.php \
+	&& cp /usr/share/php-pecl-apc/apc.php ${PACKAGE_PATH}/public_html/_apc.php
 
 # -----------------------------------------------------------------------------
-# Populate the app home directory
+# Set install directory/file permissions
 # -----------------------------------------------------------------------------
-ADD var/www/app/vhost.conf /var/www/app/vhost.conf
-ADD var/www/app/vhost.conf /var/www/app/vhost-ssl.conf
-ADD var/www/app/public_html/index.php /var/www/app/public_html/index.php
-
-# Add PHP Info _phpinfo.php and Add APC Control Panel _apc.php
-RUN echo '<?php phpinfo(); ?>' > /var/www/app/public_html/_phpinfo.php \
-	&& cp /usr/share/php-pecl-apc/apc.php /var/www/app/public_html/_apc.php
-
-# -----------------------------------------------------------------------------
-# Create the SSL VirtualHosts configuration file
-# -----------------------------------------------------------------------------
-RUN sed -i \
-	-e 's~^<VirtualHost \*:80 \*:8443>$~#<VirtualHost \*:80 \*:8443>~g' \
-	-e 's~^#<VirtualHost \*:443>$~<VirtualHost \*:443>~g' \
-	-e 's~#SSLEngine \(.*\)$~SSLEngine \1~g' \
-	-e 's~#SSLOptions \(.*\)$~SSLOptions \1~g' \
-	-e 's~#SSLProtocol \(.*\)$~SSLProtocol \1~g' \
-	-e 's~#SSLCipherSuite \(.*\)$~SSLCipherSuite \1~g' \
-	-e 's~#SSLCertificateFile \(.*\)$~SSLCertificateFile \1~g' \
-	-e 's~#SSLCertificateKeyFile \(.*\)$~SSLCertificateKeyFile \1~g' \
-	/var/www/app/vhost-ssl.conf
-
-# -----------------------------------------------------------------------------
-# Set permissions (app:app-www === 501:502)
-# -----------------------------------------------------------------------------
-RUN chown -R 501:502 /var/www/app \
-	&& chmod 775 /var/www/app
-
-# -----------------------------------------------------------------------------
-# Create the template directory
-# -----------------------------------------------------------------------------
-RUN cp -rpf /var/www/app /var/www/.app-skel
+RUN chown -R app:app-www ${PACKAGE_PATH} \
+	&& find ${PACKAGE_PATH} -type d -exec chmod 750 {} + \
+	&& find ${PACKAGE_PATH}/var -type d -exec chmod 770 {} + \
+	&& find ${PACKAGE_PATH} -type f -exec chmod 640 {} +
 
 # -----------------------------------------------------------------------------
 # Copy files into place
@@ -205,12 +203,27 @@ RUN mkdir -p /etc/services-config/{httpd/{conf,conf.d},ssl/{certs,private}} \
 # -----------------------------------------------------------------------------
 # Set default environment variables used to identify the service container
 # -----------------------------------------------------------------------------
-ENV APACHE_SERVER_NAME app-1.local
-ENV APACHE_SERVER_ALIAS app-1
 ENV SERVICE_UNIT_APP_GROUP app-1
 ENV SERVICE_UNIT_LOCAL_ID 1
 ENV SERVICE_UNIT_INSTANCE 1
-ENV DATE_TIMEZONE UTC
+
+# -----------------------------------------------------------------------------
+# Set default environment variables used to configure the service container
+# -----------------------------------------------------------------------------
+ENV APACHE_CONTENT_ROOT /var/www/${PACKAGE_NAME}
+ENV APACHE_EXTENDED_STATUS_ENABLED false
+ENV APACHE_LOAD_MODULES "authz_user_module log_config_module expires_module deflate_module headers_module setenvif_module mime_module status_module dir_module alias_module"
+ENV APACHE_MOD_SSL_ENABLED false
+ENV APACHE_PUBLIC_DIRECTORY public_html
+ENV APACHE_RUN_GROUP app-www
+ENV APACHE_RUN_USER app-www
+ENV APACHE_SERVER_ALIAS ""
+ENV APACHE_SERVER_NAME app-1.local
+ENV APACHE_SUEXEC_USER_GROUP false
+ENV APACHE_SYSTEM_USER app
+ENV HTTPD /usr/sbin/httpd
+ENV PACKAGE_PATH ${PACKAGE_PATH}
+ENV PHP_OPTIONS_DATE_TIMEZONE UTC
 
 EXPOSE 80 8443 443
 
