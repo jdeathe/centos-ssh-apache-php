@@ -187,8 +187,8 @@ OPTS_APACHE_RUN_GROUP="${APACHE_RUN_GROUP:-${DEFAULT_APACHE_USER}}"
 OPTS_APACHE_RUN_USER="${APACHE_RUN_USER:-${DEFAULT_APACHE_USER}}"
 OPTS_APACHE_SERVER_ALIAS="${APACHE_SERVER_ALIAS:-}"
 OPTS_APACHE_SERVER_NAME="${APACHE_SERVER_NAME:-$(hostname)}"
-OPTS_SERVICE_USER="${SERVICE_USER:-${DEFAULT_SYSTEM_USER}}"
-OPTS_SUEXECUSERGROUP="${SUEXECUSERGROUP:-false}"
+OPTS_APACHE_SUEXEC_USER_GROUP="${APACHE_SUEXEC_USER_GROUP:-false}"
+OPTS_APACHE_SYSTEM_USER="${APACHE_SYSTEM_USER:-${DEFAULT_SYSTEM_USER}}"
 
 # Verify package installation directory exists
 if [[ ! -d ${PACKAGE_PATH} ]]; then
@@ -290,8 +290,8 @@ echo "${DEFAULT_SYSTEM_USER}:$(get_password ${PASSWORD_LENGTH})" | chpasswd
 echo "${DEFAULT_APACHE_USER}:$(get_password ${PASSWORD_LENGTH})" | chpasswd
 
 # Set the system user's login names and groups
-update_user_login ${DEFAULT_SYSTEM_USER} ${OPTS_SERVICE_USER}
-update_group_name ${DEFAULT_SYSTEM_USER} ${OPTS_SERVICE_USER}
+update_user_login ${DEFAULT_SYSTEM_USER} ${OPTS_APACHE_SYSTEM_USER}
+update_group_name ${DEFAULT_SYSTEM_USER} ${OPTS_APACHE_SYSTEM_USER}
 update_user_login ${DEFAULT_APACHE_USER} ${OPTS_APACHE_RUN_USER}
 update_group_name ${DEFAULT_APACHE_USER} ${OPTS_APACHE_RUN_USER}
 
@@ -301,7 +301,7 @@ if [[ ${OPTS_APACHE_MOD_SSL_ENABLED} == true ]]; then
 fi
 
 # Set the Apache (run) service user/group
-if [[ ${OPTS_SUEXECUSERGROUP} == true ]]; then
+if [[ ${OPTS_APACHE_SUEXEC_USER_GROUP} == true ]]; then
 	sed -i \
 		-e 's~#SuexecUserGroup \(.*\)$~SuexecUserGroup \1~g' \
 		-e 's~app/bin/php-wrapper~app-bin/php-wrapper~g' \
@@ -326,7 +326,7 @@ cat <<-EOT
 	================================================================================
 	Apache Details
 	--------------------------------------------------------------------------------
-	system user : ${OPTS_SERVICE_USER}
+	system user : ${OPTS_APACHE_SYSTEM_USER}
 	run user : ${OPTS_APACHE_RUN_USER}
 	run group : ${OPTS_APACHE_RUN_GROUP}
 	server name : ${OPTS_APACHE_SERVER_NAME}
