@@ -221,6 +221,11 @@ if [[ ! -d ${OPTS_APACHE_DOCUMENT_ROOT} ]]; then
 	exit 1
 fi
 
+APACHE_DOCUMENT_ROOT_FILE_SYSTEM=$(
+	df -PT ${OPTS_APACHE_DOCUMENT_ROOT} | \
+	awk 'NR>1 { print $2 }'
+)
+
 # Server MPM
 HTTPD_MPM_PREFORK=/usr/sbin/httpd
 HTTPD_MPM_WORKER=/usr/sbin/httpd.worker
@@ -285,16 +290,15 @@ else
 	> /etc/httpd/conf.d/ssl.conf
 fi
 
-if [[ $(df -PT ${OPTS_APACHE_CONTENT_ROOT} | awk 'NR>1 { print $2 }') == "nfs" ]]; then
-	echo "DocumentRoot mounted on NFS filesystem - Setting EnableSendfile Off."
+# Set EnableSendfile Off if on nfs file system
+if [[ ${APACHE_DOCUMENT_ROOT_FILE_SYSTEM} == nfs ]]; then
+	echo "Disabling sendfile support."
 	sed -i \
-		-e 's~^#EnableSendfile [o|O]n$~EnableSendfile Off~g' \
-		-e 's~^EnableSendfile [o|O]n$~EnableSendfile Off~g' \
+		-re 's~^[#]?EnableSendfile (On|on|Off|off)$~EnableSendfile off~g' \
 		/etc/httpd/conf/httpd.conf
 else
-	echo "DocumentRoot mounted on non-NFS filesystem - Setting EnableSendfile On."
 	sed -i \
-		-e 's~^EnableSendfile [o|O]ff$~#EnableSendfile On~g' \
+		-re 's~^EnableSendfile (Off|off)$~#EnableSendfile on~g' \
 		/etc/httpd/conf/httpd.conf
 fi
 
@@ -344,7 +348,7 @@ cat <<-EOT
 	run group : ${OPTS_APACHE_RUN_GROUP}
 	server name : ${OPTS_APACHE_SERVER_NAME}
 	server alias : ${OPTS_APACHE_SERVER_ALIAS}
-	document root : ${OPTS_APACHE_DOCUMENT_ROOT}
+	document root : ${OPTS_APACHE_DOCUMENT_ROOT} (${APACHE_DOCUMENT_ROOT_FILE_SYSTEM})
 	--------------------------------------------------------------------------------
 
 EOT
