@@ -88,6 +88,8 @@ APACHE_SERVER_HOME=$(dirname "${APACHE_CONTENT_ROOT}")
 # Data volume mapping
 if [[ ${VOLUME_DATA_NAMED} == true ]]; then
 	DOCKER_DATA_VOLUME_MAPPING=${VOLUME_DATA_NAME}:${APACHE_SERVER_HOME}
+	# NFS mount to /var/services-data must exist on the docker host
+	# DOCKER_DATA_VOLUME_MAPPING=/var/services-data/${VOLUME_DATA_NAME}:${APACHE_CONTENT_ROOT}
 else
 	DOCKER_DATA_VOLUME_MAPPING=${APACHE_SERVER_HOME}
 fi

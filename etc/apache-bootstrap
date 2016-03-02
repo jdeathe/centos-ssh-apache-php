@@ -79,6 +79,26 @@ is_valid_user_login ()
 	return 1
 }
 
+set_apache_enable_sendfile ()
+{
+	local ENABLED=${1:-true}
+	local PATTERN_FROM
+	local PATTERN_TO
+
+	if [[ ${ENABLED} == true ]]; then
+		PATTERN_FROM="^[#]?EnableSendfile (Off|off)$"
+		PATTERN_TO="#EnableSendfile on"
+	else
+		echo "Disabling EnableSendfile."
+		PATTERN_FROM="^[#]?EnableSendfile (On|on|Off|off)$"
+		PATTERN_TO="EnableSendfile off"
+	fi
+
+	sed -i \
+		-re "s~${PATTERN_FROM}~${PATTERN_TO}~g" \
+		/etc/httpd/conf/httpd.conf
+}
+
 set_apache_extended_status ()
 {
 	local ENABLED=${1:-false}
@@ -221,6 +241,11 @@ if [[ ! -d ${OPTS_APACHE_DOCUMENT_ROOT} ]]; then
 	exit 1
 fi
 
+APACHE_DOCUMENT_ROOT_FILE_SYSTEM=$(
+	df -PT ${OPTS_APACHE_DOCUMENT_ROOT} | \
+	awk 'NR>1 { print $2 }'
+)
+
 # Server MPM
 HTTPD_MPM_PREFORK=/usr/sbin/httpd
 HTTPD_MPM_WORKER=/usr/sbin/httpd.worker
@@ -243,10 +268,17 @@ fi
 # Add local hosts entries
 add_hosts_entry 127.0.0.1 ${OPTS_APACHE_SERVER_NAME}${OPTS_APACHE_SERVER_ALIAS:+ }${OPTS_APACHE_SERVER_ALIAS}
 
-# Set ExtendedStatus
+# Set Apache EnableSendfile
+if [[ ${APACHE_DOCUMENT_ROOT_FILE_SYSTEM} == nfs ]]; then
+	set_apache_enable_sendfile false
+else
+	set_apache_enable_sendfile true
+fi
+
+# Set Apache ExtendedStatus
 set_apache_extended_status ${OPTS_APACHE_EXTENDED_STATUS_ENABLED}
 
-# Add ServerName
+# Set Apache ServerName
 set_apache_server_name ${OPTS_APACHE_SERVER_NAME} 80
 
 # Generate an SSL VirtualHost configuration if required
@@ -331,7 +363,7 @@ cat <<-EOT
 	run group : ${OPTS_APACHE_RUN_GROUP}
 	server name : ${OPTS_APACHE_SERVER_NAME}
 	server alias : ${OPTS_APACHE_SERVER_ALIAS}
-	document root : ${OPTS_APACHE_DOCUMENT_ROOT}
+	document root : ${OPTS_APACHE_DOCUMENT_ROOT} (${APACHE_DOCUMENT_ROOT_FILE_SYSTEM})
 	--------------------------------------------------------------------------------
 
 EOT
