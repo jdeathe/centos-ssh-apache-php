@@ -1,6 +1,28 @@
 #!/usr/bin/env bash
 
+TIMER_START=$(
+	date +%s.%N
+)
+
 source /etc/apache-bootstrap.conf
+
+__debug_mode ()
+{
+	local DEBUG_ON=${1:false}
+
+	if [[ ${DEBUG_ON} == true ]]; then
+		DEBUG_MODE=true
+	fi
+}
+
+__debug_timer ()
+{
+	local DEBUG_ON=${DEBUG_MODE:-false}
+
+	if [[ -n ${DEBUG_MODE} ]] && [[ ${DEBUG_ON} == true ]]; then
+		times
+	fi
+}
 
 add_hosts_entry ()
 {
@@ -15,7 +37,9 @@ add_hosts_entry ()
 	fi
 
 	while (( ${#} )); do
-		if [[ ${1} != 'localhost' ]] && [[ ${1} != '127.0.0.1' ]] && [[ ${1} != ${IP} ]]; then
+		if [[ ${1} != 'localhost' ]] \
+			&& [[ ${1} != '127.0.0.1' ]] \
+			&& [[ ${1} != ${IP} ]]; then
 			HOSTS+=" ${1}"
 		fi
 		shift
@@ -231,6 +255,19 @@ OPTS_APACHE_SERVER_NAME="${APACHE_SERVER_NAME:-$(hostname)}"
 OPTS_APACHE_SUEXEC_USER_GROUP="${APACHE_SUEXEC_USER_GROUP:-false}"
 OPTS_APACHE_SYSTEM_USER="${APACHE_SYSTEM_USER:-${DEFAULT_SYSTEM_USER}}"
 
+# Set the system user passwords
+$(
+	echo "${DEFAULT_SYSTEM_USER}:$(get_password ${PASSWORD_LENGTH})" | \
+	chpasswd
+) &
+PIDS[0]=${!}
+
+$(
+	echo "${DEFAULT_APACHE_USER}:$(get_password ${PASSWORD_LENGTH})" | \
+	chpasswd
+) &
+PIDS[1]=${!}
+
 # Verify package installation directory exists
 if [[ ! -d ${PACKAGE_PATH} ]]; then
 	echo "ERROR: ${PACKAGE_PATH} not found."
@@ -347,16 +384,6 @@ else
 	> /etc/httpd/conf.d/ssl.conf
 fi
 
-# Set the system user passwords
-echo "${DEFAULT_SYSTEM_USER}:$(get_password ${PASSWORD_LENGTH})" | chpasswd
-echo "${DEFAULT_APACHE_USER}:$(get_password ${PASSWORD_LENGTH})" | chpasswd
-
-# Set the system user's login names and groups
-update_user_login ${DEFAULT_SYSTEM_USER} ${OPTS_APACHE_SYSTEM_USER}
-update_group_name ${DEFAULT_SYSTEM_USER} ${OPTS_APACHE_SYSTEM_USER}
-update_user_login ${DEFAULT_APACHE_USER} ${OPTS_APACHE_RUN_USER}
-update_group_name ${DEFAULT_APACHE_USER} ${OPTS_APACHE_RUN_USER}
-
 VIRTUAL_HOST_CONFIGURATION_FILES="${OPTS_APACHE_CONTENT_ROOT}/vhost.conf"
 if [[ ${OPTS_APACHE_MOD_SSL_ENABLED} == true ]]; then
 	VIRTUAL_HOST_CONFIGURATION_FILES+=" ${OPTS_APACHE_CONTENT_ROOT}/vhost-ssl.conf"
@@ -375,6 +402,23 @@ else
 		${VIRTUAL_HOST_CONFIGURATION_FILES}
 fi
 
+# Set the system user's login names and groups
+update_user_login ${DEFAULT_SYSTEM_USER} ${OPTS_APACHE_SYSTEM_USER}
+update_group_name ${DEFAULT_SYSTEM_USER} ${OPTS_APACHE_SYSTEM_USER}
+update_user_login ${DEFAULT_APACHE_USER} ${OPTS_APACHE_RUN_USER}
+update_group_name ${DEFAULT_APACHE_USER} ${OPTS_APACHE_RUN_USER}
+
+# Wait for background processes
+wait ${PIDS[0]}
+wait ${PIDS[1]}
+
+TIMER_TOTAL=$(
+	echo - | awk "\
+	{ T1="${TIMER_START}" } \
+	{ T2="$(date +%s.%N)" } \
+	{ print T2 - T1; }"
+)
+
 cat <<-EOT
 
 	================================================================================
@@ -389,6 +433,7 @@ cat <<-EOT
 	modules enabled :
 	${APACHE_MODULES_ENABLED}
 	--------------------------------------------------------------------------------
+	${TIMER_TOTAL}
 
 EOT
 
