@@ -24,6 +24,27 @@ add_hosts_entry ()
 	printf -- "%s\t%s\n" "${IP}" "${HOSTS}" >> /etc/hosts
 }
 
+enable_apache_modules ()
+{
+	local MODULE
+	local MODULES=${1:-}
+	local MODULES_ENABLED=""
+	local SED_COMMAND=""
+
+	if [[ -n ${MODULES} ]]; then
+		for MODULE in ${MODULES}; do
+			MODULES_ENABLED+=" - ${MODULE}\n"
+			SED_COMMAND+=" -e \"s~^#LoadModule ${MODULE} ~LoadModule ${MODULE} ~g\""
+		done
+
+		if [[ -n ${SED_COMMAND} ]]; then
+			sed -i ${SED_COMMAND} /etc/httpd/conf/httpd.conf
+		fi
+
+		printf -- "%b" "${MODULES_ENABLED}"
+	fi
+}
+
 get_password ()
 {
 	local PASSWORD_LENGTH=${1:-16}
@@ -217,7 +238,10 @@ if [[ ! -d ${PACKAGE_PATH} ]]; then
 fi
 
 # Initialise Apache server root directory.
-APACHE_SERVER_HOME=$(dirname "${OPTS_APACHE_CONTENT_ROOT}")
+APACHE_SERVER_HOME=$(
+	dirname "${OPTS_APACHE_CONTENT_ROOT}"
+)
+
 if [[ ! -d ${APACHE_SERVER_HOME} ]]; then
 	echo "Create home directory ${APACHE_SERVER_HOME}."
 	mkdir -p -m 755 ${APACHE_SERVER_HOME}
@@ -281,6 +305,11 @@ set_apache_extended_status ${OPTS_APACHE_EXTENDED_STATUS_ENABLED}
 # Set Apache ServerName
 set_apache_server_name ${OPTS_APACHE_SERVER_NAME} 80
 
+# Enable Apache modules
+APACHE_MODULES_ENABLED=$(
+	enable_apache_modules "${OPTS_APACHE_LOAD_MODULES}"
+)
+
 # Generate an SSL VirtualHost configuration if required
 if [[ ${OPTS_APACHE_MOD_SSL_ENABLED} == true ]] \
 	&& [[ ! -f ${OPTS_APACHE_CONTENT_ROOT}/vhost-ssl.conf ]] \
@@ -299,7 +328,8 @@ if [[ ${OPTS_APACHE_MOD_SSL_ENABLED} == true ]]; then
 	echo "Enabling SSL support."
 	cat /etc/httpd/conf.d/ssl.conf.off > /etc/httpd/conf.d/ssl.conf
 
-	if [[ ! -f /etc/services-config/ssl/private/localhost.key ]] || [[ ! -f /etc/services-config/ssl/certs/localhost.crt ]]; then
+	if [[ ! -f /etc/services-config/ssl/private/localhost.key ]] \
+		|| [[ ! -f /etc/services-config/ssl/certs/localhost.crt ]]; then
 		echo "Generating new certificate."
 		openssl req \
 			-x509 \
@@ -345,14 +375,6 @@ else
 		${VIRTUAL_HOST_CONFIGURATION_FILES}
 fi
 
-echo "Loading Apache modules."
-for MODULE in ${APACHE_LOAD_MODULES}; do
-	echo " - ${MODULE}"
-	sed -i \
-		-e "s~^#LoadModule ${MODULE} ~LoadModule ${MODULE} ~g" \
-		/etc/httpd/conf/httpd.conf
-done
-
 cat <<-EOT
 
 	================================================================================
@@ -364,6 +386,8 @@ cat <<-EOT
 	server name : ${OPTS_APACHE_SERVER_NAME}
 	server alias : ${OPTS_APACHE_SERVER_ALIAS}
 	document root : ${OPTS_APACHE_DOCUMENT_ROOT} (${APACHE_DOCUMENT_ROOT_FILE_SYSTEM})
+	modules enabled :
+	${APACHE_MODULES_ENABLED}
 	--------------------------------------------------------------------------------
 
 EOT
