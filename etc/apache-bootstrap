@@ -6,24 +6,6 @@ TIMER_START=$(
 
 source /etc/apache-bootstrap.conf
 
-__debug_mode ()
-{
-	local DEBUG_ON=${1:false}
-
-	if [[ ${DEBUG_ON} == true ]]; then
-		DEBUG_MODE=true
-	fi
-}
-
-__debug_timer ()
-{
-	local DEBUG_ON=${DEBUG_MODE:-false}
-
-	if [[ -n ${DEBUG_MODE} ]] && [[ ${DEBUG_ON} == true ]]; then
-		times
-	fi
-}
-
 add_hosts_entry ()
 {
 	local IP=${1:-127.0.0.1}
