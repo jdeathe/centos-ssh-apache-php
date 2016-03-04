@@ -6,6 +6,21 @@ TIMER_START=$(
 
 source /etc/apache-bootstrap.conf
 
+absolute_path ()
+{
+	local DIRECTORY_PATH=${1:-}
+	local VALUE=""
+
+	if [[ -n ${DIRECTORY_PATH} ]]; then
+		VALUE=$(
+			python -c "import os,sys; print os.path.abspath(sys.argv[1])" \
+			${DIRECTORY_PATH}
+		)
+	fi
+
+	printf "%s" "${VALUE}"
+}
+
 add_hosts_entry ()
 {
 	local IP=${1:-127.0.0.1}
@@ -19,8 +34,8 @@ add_hosts_entry ()
 	fi
 
 	while (( ${#} )); do
-		if [[ ${1} != 'localhost' ]] \
-			&& [[ ${1} != '127.0.0.1' ]] \
+		if [[ ${1} != localhost ]] \
+			&& [[ ${1} != 127.0.0.1 ]] \
 			&& [[ ${1} != ${IP} ]]; then
 			HOSTS+=" ${1}"
 		fi
@@ -67,10 +82,13 @@ get_password ()
 
 is_valid_apache_content_root ()
 {
-	local DIRECTORY_PATH="${1:-}"
+	local DIRECTORY_PATH=${1:-}
+	local DIRECTORY_PATH_ABSOLUTE=$(
+		absolute_path ${DIRECTORY_PATH}
+	)
 	local VALID_DIRECTORY='^\/(?!\/|bin|dev|etc|lib|lib64|lost+found|media|proc|root|sbin|sys|tmp|usr).+$'
 
-	if [[ -n $(grep -oP ${VALID_DIRECTORY} <<< $(real_directory_path "${DIRECTORY_PATH}")) ]]; then
+	if [[ -n $(grep -oP ${VALID_DIRECTORY} <<< ${DIRECTORY_PATH_ABSOLUTE}) ]]; then
 		return 0
 	fi
 
@@ -79,11 +97,16 @@ is_valid_apache_content_root ()
 
 is_valid_apache_public_directory ()
 {
-	local DIRECTORY="${1:-}"
+	local DIRECTORY=${1:-}
+	local DIRECTORY_ABSOLUTE=$(
+		absolute_path $(
+			get_apache_content_root
+		)/${DIRECTORY}
+	)
 	local VALID_DIRECTORY='^\/(?!\/|bin|dev|etc|lib|lib64|lost+found|media|proc|root|sbin|sys|tmp|usr).+$'
 	local VALID_SUBDIRECTORY='^[^\/\\].+$'
 
-	if [[ -n $(grep -oP ${VALID_DIRECTORY} <<< $(real_directory_path "$(get_apache_content_root)/${DIRECTORY}")) ]]; then
+	if [[ -n $(grep -oP ${VALID_DIRECTORY} <<< ${DIRECTORY_ABSOLUTE}) ]]; then
 		return 0
 	fi
 
@@ -175,19 +198,6 @@ get_apache_public_directory ()
 
 	if [[ -z ${VALUE} ]] || ! is_valid_apache_public_directory "${VALUE}"; then
 		VALUE="${DEFAULT_VALUE}"
-	fi
-
-	printf "%s" "${VALUE}"
-}
-
-real_directory_path ()
-{
-	local PATH=${1:-}
-	local VALUE=""
-
-	if [[ -n ${PATH} ]]; then
-		cd ${PATH}
-		VALUE=${PWD}
 	fi
 
 	printf "%s" "${VALUE}"
