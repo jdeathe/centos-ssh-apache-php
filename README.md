@@ -201,6 +201,10 @@ $ docker run -d \
   --env "SERVICE_UNIT_LOCAL_ID=1" \
   --env "SERVICE_UNIT_INSTANCE=1" \
   --env "APACHE_CONTENT_ROOT=/var/www/app-1" \
+  --env "APACHE_CUSTOM_LOG_FORMAT=combined" \
+  --env "APACHE_CUSTOM_LOG_LOCATION=/var/www/app-1/var/log/apache_access_log" \
+  --env "APACHE_ERROR_LOG_LOCATION=/var/www/app-1/var/log/apache_error_log" \
+  --env "APACHE_ERROR_LOG_LEVEL=warn" \
   --env "APACHE_EXTENDED_STATUS_ENABLED=false" \
   --env "APACHE_LOAD_MODULES=authz_user_module log_config_module expires_module deflate_module headers_module setenvif_module mime_module status_module dir_module alias_module rewrite_module" \
   --env "APACHE_MOD_SSL_ENABLED=false" \
@@ -271,6 +275,28 @@ The ```APACHE_SERVER_NAME``` and ```APACHE_SERVER_ALIAS``` environmental variabl
 ```
 
 from your browser you can then access it with ```http://app-1.local:8080``` assuming you have the IP address of your docker mapped to the hostname using your DNS server or a local hosts entry.
+
+##### APACHE_CUSTOM_LOG_LOCATION & APACHE_CUSTOM_LOG_FORMAT
+
+The Apache CustomLog can be defined using ```APACHE_CUSTOM_LOG_LOCATION``` to set a file | pipe location and ```APACHE_CUSTOM_LOG_FORMAT``` to specify the required LogFormat nickname.
+
+```
+...
+  --env "APACHE_CUSTOM_LOG_LOCATION=/var/log/httpd/access_log" \
+  --env "APACHE_CUSTOM_LOG_FORMAT=common" \
+...
+```
+
+##### APACHE_ERROR_LOG_LOCATION && APACHE_ERROR_LOG_LEVEL
+
+The Apache ErrorLog can be defined using ```APACHE_ERROR_LOG_LOCATION``` to set a file | pipe location and ```APACHE_ERROR_LOG_LEVEL``` to specify the required LogLevel value.
+
+```
+...
+  --env "APACHE_CUSTOM_LOG_LOCATION=/var/log/httpd/error_log" \
+  --env "APACHE_CUSTOM_LOG_FORMAT=error" \
+...
+```
 
 ##### APACHE_EXTENDED_STATUS_ENABLED
 
