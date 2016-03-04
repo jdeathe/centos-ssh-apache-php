@@ -38,6 +38,10 @@ Environment="VOLUME_CONFIG_NAMED=false"
 Environment="VOLUME_CONFIG_NAME=volume-config.%p"
 Environment="VOLUME_DATA_NAME=volume-data.%p"
 Environment="APACHE_CONTENT_ROOT=/var/www/app"
+Environment="APACHE_CUSTOM_LOG_FORMAT=combined"
+Environment="APACHE_CUSTOM_LOG_LOCATION=/var/www/app/var/log/apache_access_log"
+Environment="APACHE_ERROR_LOG_LOCATION=/var/www/app/var/log/apache_error_log"
+Environment="APACHE_ERROR_LOG_LEVEL=warn"
 Environment="APACHE_EXTENDED_STATUS_ENABLED=false"
 Environment="APACHE_LOAD_MODULES=authz_user_module log_config_module expires_module deflate_module headers_module setenvif_module mime_module status_module dir_module alias_module"
 Environment="APACHE_MOD_SSL_ENABLED=false"
@@ -124,6 +128,10 @@ ExecStart=/bin/sudo /bin/bash -c \
       --env \"SERVICE_UNIT_LOCAL_ID=${SERVICE_UNIT_LOCAL_ID}\" \
       --env \"SERVICE_UNIT_INSTANCE=${SERVICE_UNIT_INSTANCE}\" \
       --env \"APACHE_CONTENT_ROOT=${APACHE_CONTENT_ROOT}\" \
+      --env \"APACHE_CUSTOM_LOG_FORMAT=${APACHE_CUSTOM_LOG_FORMAT}\" \
+      --env \"APACHE_CUSTOM_LOG_LOCATION=${APACHE_CUSTOM_LOG_LOCATION}\" \
+      --env \"APACHE_ERROR_LOG_LOCATION=${APACHE_ERROR_LOG_LOCATION}\" \
+      --env \"APACHE_ERROR_LOG_LEVEL=${APACHE_ERROR_LOG_LEVEL}\" \
       --env \"APACHE_EXTENDED_STATUS_ENABLED=${APACHE_EXTENDED_STATUS_ENABLED}\" \
       --env \"APACHE_LOAD_MODULES=${APACHE_LOAD_MODULES}\" \
       --env \"APACHE_MOD_SSL_ENABLED=${APACHE_MOD_SSL_ENABLED}\" \
