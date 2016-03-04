@@ -39,8 +39,8 @@ $ docker run -d \
   --env "SERVICE_UNIT_LOCAL_ID=1" \
   --env "SERVICE_UNIT_INSTANCE=1" \
   --env "APACHE_SERVER_NAME=app-1.local" \
-  --env "DATE_TIMEZONE=UTC" \
-  -v /var/www/app \
+  --env "PHP_OPTIONS_DATE_TIMEZONE=UTC" \
+  -v /var/www \
   jdeathe/centos-ssh-apache-php:latest
 ```
 
@@ -62,7 +62,7 @@ To verify the container is initialised and running successfully by inspecting th
 $ docker logs apache-php.app-1.1.1
 ```
 
-The Apache data is persistent across container restarts by setting the data directory ```/var/www/app``` as a data volume. No name or docker_host path was specified so Docker will give it a unique name and store it in ```/var/lib/docker/volumes/```; to find out where the data is stored on the Docker host you can use ```docker inspect```.
+The Apache data is persistent across container restarts by setting the data directory ```/var/www``` as a data volume. No name or docker_host path was specified so Docker will give it a unique name and store it in ```/var/lib/docker/volumes/```; to find out where the data is stored on the Docker host you can use ```docker inspect```.
 
 ```
 $ docker inspect \
@@ -181,7 +181,7 @@ The following configuration files are required to run the application container 
 - [httpd/conf/httpd.conf](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6/etc/services-config/httpd/conf/httpd.conf)
 - [httpd/conf.d/php.conf](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6/etc/services-config/httpd/conf.d/php.conf)
 - [httpd/conf.d/ssl.conf](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6/etc/services-config/httpd/conf.d/ssl.conf)
-- [supervisor/supervisord.conf](https://github.com/jdeathe/centos-ssh-mysql/blob/centos-6/etc/services-config/supervisor/supervisord.conf)
+- [supervisor/supervisord.conf](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6/etc/services-config/supervisor/supervisord.conf)
 
 ### Running
 
@@ -200,23 +200,27 @@ $ docker run -d \
   --env "SERVICE_UNIT_INSTANCE=app-1" \
   --env "SERVICE_UNIT_LOCAL_ID=1" \
   --env "SERVICE_UNIT_INSTANCE=1" \
+  --env "APACHE_CONTENT_ROOT=/var/www/app-1" \
+  --env "APACHE_CUSTOM_LOG_FORMAT=combined" \
+  --env "APACHE_CUSTOM_LOG_LOCATION=/var/www/app-1/var/log/apache_access_log" \
+  --env "APACHE_ERROR_LOG_LOCATION=/var/www/app-1/var/log/apache_error_log" \
+  --env "APACHE_ERROR_LOG_LEVEL=warn" \
   --env "APACHE_EXTENDED_STATUS_ENABLED=false" \
   --env "APACHE_LOAD_MODULES=authz_user_module log_config_module expires_module deflate_module headers_module setenvif_module mime_module status_module dir_module alias_module rewrite_module" \
   --env "APACHE_MOD_SSL_ENABLED=false" \
+  --env "APACHE_RUN_GROUP=www-app" \
+  --env "APACHE_RUN_USER=www-app" \
   --env "APACHE_SERVER_ALIAS=app-1" \
   --env "APACHE_SERVER_NAME=app-1.local" \
-  --env "APP_HOME_DIR=/var/www/app-1" \
-  --env "DATE_TIMEZONE=UTC" \
-  --env "SERVICE_USER=app" \
-  --env "SERVICE_USER_GROUP=app-www" \
-  --env "SERVICE_USER_PASSWORD=" \
-  -v volume-data.apache-php.app-1.1.1:/var/www/app-1 \
+  --env "APACHE_SYSTEM_USER=app" \
+  --env "PHP_OPTIONS_DATE_TIMEZONE=UTC" \
+  -v volume-data.apache-php.app-1.1.1:/var/www \
   jdeathe/centos-ssh-apache-php:latest
 ```
 
 #### Using configuration volume
 
-The following example uses the settings from the optonal configuration volume volume-config.apache-php.app-1.1.1 and maps a data volume for persistent storage of the Apache app data on the docker host.
+The following example uses the settings from the optional configuration volume volume-config.apache-php.app-1.1.1 and maps a data volume for persistent storage of the Apache app data on the docker host.
 
 ```
 $ docker stop apache-php.app-1.1.1 && \
@@ -229,9 +233,9 @@ $ docker run -d \
   --env "SERVICE_UNIT_INSTANCE=1" \
   --env "APACHE_SERVER_ALIAS=app-1" \
   --env "APACHE_SERVER_NAME=app-1.local" \
-  --env "DATE_TIMEZONE=UTC" \
+  --env "PHP_OPTIONS_DATE_TIMEZONE=UTC" \
   --volumes-from volume-config.apache-php.app-1.1.1 \
-  -v volume-data.apache-php.app-1.1.1:/var/www/app \
+  -v volume-data.apache-php.app-1.1.1:/var/www \
   jdeathe/centos-ssh-apache-php:latest
 ```
 
@@ -247,7 +251,7 @@ The output of the logs should show the Apache modules being loaded and auto-gene
 
 There are several environmental variables defined at runtime these allow the operator to customise the running container which may become necessary when running several on the same docker host, when clustering docker hosts or to simply set the timezone.
 
-##### 1. SERVICE_UNIT_INSTANCE, SERVICE_UNIT_LOCAL_ID & SERVICE_UNIT_INSTANCE
+##### SERVICE_UNIT_INSTANCE, SERVICE_UNIT_LOCAL_ID & SERVICE_UNIT_INSTANCE
 
 The ```SERVICE_UNIT_INSTANCE```, ```SERVICE_UNIT_LOCAL_ID``` and ```SERVICE_UNIT_INSTANCE``` environmental variables are used to set a response header named ```X-Service-Uid``` that lets you identify the container that is serving the content. This is useful when you have many containers running on a single host using different ports (i.e with different ```SERVICE_UNIT_LOCAL_ID``` values) or if you are running a cluster and need to identify which host the content is served from (i.e with different ```SERVICE_UNIT_INSTANCE``` values). The three values should map to the last 3 dotted values of the container name; in our case that is "app-1.1.1"
 
@@ -259,7 +263,7 @@ The ```SERVICE_UNIT_INSTANCE```, ```SERVICE_UNIT_LOCAL_ID``` and ```SERVICE_UNIT
 ...
 ```
 
-##### 2. APACHE_SERVER_NAME & APACHE_SERVER_ALIAS
+##### APACHE_SERVER_NAME & APACHE_SERVER_ALIAS
 
 The ```APACHE_SERVER_NAME``` and ```APACHE_SERVER_ALIAS``` environmental variables are used to set the VirtualHost ```ServerName``` and ```ServerAlias``` values respectively. In the following example the running container would respond to the host names ```app-1.local``` or ```app-1```:
 
@@ -272,7 +276,29 @@ The ```APACHE_SERVER_NAME``` and ```APACHE_SERVER_ALIAS``` environmental variabl
 
 from your browser you can then access it with ```http://app-1.local:8080``` assuming you have the IP address of your docker mapped to the hostname using your DNS server or a local hosts entry.
 
-##### 3. APACHE_EXTENDED_STATUS_ENABLED
+##### APACHE_CUSTOM_LOG_LOCATION & APACHE_CUSTOM_LOG_FORMAT
+
+The Apache CustomLog can be defined using ```APACHE_CUSTOM_LOG_LOCATION``` to set a file | pipe location and ```APACHE_CUSTOM_LOG_FORMAT``` to specify the required LogFormat nickname.
+
+```
+...
+  --env "APACHE_CUSTOM_LOG_LOCATION=/var/log/httpd/access_log" \
+  --env "APACHE_CUSTOM_LOG_FORMAT=common" \
+...
+```
+
+##### APACHE_ERROR_LOG_LOCATION && APACHE_ERROR_LOG_LEVEL
+
+The Apache ErrorLog can be defined using ```APACHE_ERROR_LOG_LOCATION``` to set a file | pipe location and ```APACHE_ERROR_LOG_LEVEL``` to specify the required LogLevel value.
+
+```
+...
+  --env "APACHE_CUSTOM_LOG_LOCATION=/var/log/httpd/error_log" \
+  --env "APACHE_CUSTOM_LOG_FORMAT=error" \
+...
+```
+
+##### APACHE_EXTENDED_STATUS_ENABLED
 
 The variable ```APACHE_EXTENDED_STATUS_ENABLED``` allows you to turn ExtendedStatus on. It is turned off by default as it has an impact on the server's performance but with it enabled you can gather more statistics.
 
@@ -291,7 +317,7 @@ $ docker exec -it apache-php.app-1.1.1 \
   -d "curl -s http://app-1/_httpdstatus?auto"
 ```
 
-##### 4. APACHE_LOAD_MODULES
+##### APACHE_LOAD_MODULES
 
 The variable ```APACHE_LOAD_MODULES``` defines all Apache modules to be loaded from */etc/httpd/conf/http.conf*. The default is the minimum required so you may need to add more as necessary. To add the "mod\_rewrite" Apache Module you would add it's identifier ```rewrite_module``` to the array as follows.
 
@@ -301,7 +327,7 @@ The variable ```APACHE_LOAD_MODULES``` defines all Apache modules to be loaded f
 ...
 ```
 
-##### 5. APACHE_MOD_SSL_ENABLED
+##### APACHE_MOD_SSL_ENABLED
 
 By default SSL support is disabled but a second port, (mapped to 8443), is available for traffic that has been been through upstream SSL termination (SSL Offloading). If you want the container to support SSL directly then set ```APACHE_MOD_SSL_ENABLED=true``` this will then generate a self signed certificate and will update Apache to accept traffic on port 443.
 
@@ -320,43 +346,61 @@ $ docker run -d \
   --env "APACHE_SERVER_ALIAS=app-1" \
   --env "APACHE_SERVER_NAME=app-1.local" \
   --env "APACHE_MOD_SSL_ENABLED=true" \
-  --env "DATE_TIMEZONE=UTC" \
-  -v volume-data.apache-php.app-1.1.1:/var/www/app \
+  --env "PHP_OPTIONS_DATE_TIMEZONE=UTC" \
+  -v volume-data.apache-php.app-1.1.1:/var/www \
   jdeathe/centos-ssh-apache-php:latest
 ```
 
-##### 6. APP_HOME_DIR
+##### APACHE_RUN_USER & APACHE_RUN_GROUP
 
-The home directory of the service user and parent directory of the Apache DocumentRoot is  /var/www/app by default but can be changed if necessary using the ```APP_HOME_DIR``` environment variable. It is also necessary to change the target of the data volume mapping accordingly as in the following example where /var/www/app-1 is used.
+The Apache process is run by the User and Group defined by ```APACHE_RUN_USER``` and ```APACHE_RUN_GROUP``` respectively.
 
 ```
 ...
-  --env "APP_HOME_DIR=/var/www/app-1" \
-  -v volume-data.apache-php.app-1.1.1:/var/www/app-1 \
+  --env "APACHE_RUN_GROUP=www-app" \
+  --env "APACHE_RUN_USER=www-app" \
 ...
 ```
 
-##### 7. DATE_TIMEZONE
+##### APACHE_CONTENT_ROOT
 
-The default timezone for the container, and the PHP app, is UTC however the operator can set an appropriate timezone using the ```DATE_TIMEZONE``` variable. The value should be a timezone identifier, like UTC or Europe/London. The list of valid identifiers is available in the PHP [List of Supported Timezones](http://php.net/manual/en/timezones.php).
+The home directory of the service user and parent directory of the Apache DocumentRoot is /var/www/app by default but can be changed if necessary using the ```APACHE_CONTENT_ROOT``` environment variable.
+
+```
+...
+  --env "APACHE_CONTENT_ROOT=/var/www/app-1" \
+...
+```
+
+##### APACHE_PUBLIC_DIRECTORY
+
+The public directory is relative to the ```APACHE_CONTENT_ROOT``` and together they form the Apache DocumentRoot path. The default value is `public_html` and should not be changed unless changes are made to the source of the app to include an alternative public directory such as `web` or `public`.
+
+```
+...
+  --env "APACHE_PUBLIC_DIRECTORY=web" \
+...
+```
+
+##### PHP_OPTIONS_DATE_TIMEZONE
+
+The default timezone for the container, and the PHP app, is UTC however the operator can set an appropriate timezone using the ```PHP_OPTIONS_DATE_TIMEZONE``` variable. The value should be a timezone identifier, like UTC or Europe/London. The list of valid identifiers is available in the PHP [List of Supported Timezones](http://php.net/manual/en/timezones.php).
 
 To set the timezone for the UK and account for British Summer Time you would use:
 
 ```
 ...
-  --env "DATE_TIMEZONE=Europe/London" \
+  --env "PHP_OPTIONS_DATE_TIMEZONE=Europe/London" \
 ...
 ```
 
-##### 8. SERVICE_USER, SERVICE_USER_GROUP & SERVICE_USER_PASSWORD
+##### APACHE_SYSTEM_USER
 
-Use the ```SERVICE_USER```, ```SERVICE_USER_GROUP``` and ```SERVICE_USER_PASSWORD``` environment variables to define a custom service username, group and password respectively. If the password is left an empty string then it is automatically generated on first run which is the default.
+Use the ```APACHE_SYSTEM_USER``` environment variable to define a custom service username.
 
 ```
 ...
-  --env "SERVICE_USER=apacheUser" \
-  --env "SERVICE_USER_GROUP=apacheGroup" \
-  --env "SERVICE_USER_PASSWORD=userPassword123" \
+  --env "APACHE_SYSTEM_USER=app-1" \
 ...
 ```
 

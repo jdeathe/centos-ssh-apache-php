@@ -83,11 +83,15 @@ if [[ ${VOLUME_CONFIG_ENABLED} == true ]] && ! have_docker_container_name ${VOLU
 	fi
 fi
 
+APACHE_SERVER_HOME=$(dirname "${APACHE_CONTENT_ROOT}")
+
 # Data volume mapping
 if [[ ${VOLUME_DATA_NAMED} == true ]]; then
-	DOCKER_DATA_VOLUME_MAPPING=${VOLUME_DATA_NAME}:/var/www/app
+	DOCKER_DATA_VOLUME_MAPPING=${VOLUME_DATA_NAME}:${APACHE_SERVER_HOME}
+	# NFS mount to /var/services-data must exist on the docker host
+	# DOCKER_DATA_VOLUME_MAPPING=/var/services-data/${VOLUME_DATA_NAME}:${APACHE_CONTENT_ROOT}
 else
-	DOCKER_DATA_VOLUME_MAPPING=/var/www/app
+	DOCKER_DATA_VOLUME_MAPPING=${APACHE_SERVER_HOME}
 fi
 
 # Data volume container
@@ -148,18 +152,23 @@ docker run \
 	--env "SERVICE_UNIT_APP_GROUP=${SERVICE_UNIT_APP_GROUP}" \
 	--env "SERVICE_UNIT_LOCAL_ID=${SERVICE_UNIT_LOCAL_ID}" \
 	--env "SERVICE_UNIT_INSTANCE=${SERVICE_UNIT_INSTANCE}" \
+	--env "APACHE_CONTENT_ROOT=${APACHE_CONTENT_ROOT}" \
+	--env "APACHE_CUSTOM_LOG_FORMAT=${APACHE_CUSTOM_LOG_FORMAT}" \
+	--env "APACHE_CUSTOM_LOG_LOCATION=${APACHE_CUSTOM_LOG_LOCATION}" \
+	--env "APACHE_ERROR_LOG_LOCATION=${APACHE_ERROR_LOG_LOCATION}" \
+	--env "APACHE_ERROR_LOG_LEVEL=${APACHE_ERROR_LOG_LEVEL}" \
 	--env "APACHE_EXTENDED_STATUS_ENABLED=${APACHE_EXTENDED_STATUS_ENABLED}" \
 	--env "APACHE_LOAD_MODULES=${APACHE_LOAD_MODULES}" \
 	--env "APACHE_MOD_SSL_ENABLED=${APACHE_MOD_SSL_ENABLED}" \
+	--env "APACHE_PUBLIC_DIRECTORY=${APACHE_PUBLIC_DIRECTORY}" \
+ 	--env "APACHE_RUN_GROUP=${APACHE_RUN_GROUP}" \
+ 	--env "APACHE_RUN_USER=${APACHE_RUN_USER}" \
 	--env "APACHE_SERVER_ALIAS=${APACHE_SERVER_ALIAS}" \
 	--env "APACHE_SERVER_NAME=${APACHE_SERVER_NAME}" \
-	--env "APP_HOME_DIR=${APP_HOME_DIR}" \
-	--env "DATE_TIMEZONE=${DATE_TIMEZONE}" \
+	--env "APACHE_SUEXEC_USER_GROUP=${APACHE_SUEXEC_USER_GROUP}" \
+	--env "APACHE_SYSTEM_USER=${APACHE_SYSTEM_USER}" \
 	--env "HTTPD=${HTTPD}" \
-	--env "SERVICE_USER=${SERVICE_USER}" \
-	--env "SERVICE_USER_GROUP=${SERVICE_USER_GROUP}" \
-	--env "SERVICE_USER_PASSWORD=${SERVICE_USER_PASSWORD}" \
-	--env "SUEXECUSERGROUP=${SUEXECUSERGROUP}" \
+	--env "PHP_OPTIONS_DATE_TIMEZONE=${PHP_OPTIONS_DATE_TIMEZONE}" \
 	${DOCKER_VOLUMES_FROM:-} \
 	${DOCKER_IMAGE_REPOSITORY_NAME}${@:+ -c }"${@}"
 )
@@ -177,18 +186,23 @@ docker run \
 # 	--env "SERVICE_UNIT_APP_GROUP=app-1" \
 # 	--env "SERVICE_UNIT_LOCAL_ID=1" \
 # 	--env "SERVICE_UNIT_INSTANCE=1" \
-# 	--env "APACHE_EXTENDED_STATUS_ENABLED=true"
+# 	--env "APACHE_CONTENT_ROOT=/var/www/app-1" \
+# 	--env "APACHE_CUSTOM_LOG_FORMAT=forwarded_for_combined" \
+# 	--env "APACHE_CUSTOM_LOG_LOCATION=/var/log/httpd/access_log" \
+# 	--env "APACHE_ERROR_LOG_LOCATION=/var/log/httpd/error_log" \
+# 	--env "APACHE_ERROR_LOG_LEVEL=info" \
+# 	--env "APACHE_EXTENDED_STATUS_ENABLED=true" \
 # 	--env "APACHE_LOAD_MODULES=${APACHE_LOAD_MODULES} rewrite_module" \
 # 	--env "APACHE_MOD_SSL_ENABLED=false" \
+# 	--env "APACHE_PUBLIC_DIRECTORY=public_html" \
+# 	--env "APACHE_RUN_GROUP=www-app" \
+# 	--env "APACHE_RUN_USER=www-app" \
 # 	--env "APACHE_SERVER_ALIAS=app-1 www.app-1 www.app-1.local" \
 # 	--env "APACHE_SERVER_NAME=app-1.local" \
-# 	--env "APP_HOME_DIR=/var/www/app-1" \
-# 	--env "DATE_TIMEZONE=Europe/London" \
+# 	--env "APACHE_SYSTEM_USER=app" \
 # 	--env "HTTPD=/usr/sbin/httpd.worker" \
-# 	--env "SERVICE_USER=app" \
-# 	--env "SERVICE_USER_GROUP=app-www" \
-# 	--env "SERVICE_USER_PASSWORD=" \
-# 	--env "SUEXECUSERGROUP=false" \
+# 	--env "PHP_OPTIONS_DATE_TIMEZONE=Europe/London" \
+# 	--env "APACHE_SUEXEC_USER_GROUP=false" \
 # 	${DOCKER_VOLUMES_FROM:-} \
 # 	${DOCKER_IMAGE_REPOSITORY_NAME}${@:+ -c }"${@}"
 # )

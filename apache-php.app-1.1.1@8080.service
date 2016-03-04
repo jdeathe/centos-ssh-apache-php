@@ -1,17 +1,19 @@
 # -----------------------------------------------------------------------------
-# Create a data container for the configuration volume: 
-#     docker run -v /config --name volume-config.<service-name> busybox /bin/true
-#
-# To install: 
+# To install:
 #     sudo cp <container-path>/<service-name>@<port>.service /etc/systemd/system/
 #     sudo systemctl daemon-reload
-#     sudo systemctl enable /etc/systemd/system/<service-name>@<port>.service
-# 
-# Start using: 
+#     sudo systemctl enable -f /etc/systemd/system/<service-name>@<port>.service
+#
+# Start using:
 #     sudo systemctl [start|stop|restart|kill|status] <service-name>@<port>.service
 #
-# Debugging: 
+# Debugging:
 #     journalctl -fn 50 u <service-name>@<port>.service
+#
+# To uninstall:
+#     sudo systemctl disable -f /etc/systemd/system/<service-name>@<port>.service
+#     sudo systemctl stop /etc/systemd/system/<service-name>@<port>.service
+#     sudo docker rm <service-name>
 # -----------------------------------------------------------------------------
 
 [Unit]
@@ -27,7 +29,7 @@ RestartSec=30
 TimeoutStartSec=1200
 Environment="DOCKER_IMAGE_PACKAGE_PATH=/var/services-packages"
 Environment="DOCKER_IMAGE_NAME=jdeathe/centos-ssh-apache-php"
-Environment="DOCKER_IMAGE_TAG=centos-6-1.4.2"
+Environment="DOCKER_IMAGE_TAG=centos-6-1.4.3"
 Environment="SERVICE_UNIT_APP_GROUP=app-1"
 Environment="SERVICE_UNIT_LOCAL_ID=1"
 Environment="SERVICE_UNIT_INSTANCE=1"
@@ -35,9 +37,24 @@ Environment="VOLUME_CONFIG_ENABLED=false"
 Environment="VOLUME_CONFIG_NAMED=false"
 Environment="VOLUME_CONFIG_NAME=volume-config.%p"
 Environment="VOLUME_DATA_NAME=volume-data.%p"
+Environment="APACHE_CONTENT_ROOT=/var/www/app"
+Environment="APACHE_CUSTOM_LOG_FORMAT=combined"
+Environment="APACHE_CUSTOM_LOG_LOCATION=/var/www/app/var/log/apache_access_log"
+Environment="APACHE_ERROR_LOG_LOCATION=/var/www/app/var/log/apache_error_log"
+Environment="APACHE_ERROR_LOG_LEVEL=warn"
+Environment="APACHE_EXTENDED_STATUS_ENABLED=false"
+Environment="APACHE_LOAD_MODULES=authz_user_module log_config_module expires_module deflate_module headers_module setenvif_module mime_module status_module dir_module alias_module"
+Environment="APACHE_MOD_SSL_ENABLED=false"
+Environment="APACHE_PUBLIC_DIRECTORY=public_html"
+Environment="APACHE_RUN_GROUP=app-www"
+Environment="APACHE_RUN_USER=app-www"
 Environment="APACHE_SERVER_ALIAS=app-1"
+Environment="APACHE_SERVER_HOME=/var/www"
 Environment="APACHE_SERVER_NAME=app-1.local"
-Environment="DATE_TIMEZONE=UTC"
+Environment="APACHE_SUEXEC_USER_GROUP=false"
+Environment="APACHE_SYSTEM_USER=app"
+Environment="HTTPD=/usr/sbin/httpd"
+Environment="PHP_OPTIONS_DATE_TIMEZONE=UTC"
 
 # Initialisation: Load image from local storage if available, otherwise pull.
 ExecStartPre=/bin/sudo /bin/bash -c \
@@ -76,7 +93,7 @@ ExecStartPre=/bin/sudo /bin/bash -c \
     fi; \
   fi"
 
-# Remove existing container (and stop if running). This allows it to 
+# Remove existing container (and stop if running). This allows it to
 # be re-created on startup but not removed on exit as with --rm.
 ExecStartPre=/bin/sudo /bin/bash -c \
   "if [[ %p == $(/usr/bin/docker ps -a | /bin/awk -v pattern='^%p$' '$NF ~ pattern { print $NF; }') ]]; then \
@@ -93,36 +110,41 @@ ExecStart=/bin/sudo /bin/bash -c \
       --name %p \
       -p %i:80 \
       -p 8580:8443 \
-      --env SERVICE_UNIT_APP_GROUP=${SERVICE_UNIT_APP_GROUP} \
-      --env SERVICE_UNIT_LOCAL_ID=${SERVICE_UNIT_LOCAL_ID} \
-      --env SERVICE_UNIT_INSTANCE=${SERVICE_UNIT_INSTANCE} \
-      --env APACHE_SERVER_ALIAS=${APACHE_SERVER_ALIAS} \
-      --env APACHE_SERVER_NAME=${APACHE_SERVER_NAME} \
-      --env DATE_TIMEZONE=${DATE_TIMEZONE} \
+      --env \"SERVICE_UNIT_APP_GROUP=${SERVICE_UNIT_APP_GROUP}\" \
+      --env \"SERVICE_UNIT_LOCAL_ID=${SERVICE_UNIT_LOCAL_ID}\" \
+      --env \"SERVICE_UNIT_INSTANCE=${SERVICE_UNIT_INSTANCE}\" \
+      --env \"APACHE_SERVER_ALIAS=${APACHE_SERVER_ALIAS}\" \
+      --env \"APACHE_SERVER_NAME=${APACHE_SERVER_NAME}\" \
+      --env \"PHP_OPTIONS_DATE_TIMEZONE=${PHP_OPTIONS_DATE_TIMEZONE}\" \
       --volumes-from volume-config.%p \
-      -v ${VOLUME_DATA_NAME}:/var/www/app \
+      -v ${VOLUME_DATA_NAME}:${APACHE_SERVER_HOME} \
       ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}; \
   else \
     /usr/bin/docker run \
       --name %p \
       -p %i:80 \
       -p 8580:8443 \
-      --env SERVICE_UNIT_APP_GROUP=${SERVICE_UNIT_APP_GROUP} \
-      --env SERVICE_UNIT_LOCAL_ID=${SERVICE_UNIT_LOCAL_ID} \
-      --env SERVICE_UNIT_INSTANCE=${SERVICE_UNIT_INSTANCE} \
-      --env APACHE_EXTENDED_STATUS_ENABLED=false \
-      --env APACHE_LOAD_MODULES='authz_user_module log_config_module expires_module deflate_module headers_module setenvif_module mime_module status_module dir_module alias_module' \
-      --env APACHE_MOD_SSL_ENABLED=false \
-      --env APACHE_SERVER_ALIAS=${APACHE_SERVER_ALIAS} \
-      --env APACHE_SERVER_NAME=${APACHE_SERVER_NAME} \
-      --env APP_HOME_DIR=/var/www/app \
-      --env DATE_TIMEZONE=${DATE_TIMEZONE} \
-      --env HTTPD=/usr/sbin/httpd \
-      --env SERVICE_USER=app \
-      --env SERVICE_USER_GROUP=app-www \
-      --env SERVICE_USER_PASSWORD= \
-      --env SUEXECUSERGROUP=false \
-      -v ${VOLUME_DATA_NAME}:/var/www/app \
+      --env \"SERVICE_UNIT_APP_GROUP=${SERVICE_UNIT_APP_GROUP}\" \
+      --env \"SERVICE_UNIT_LOCAL_ID=${SERVICE_UNIT_LOCAL_ID}\" \
+      --env \"SERVICE_UNIT_INSTANCE=${SERVICE_UNIT_INSTANCE}\" \
+      --env \"APACHE_CONTENT_ROOT=${APACHE_CONTENT_ROOT}\" \
+      --env \"APACHE_CUSTOM_LOG_FORMAT=${APACHE_CUSTOM_LOG_FORMAT}\" \
+      --env \"APACHE_CUSTOM_LOG_LOCATION=${APACHE_CUSTOM_LOG_LOCATION}\" \
+      --env \"APACHE_ERROR_LOG_LOCATION=${APACHE_ERROR_LOG_LOCATION}\" \
+      --env \"APACHE_ERROR_LOG_LEVEL=${APACHE_ERROR_LOG_LEVEL}\" \
+      --env \"APACHE_EXTENDED_STATUS_ENABLED=${APACHE_EXTENDED_STATUS_ENABLED}\" \
+      --env \"APACHE_LOAD_MODULES=${APACHE_LOAD_MODULES}\" \
+      --env \"APACHE_MOD_SSL_ENABLED=${APACHE_MOD_SSL_ENABLED}\" \
+      --env \"APACHE_PUBLIC_DIRECTORY=${APACHE_PUBLIC_DIRECTORY}\" \
+      --env \"APACHE_RUN_GROUP=${APACHE_RUN_GROUP}\" \
+      --env \"APACHE_RUN_USER=${APACHE_RUN_USER}\" \
+      --env \"APACHE_SERVER_ALIAS=${APACHE_SERVER_ALIAS}\" \
+      --env \"APACHE_SERVER_NAME=${APACHE_SERVER_NAME}\" \
+      --env \"APACHE_SUEXEC_USER_GROUP=${APACHE_SUEXEC_USER_GROUP}\" \
+      --env \"APACHE_SYSTEM_USER=${APACHE_SYSTEM_USER}\" \
+      --env \"HTTPD=${HTTPD}\" \
+      --env \"PHP_OPTIONS_DATE_TIMEZONE=${PHP_OPTIONS_DATE_TIMEZONE}\" \
+      -v ${VOLUME_DATA_NAME}:${APACHE_SERVER_HOME} \
       ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}; \
   fi"
 
