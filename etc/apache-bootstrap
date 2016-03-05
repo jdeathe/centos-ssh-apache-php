@@ -203,6 +203,24 @@ get_apache_public_directory ()
 	printf "%s" "${VALUE}"
 }
 
+get_ssl_certificate_fingerprint ()
+{
+	local DIGEST=${1:-sha1}
+	local VALUE=""
+
+	VALUE=$(
+		openssl x509 \
+			-${DIGEST} \
+			-in /etc/services-config/ssl/certs/localhost.crt \
+			-noout \
+			-fingerprint
+	)
+
+	VALUE="${VALUE//${DIGEST^^}' Fingerprint='/}"
+
+	printf "%s" "${VALUE}"
+}
+
 update_group_name ()
 {
 	local GROUP_FROM=${1}
@@ -246,6 +264,23 @@ OPTS_APACHE_SERVER_ALIAS="${APACHE_SERVER_ALIAS:-}"
 OPTS_APACHE_SERVER_NAME="${APACHE_SERVER_NAME:-$(hostname)}"
 OPTS_APACHE_SUEXEC_USER_GROUP="${APACHE_SUEXEC_USER_GROUP:-false}"
 OPTS_APACHE_SYSTEM_USER="${APACHE_SYSTEM_USER:-${DEFAULT_SYSTEM_USER}}"
+
+# Generate SSL certificate.
+if [[ ${OPTS_APACHE_MOD_SSL_ENABLED} == true ]] \
+ 	&& [[ ! -f /etc/services-config/ssl/private/localhost.key ]] \
+	|| [[ ! -f /etc/services-config/ssl/certs/localhost.crt ]]; then
+
+	openssl req \
+		-x509 \
+		-sha256 \
+		-nodes \
+		-newkey rsa:4096 \
+		-days 365 \
+		-subj "/C=--/ST=STATE/L=LOCALITY/O=ORGANIZATION/CN=${OPTS_APACHE_SERVER_NAME}" \
+		-keyout /etc/services-config/ssl/private/localhost.key \
+		-out /etc/services-config/ssl/certs/localhost.crt &
+	PIDS[2]=${!}
+fi
 
 # Set the system user passwords
 $(
@@ -356,23 +391,7 @@ fi
 if [[ ${OPTS_APACHE_MOD_SSL_ENABLED} == true ]]; then
 	echo "Enabling SSL support."
 	cat /etc/httpd/conf.d/ssl.conf.off > /etc/httpd/conf.d/ssl.conf
-
-	if [[ ! -f /etc/services-config/ssl/private/localhost.key ]] \
-		|| [[ ! -f /etc/services-config/ssl/certs/localhost.crt ]]; then
-		echo "Generating new certificate."
-		openssl req \
-			-x509 \
-			-nodes \
-			-newkey rsa:4096 \
-			-days 365 \
-			-subj "/C=--/ST=STATE/L=LOCALITY/O=ORGANIZATION/CN=${OPTS_APACHE_SERVER_NAME}" \
-			-keyout /etc/services-config/ssl/private/localhost.key \
-			-out /etc/services-config/ssl/certs/localhost.crt
-	fi
-
-	openssl x509 -in /etc/services-config/ssl/certs/localhost.crt -text
 else
-	echo "Disabling SSL support."
 	> /etc/httpd/conf.d/ssl.conf
 fi
 
@@ -404,6 +423,21 @@ update_group_name ${DEFAULT_APACHE_USER} ${OPTS_APACHE_RUN_USER}
 wait ${PIDS[0]}
 wait ${PIDS[1]}
 
+SSL_CRT_FINGERPRINT_DETAILS=
+if [[ ${OPTS_APACHE_MOD_SSL_ENABLED} == true ]]; then
+	# Wait for certificate generation if necessary
+	[[ -n ${PIDS[2]} ]] && wait ${PIDS[2]}
+
+	DIGEST=sha1
+	FINGERPRINT=$(
+		get_ssl_certificate_fingerprint \
+		${DIGEST}
+	)
+	DETAILS_LABEL="ssl certificate ${DIGEST} fingerprint : "
+
+	SSL_CRT_FINGERPRINT_DETAILS="$(echo -e "\n${DETAILS_LABEL}\n${FINGERPRINT}")"
+fi
+
 TIMER_TOTAL=$(
 	echo - | awk "\
 	{ T1="${TIMER_START}" } \
@@ -423,7 +457,7 @@ cat <<-EOT
 	server alias : ${OPTS_APACHE_SERVER_ALIAS}
 	document root : ${OPTS_APACHE_DOCUMENT_ROOT} (${APACHE_DOCUMENT_ROOT_FILE_SYSTEM})
 	modules enabled :
-	${APACHE_MODULES_ENABLED}
+	${APACHE_MODULES_ENABLED}${SSL_CRT_FINGERPRINT_DETAILS}
 	--------------------------------------------------------------------------------
 	${TIMER_TOTAL}
 
