@@ -267,8 +267,8 @@ OPTS_APACHE_SYSTEM_USER="${APACHE_SYSTEM_USER:-${DEFAULT_SYSTEM_USER}}"
 
 # Generate SSL certificate.
 if [[ ${OPTS_APACHE_MOD_SSL_ENABLED} == true ]] \
- 	&& [[ ! -f /etc/services-config/ssl/private/localhost.key ]] \
-	|| [[ ! -f /etc/services-config/ssl/certs/localhost.crt ]]; then
+ 	&& [[ ! -f /etc/services-config/ssl/private/localhost.key \
+	|| ! -f /etc/services-config/ssl/certs/localhost.crt ]]; then
 
 	openssl req \
 		-x509 \
