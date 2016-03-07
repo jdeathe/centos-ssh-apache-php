@@ -380,9 +380,11 @@ if [[ ${OPTS_APACHE_MOD_SSL_ENABLED} == true ]] \
 	&& [[ -f ${OPTS_APACHE_CONTENT_ROOT}/vhost.conf ]]; then
 	echo "Generating SSL VirtualHost configuration."
 
+	SED_UNCOMMENT='s~\( *\)\(#\( \([^ ]\)\)\?\)\(.*\)$~\1\4\5~'
+
 	sed \
 		-e 's~^<VirtualHost \*:80 \*:8443>$~<VirtualHost \*:443>~g' \
-		-e '/<IfModule mod_ssl.c>/,/<\/IfModule>/ s~\( *\)\(#\( \([^ ]\)\)\?\)\(.*\)$~\1\4\5~' \
+		-e "/<IfModule mod_ssl.c>/,/<\/IfModule>/ ${SED_UNCOMMENT}" \
 		${OPTS_APACHE_CONTENT_ROOT}/vhost.conf > \
 		${OPTS_APACHE_CONTENT_ROOT}/vhost-ssl.conf
 fi
