@@ -382,7 +382,7 @@ if [[ ${OPTS_APACHE_MOD_SSL_ENABLED} == true ]] \
 
 	sed \
 		-e 's~^<VirtualHost \*:80 \*:8443>$~<VirtualHost \*:443>~g' \
-		-e '/<IfModule mod_ssl.c>/,/<\/IfModule>/ s~^#~~' \
+		-e '/<IfModule mod_ssl.c>/,/<\/IfModule>/ s~\( *\)\(#\( \([^ ]\)\)\?\)\(.*\)$~\1\4\5~' \
 		${OPTS_APACHE_CONTENT_ROOT}/vhost.conf > \
 		${OPTS_APACHE_CONTENT_ROOT}/vhost-ssl.conf
 fi
@@ -412,6 +412,12 @@ else
 		-e 's~app/bin/php-wrapper~app-bin/php-wrapper~g' \
 		${VIRTUAL_HOST_CONFIGURATION_FILES}
 fi
+
+# Set correct ownership for fcgid php-wrapper and socket
+chown -R \
+	${OPTS_APACHE_RUN_USER}:${OPTS_APACHE_RUN_GROUP} \
+	/var/{www/app-bin,run/mod_fcgid} \
+	&> /dev/null
 
 # Set the system user's login names and groups
 update_user_login ${DEFAULT_SYSTEM_USER} ${OPTS_APACHE_SYSTEM_USER}
