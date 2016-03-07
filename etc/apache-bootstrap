@@ -415,11 +415,12 @@ else
 		${VIRTUAL_HOST_CONFIGURATION_FILES}
 fi
 
-# Set correct ownership for fcgid php-wrapper and socket
-chown -R \
-	${OPTS_APACHE_RUN_USER}:${OPTS_APACHE_RUN_GROUP} \
-	/var/{www/app-bin,run/mod_fcgid} \
-	&> /dev/null
+# Set ownership for fcgid php-wrapper and socket if necessary
+if [[ -d /var/www/app-bin && -d /var/run/mod_fcgid ]]; then
+	chown -R \
+		${OPTS_APACHE_RUN_USER}:${OPTS_APACHE_RUN_GROUP} \
+		/var/{www/app-bin,run/mod_fcgid}
+fi
 
 # Set the system user's login names and groups
 update_user_login ${DEFAULT_SYSTEM_USER} ${OPTS_APACHE_SYSTEM_USER}
