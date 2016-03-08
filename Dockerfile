@@ -137,8 +137,8 @@ RUN mv /etc/httpd/conf.d/ssl.conf /etc/httpd/conf.d/ssl.conf.off \
 # -----------------------------------------------------------------------------
 RUN { \
 		echo ''; \
-		echo -e '@apache\tsoft\tnproc\t60'; \
-		echo -e '@apache\thard\tnproc\t100'; \
+		echo -e '@apache\tsoft\tnproc\t85'; \
+		echo -e '@apache\thard\tnproc\t170'; \
 	} >> /etc/security/limits.conf
 
 # -----------------------------------------------------------------------------
