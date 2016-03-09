@@ -147,6 +147,7 @@ RUN { \
 RUN sed -i \
 	-e 's~^;date.timezone =$~date.timezone = UTC~g' \
 	-e 's~^;user_ini.filename =$~user_ini.filename =~g' \
+	-e 's~^;cgi.fix_pathinfo=1$~cgi.fix_pathinfo=1~g' \
 	/etc/php.ini
 
 # -----------------------------------------------------------------------------
