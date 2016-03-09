@@ -387,7 +387,8 @@ set_apache_server_name ${OPTS_APACHE_SERVER_NAME} 80
 
 # Enable Apache modules
 APACHE_MODULES_ENABLED=$(
-	enable_apache_modules "${OPTS_APACHE_LOAD_MODULES}"
+	enable_apache_modules "${OPTS_APACHE_LOAD_MODULES}" \
+	| sort
 )
 
 # Generate an SSL VirtualHost configuration if required
