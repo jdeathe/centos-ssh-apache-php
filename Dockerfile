@@ -182,7 +182,8 @@ RUN find ${PACKAGE_PATH} -name '*.gitkeep' -type f -delete \
 RUN chown -R app:app-www ${PACKAGE_PATH} \
 	&& find ${PACKAGE_PATH} -type d -exec chmod 750 {} + \
 	&& find ${PACKAGE_PATH}/var -type d -exec chmod 770 {} + \
-	&& find ${PACKAGE_PATH} -type f -exec chmod 640 {} +
+	&& find ${PACKAGE_PATH} -type f -exec chmod 640 {} + \
+	&& find ${PACKAGE_PATH}/bin -type f -exec chmod 750 {} +
 
 # -----------------------------------------------------------------------------
 # Copy files into place

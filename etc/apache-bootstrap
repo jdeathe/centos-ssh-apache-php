@@ -274,7 +274,6 @@ OPTS_APACHE_RUN_GROUP="${APACHE_RUN_GROUP:-${DEFAULT_APACHE_USER}}"
 OPTS_APACHE_RUN_USER="${APACHE_RUN_USER:-${DEFAULT_APACHE_USER}}"
 OPTS_APACHE_SERVER_ALIAS="${APACHE_SERVER_ALIAS:-}"
 OPTS_APACHE_SERVER_NAME="${APACHE_SERVER_NAME:-$(hostname)}"
-OPTS_APACHE_SUEXEC_USER_GROUP="${APACHE_SUEXEC_USER_GROUP:-false}"
 OPTS_APACHE_SYSTEM_USER="${APACHE_SYSTEM_USER:-${DEFAULT_SYSTEM_USER}}"
 
 # Generate SSL certificate.
@@ -419,24 +418,11 @@ if [[ ${OPTS_APACHE_MOD_SSL_ENABLED} == true ]]; then
 	VIRTUAL_HOST_CONFIGURATION_FILES+=" ${OPTS_APACHE_CONTENT_ROOT}/vhost-ssl.conf"
 fi
 
-# Set the Apache (run) service user/group
-if [[ ${OPTS_APACHE_SUEXEC_USER_GROUP} == true ]]; then
-	sed -i \
-		-e 's~#SuexecUserGroup \(.*\)$~SuexecUserGroup \1~g' \
-		-e 's~app/bin/php-wrapper~app-bin/php-wrapper~g' \
-		${VIRTUAL_HOST_CONFIGURATION_FILES}
-else
-	sed -i \
-		-e 's~\([^#]\)SuexecUserGroup \(.*\)$~\1#SuexecUserGroup \2~g' \
-		-e 's~app/bin/php-wrapper~app-bin/php-wrapper~g' \
-		${VIRTUAL_HOST_CONFIGURATION_FILES}
-fi
-
 # Set ownership for fcgid php-wrapper and socket if necessary
-if [[ -d /var/www/app-bin && -d /var/run/mod_fcgid ]]; then
+if [[ -d ${PACKAGE_PATH}/bin && -d /var/run/mod_fcgid ]]; then
 	chown -R \
 		${OPTS_APACHE_RUN_USER}:${OPTS_APACHE_RUN_GROUP} \
-		/var/{www/app-bin,run/mod_fcgid}
+		{${PACKAGE_PATH}/bin,/var/run/mod_fcgid}
 fi
 
 # Set the system user's login names and groups
