@@ -51,7 +51,6 @@ Environment="APACHE_RUN_USER=app-www"
 Environment="APACHE_SERVER_ALIAS=app-1"
 Environment="APACHE_SERVER_HOME=/var/www"
 Environment="APACHE_SERVER_NAME=app-1.local"
-Environment="APACHE_SUEXEC_USER_GROUP=false"
 Environment="APACHE_SYSTEM_USER=app"
 Environment="HTTPD=/usr/sbin/httpd"
 Environment="PHP_OPTIONS_DATE_TIMEZONE=UTC"
@@ -140,7 +139,6 @@ ExecStart=/bin/sudo /bin/bash -c \
       --env \"APACHE_RUN_USER=${APACHE_RUN_USER}\" \
       --env \"APACHE_SERVER_ALIAS=${APACHE_SERVER_ALIAS}\" \
       --env \"APACHE_SERVER_NAME=${APACHE_SERVER_NAME}\" \
-      --env \"APACHE_SUEXEC_USER_GROUP=${APACHE_SUEXEC_USER_GROUP}\" \
       --env \"APACHE_SYSTEM_USER=${APACHE_SYSTEM_USER}\" \
       --env \"HTTPD=${HTTPD}\" \
       --env \"PHP_OPTIONS_DATE_TIMEZONE=${PHP_OPTIONS_DATE_TIMEZONE}\" \
