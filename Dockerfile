@@ -39,7 +39,6 @@ RUN rpm --rebuilddb \
 RUN sed -i \
 	-e 's~^ServerSignature On$~ServerSignature Off~g' \
 	-e 's~^ServerTokens OS$~ServerTokens Prod~g' \
-	-e 's~^DirectoryIndex \(.*\)$~DirectoryIndex \1 index.php~g' \
 	-e 's~^NameVirtualHost \(.*\)$~#NameVirtualHost \1~g' \
 	-e 's~^User .*$~User ${APACHE_RUN_USER}~g' \
 	-e 's~^Group .*$~Group ${APACHE_RUN_GROUP}~g' \
@@ -137,8 +136,8 @@ RUN mv /etc/httpd/conf.d/ssl.conf /etc/httpd/conf.d/ssl.conf.off \
 # -----------------------------------------------------------------------------
 RUN { \
 		echo ''; \
-		echo -e '@apache\tsoft\tnproc\t60'; \
-		echo -e '@apache\thard\tnproc\t100'; \
+		echo -e '@apache\tsoft\tnproc\t85'; \
+		echo -e '@apache\thard\tnproc\t170'; \
 	} >> /etc/security/limits.conf
 
 # -----------------------------------------------------------------------------
@@ -147,6 +146,7 @@ RUN { \
 RUN sed -i \
 	-e 's~^;date.timezone =$~date.timezone = UTC~g' \
 	-e 's~^;user_ini.filename =$~user_ini.filename =~g' \
+	-e 's~^;cgi.fix_pathinfo=1$~cgi.fix_pathinfo=1~g' \
 	/etc/php.ini
 
 # -----------------------------------------------------------------------------
@@ -182,7 +182,8 @@ RUN find ${PACKAGE_PATH} -name '*.gitkeep' -type f -delete \
 RUN chown -R app:app-www ${PACKAGE_PATH} \
 	&& find ${PACKAGE_PATH} -type d -exec chmod 750 {} + \
 	&& find ${PACKAGE_PATH}/var -type d -exec chmod 770 {} + \
-	&& find ${PACKAGE_PATH} -type f -exec chmod 640 {} +
+	&& find ${PACKAGE_PATH} -type f -exec chmod 640 {} + \
+	&& find ${PACKAGE_PATH}/bin -type f -exec chmod 750 {} +
 
 # -----------------------------------------------------------------------------
 # Copy files into place
@@ -223,7 +224,6 @@ ENV APACHE_RUN_GROUP app-www
 ENV APACHE_RUN_USER app-www
 ENV APACHE_SERVER_ALIAS ""
 ENV APACHE_SERVER_NAME app-1.local
-ENV APACHE_SUEXEC_USER_GROUP false
 ENV APACHE_SYSTEM_USER app
 ENV HTTPD /usr/sbin/httpd
 ENV PACKAGE_PATH ${PACKAGE_PATH}

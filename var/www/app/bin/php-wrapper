@@ -1,0 +1,179 @@
+#!/usr/bin/env bash
+
+source /etc/apache-bootstrap.conf
+
+# Allow PHP settings to be varied by passing a parameter to php-wrapper
+PHP_PACKAGE_NAME=${1}
+
+# Mode of opperation: production,development,debug.
+# Used to enable appropriate php options for requirements
+PHP_WRAPPER_MODE=${2}
+
+# VirtualHost specific options can be used to override the PHP options set in 
+# this wrapper
+PHP_VHOST_OPTIONS=${3}
+
+# Set path to php.ini
+export PHPRC=/etc
+
+# PHP child process management should always be disabled with mod_fcgid
+export PHP_FCGI_CHILDREN=0
+export PHP_FCGI_MAX_REQUESTS=15000
+
+export REDIRECT_STATUS=200
+export TMP="${APACHE_CONTENT_ROOT}/var/tmp"
+export TEMP=${TMP}
+export TMPDIR=${TMP}
+
+X_NICE=/bin/nice
+X_PHP_CGI_NICENESS=15
+X_PHP_CGI=/usr/bin/php-cgi
+
+if [[ ${PHP_PACKAGE_NAME} == rh-php56 ]] \
+	&& [[ -f /opt/rh/rh-php56/enable ]] \
+	&& [[ -f /opt/rh/rh-php56/root/usr/bin/php-cgi ]]; then
+	source /opt/rh/rh-php56/enable
+	export X_SCLS="$(scl enable rh-php56 'echo $X_SCLS')"
+
+	X_PHP_CGI=/opt/rh/rh-php56/root/usr/bin/php-cgi
+elif [[ ${PHP_PACKAGE_NAME} == php55 ]] \
+	&& [[ -f /opt/rh/php55/enable ]] \
+	&& [[ -f /opt/rh/php55/root/usr/bin/php-cgi ]]; then
+	source /opt/rh/php55/enable
+	export X_SCLS="$(scl enable php55 'echo $X_SCLS')"
+
+	X_PHP_CGI=/opt/rh/php55/root/usr/bin/php-cgi
+elif [[ ${PHP_PACKAGE_NAME} == php54 ]] \
+	&& [[ -f /opt/rh/php54/enable ]] \
+	&& [[ -f /opt/rh/php54/root/usr/bin/php-cgi ]]; then
+	source /opt/rh/php54/enable
+	export X_SCLS="$(scl enable php54 'echo $X_SCLS')"
+
+	X_PHP_CGI=/opt/rh/php54/root/usr/bin/php-cgi
+fi
+
+# Unset MySQL environment variables if they are not set in the vhost
+if [[ ${DB_MYSQL_PORT_3306_TCP_ADDR} == '${DB_MYSQL_PORT_3306_TCP_ADDR}' ]]; then
+	unset DB_MYSQL_PORT_3306_TCP_ADDR
+fi
+
+if [[ ${DB_MYSQL_PORT_3306_TCP_PORT} == '${DB_MYSQL_PORT_3306_TCP_PORT}' ]]; then
+	unset DB_MYSQL_PORT_3306_TCP_PORT
+fi
+
+PHP_OPTIONS_DISABLE_FUNCTIONS="system,exec,passthru,shell_exec,proc_open,show_source,popen,pcntl_fork,pcntl_exec,escapeshellarg,escapeshellcmd,openlog,closelog,uname,php_uname"
+PHP_OPTIONS_OPEN_BASE_DIR="${APACHE_CONTENT_ROOT}"
+
+PHP_OPTIONS_MEMORY_LIMIT="32M"
+PHP_OPTIONS_POST_MAX_SIZE="32M"
+PHP_OPTIONS_UPLOAD_MAX_FILESIZE="24M"
+
+# Use numeric values here. 
+# To identify the correct value use: php -r "echo E_ALL & ~E_DEPRECATED;"
+#   Default Value: E_ALL & ~E_NOTICE        = 30711
+#   Development Value: E_ALL | E_STRICT     = 32767
+#   Production Value: E_ALL & ~E_DEPRECATED = 22527
+PHP_OPTIONS_ERROR_REPORTING=22527
+PHP_OPTIONS_DISPLAY_ERRORS="Off"
+PHP_OPTIONS_HTML_ERRORS="Off"
+
+PHP_OPTIONS_XDEBUG_SHOW_EXCEPTION_TRACE="Off"
+PHP_OPTIONS_XDEBUG_TRACE_ENABLE_TRIGGER="Off"
+PHP_OPTIONS_XDEBUG_TRACE_FORMAT="0"
+PHP_OPTIONS_XDEBUG_COLLECT_PARAMS="0"
+PHP_OPTIONS_XDEBUG_COLLECT_RETURN="Off"
+PHP_OPTIONS_XDEBUG_SHOW_MEM_DELTA="Off"
+PHP_OPTIONS_XDEBUG_REMOTE_ENABLE="Off"
+PHP_OPTIONS_XDEBUG_REMOTE_MODE="req"
+PHP_OPTIONS_XDEBUG_REMOTE_CONNECT_BACK="Off"
+PHP_OPTIONS_XDEBUG_PROFILER_ENABLE_TRIGGER="Off"
+
+# Set the PHP options appropriately for requirements
+case ${PHP_WRAPPER_MODE} in
+	development|debug)
+		PHP_OPTIONS_DISPLAY_ERRORS="On"
+		PHP_OPTIONS_HTML_ERRORS="On"
+		PHP_OPTIONS_ERROR_REPORTING=32767
+		PHP_OPTIONS_XDEBUG_SHOW_EXCEPTION_TRACE="On"
+		PHP_OPTIONS_XDEBUG_TRACE_ENABLE_TRIGGER="On"
+		PHP_OPTIONS_XDEBUG_TRACE_FORMAT="0"
+		PHP_OPTIONS_XDEBUG_COLLECT_PARAMS="4"
+		PHP_OPTIONS_XDEBUG_COLLECT_RETURN="On"
+		PHP_OPTIONS_XDEBUG_SHOW_MEM_DELTA="On"
+		PHP_OPTIONS_XDEBUG_REMOTE_ENABLE="On"
+		PHP_OPTIONS_XDEBUG_REMOTE_CONNECT_BACK="On"
+		PHP_OPTIONS_XDEBUG_PROFILER_ENABLE_TRIGGER="On"
+		case ${PHP_WRAPPER_MODE} in
+			debug)
+				PHP_OPTIONS_XDEBUG_TRACE_FORMAT="1"
+				PHP_OPTIONS_XDEBUG_COLLECT_PARAMS="2"
+				;;
+		esac
+		;;
+	production)
+		;;
+	*)
+		;;
+esac
+
+PHP_OPTIONS="
+ -d disable_functions=${PHP_OPTIONS_DISABLE_FUNCTIONS}
+ -d open_basedir=${APACHE_CONTENT_ROOT}
+ -d include_path=${APACHE_CONTENT_ROOT}
+ -d expose_php=Off
+ -d allow_url_fopen=Off
+ -d magic_quotes_sybase=Off
+ -d magic_quotes_gpc=Off
+ -d memory_limit=${PHP_OPTIONS_MEMORY_LIMIT}
+ -d post_max_size=${PHP_OPTIONS_POST_MAX_SIZE}
+ -d file_uploads=On
+ -d upload_max_filesize=${PHP_OPTIONS_UPLOAD_MAX_FILESIZE}
+ -d upload_tmp_dir=${TMP}
+ -d mysqli.reconnect=On
+ -d register_globals=Off
+ -d default_charset=UTF-8
+ -d date.timezone=${PHP_OPTIONS_DATE_TIMEZONE:-UTC}
+ -d error_reporting=${PHP_OPTIONS_ERROR_REPORTING}
+ -d display_errors=${PHP_OPTIONS_DISPLAY_ERRORS}
+ -d log_errors=On
+ -d error_log=${APACHE_CONTENT_ROOT}/var/log/php_error_log
+ -d html_errors=${PHP_OPTIONS_HTML_ERRORS}
+ -d session.save_path=${APACHE_CONTENT_ROOT}/var/session
+ -d session.name=app-session 
+ -d session.cookie_httponly=1
+ -d session.hash_function=sha256
+ -d session.hash_bits_per_character=5
+ -d mbstring.language=Neutral
+ -d mbstring.internal_encoding=UTF-8
+ -d mbstring.encoding_translation=On
+ -d mbstring.http_input=auto
+ -d mbstring.http_output=UTF-8
+ -d mbstring.detect_order=auto
+ -d mbstring.substitute_character=none
+ -d xdebug.show_exception_trace=${PHP_OPTIONS_XDEBUG_SHOW_EXCEPTION_TRACE}
+ -d xdebug.auto_trace=Off
+ -d xdebug.trace_enable_trigger=${PHP_OPTIONS_XDEBUG_TRACE_ENABLE_TRIGGER}
+ -d xdebug.trace_output_dir=${TMP}
+ -d xdebug.trace_output_name=trace.%R.%t
+ -d xdebug.trace_format=${PHP_OPTIONS_XDEBUG_TRACE_FORMAT}
+ -d xdebug.collect_params=${PHP_OPTIONS_XDEBUG_COLLECT_PARAMS}
+ -d xdebug.collect_return=${PHP_OPTIONS_XDEBUG_COLLECT_RETURN}
+ -d xdebug.show_mem_delta=${PHP_OPTIONS_XDEBUG_SHOW_MEM_DELTA}
+ -d xdebug.idekey=ide-xdebug
+ -d xdebug.remote_enable=${PHP_OPTIONS_XDEBUG_REMOTE_ENABLE}
+ -d xdebug.remote_host=localhost
+ -d xdebug.remote_port=9000
+ -d xdebug.remote_mode=${PHP_OPTIONS_XDEBUG_REMOTE_MODE}
+ -d xdebug.remote_connect_back=${PHP_OPTIONS_XDEBUG_REMOTE_CONNECT_BACK}
+ -d xdebug.profiler_enable=Off
+ -d xdebug.profiler_enable_trigger=${PHP_OPTIONS_XDEBUG_PROFILER_ENABLE_TRIGGER}
+ -d xdebug.profiler_output_dir=${TMP}
+ -d xdebug.profiler_output_name=cachegrind.out.%R.%t
+"
+
+# FastCGI-enabled PHP executable
+exec ${X_NICE} \
+	-n ${X_PHP_CGI_NICENESS} \
+	${X_PHP_CGI} \
+	${PHP_OPTIONS} \
+	${PHP_VHOST_OPTIONS}

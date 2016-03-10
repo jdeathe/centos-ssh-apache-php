@@ -203,6 +203,24 @@ get_apache_public_directory ()
 	printf "%s" "${VALUE}"
 }
 
+get_ssl_certificate_fingerprint ()
+{
+	local DIGEST=${1:-sha1}
+	local VALUE=""
+
+	VALUE=$(
+		openssl x509 \
+			-${DIGEST} \
+			-in /etc/services-config/ssl/certs/localhost.crt \
+			-noout \
+			-fingerprint
+	)
+
+	VALUE="${VALUE//${DIGEST^^}' Fingerprint='/}"
+
+	printf "%s" "${VALUE}"
+}
+
 update_group_name ()
 {
 	local GROUP_FROM=${1}
@@ -232,20 +250,50 @@ update_user_login ()
 
 DEFAULT_SYSTEM_USER=app
 DEFAULT_APACHE_USER=app-www
+DEFAULT_APACHE_LOAD_MODULES="
+ authz_user_module
+ log_config_module
+ expires_module
+ deflate_module
+ headers_module
+ setenvif_module
+ mime_module
+ status_module
+ dir_module
+ alias_module
+"
 PACKAGE_PATH=${PACKAGE_PATH:-/opt/app}
 PASSWORD_LENGTH=16
 
 OPTS_APACHE_CONTENT_ROOT="$(get_apache_content_root)"
 OPTS_APACHE_DOCUMENT_ROOT="${OPTS_APACHE_CONTENT_ROOT}/$(get_apache_public_directory)"
 OPTS_APACHE_EXTENDED_STATUS_ENABLED="${APACHE_EXTENDED_STATUS_ENABLED:-false}"
-OPTS_APACHE_LOAD_MODULES="${APACHE_LOAD_MODULES:-authz_user_module log_config_module expires_module deflate_module headers_module setenvif_module mime_module status_module dir_module alias_module reqtimeout_module}"
+OPTS_APACHE_LOAD_MODULES="${APACHE_LOAD_MODULES:-${DEFAULT_APACHE_LOAD_MODULES}}"
 OPTS_APACHE_MOD_SSL_ENABLED="${APACHE_MOD_SSL_ENABLED:-false}"
 OPTS_APACHE_RUN_GROUP="${APACHE_RUN_GROUP:-${DEFAULT_APACHE_USER}}"
 OPTS_APACHE_RUN_USER="${APACHE_RUN_USER:-${DEFAULT_APACHE_USER}}"
 OPTS_APACHE_SERVER_ALIAS="${APACHE_SERVER_ALIAS:-}"
 OPTS_APACHE_SERVER_NAME="${APACHE_SERVER_NAME:-$(hostname)}"
-OPTS_APACHE_SUEXEC_USER_GROUP="${APACHE_SUEXEC_USER_GROUP:-false}"
 OPTS_APACHE_SYSTEM_USER="${APACHE_SYSTEM_USER:-${DEFAULT_SYSTEM_USER}}"
+
+# Generate SSL certificate.
+if [[ ${OPTS_APACHE_MOD_SSL_ENABLED} == true ]] \
+ 	&& [[ ! -f /etc/services-config/ssl/private/localhost.key \
+	|| ! -f /etc/services-config/ssl/certs/localhost.crt ]]; then
+
+	openssl req \
+		-x509 \
+		-sha256 \
+		-nodes \
+		-newkey rsa:4096 \
+		-days 365 \
+		-subj "/C=--/ST=STATE/L=LOCALITY/O=ORGANIZATION/CN=${OPTS_APACHE_SERVER_NAME}" \
+		-keyout /etc/services-config/ssl/private/localhost.key \
+		-out /etc/services-config/ssl/certs/localhost.crt \
+	&
+
+	PIDS[2]=${!}
+fi
 
 # Set the system user passwords
 $(
@@ -306,20 +354,22 @@ HTTPD=${HTTPD:-${HTTPD_MPM_PREFORK}}
 if [[ ${HTTPD} == ${HTTPD_MPM_PREFORK} ]]; then
 	echo "Apache Server MPM: Prefork"
 	sed -i \
-	-e "s~HTTPD=${HTTPD_MPM_WORKER}~#HTTPD=${HTTPD_MPM_WORKER}~g" \
-	/etc/sysconfig/httpd
+		-e "s~HTTPD=${HTTPD_MPM_WORKER}~#HTTPD=${HTTPD_MPM_WORKER}~g" \
+		/etc/sysconfig/httpd
 elif [[ ${HTTPD} == ${HTTPD_MPM_WORKER} ]]; then
 	echo "Apache Server MPM: Worker"
 	sed -i \
-	-e "s~#HTTPD=${HTTPD_MPM_WORKER}~HTTPD=${HTTPD_MPM_WORKER}~g" \
-	/etc/sysconfig/httpd
+		-e "s~#HTTPD=${HTTPD_MPM_WORKER}~HTTPD=${HTTPD_MPM_WORKER}~g" \
+		/etc/sysconfig/httpd
 else
 	echo "ERROR: Apache Server MPM (${HTTPD}) unknown."
 	exit 1
 fi
 
 # Add local hosts entries
-add_hosts_entry 127.0.0.1 ${OPTS_APACHE_SERVER_NAME}${OPTS_APACHE_SERVER_ALIAS:+ }${OPTS_APACHE_SERVER_ALIAS}
+add_hosts_entry \
+	127.0.0.1 \
+	${OPTS_APACHE_SERVER_NAME}${OPTS_APACHE_SERVER_ALIAS:+ }${OPTS_APACHE_SERVER_ALIAS}
 
 # Set Apache EnableSendfile
 if [[ ${APACHE_DOCUMENT_ROOT_FILE_SYSTEM} == nfs ]]; then
@@ -336,7 +386,8 @@ set_apache_server_name ${OPTS_APACHE_SERVER_NAME} 80
 
 # Enable Apache modules
 APACHE_MODULES_ENABLED=$(
-	enable_apache_modules "${OPTS_APACHE_LOAD_MODULES}"
+	enable_apache_modules "${OPTS_APACHE_LOAD_MODULES}" \
+	| sort
 )
 
 # Generate an SSL VirtualHost configuration if required
@@ -345,9 +396,11 @@ if [[ ${OPTS_APACHE_MOD_SSL_ENABLED} == true ]] \
 	&& [[ -f ${OPTS_APACHE_CONTENT_ROOT}/vhost.conf ]]; then
 	echo "Generating SSL VirtualHost configuration."
 
+	SED_UNCOMMENT='s~\( *\)\(#\( \([^ ]\)\)\?\)\(.*\)$~\1\4\5~'
+
 	sed \
 		-e 's~^<VirtualHost \*:80 \*:8443>$~<VirtualHost \*:443>~g' \
-		-e '/<IfModule mod_ssl.c>/,/<\/IfModule>/ s~^#~~' \
+		-e "/<IfModule mod_ssl.c>/,/<\/IfModule>/ ${SED_UNCOMMENT}" \
 		${OPTS_APACHE_CONTENT_ROOT}/vhost.conf > \
 		${OPTS_APACHE_CONTENT_ROOT}/vhost-ssl.conf
 fi
@@ -356,42 +409,15 @@ fi
 if [[ ${OPTS_APACHE_MOD_SSL_ENABLED} == true ]]; then
 	echo "Enabling SSL support."
 	cat /etc/httpd/conf.d/ssl.conf.off > /etc/httpd/conf.d/ssl.conf
-
-	if [[ ! -f /etc/services-config/ssl/private/localhost.key ]] \
-		|| [[ ! -f /etc/services-config/ssl/certs/localhost.crt ]]; then
-		echo "Generating new certificate."
-		openssl req \
-			-x509 \
-			-nodes \
-			-newkey rsa:4096 \
-			-days 365 \
-			-subj "/C=--/ST=STATE/L=LOCALITY/O=ORGANIZATION/CN=${OPTS_APACHE_SERVER_NAME}" \
-			-keyout /etc/services-config/ssl/private/localhost.key \
-			-out /etc/services-config/ssl/certs/localhost.crt
-	fi
-
-	openssl x509 -in /etc/services-config/ssl/certs/localhost.crt -text
 else
-	echo "Disabling SSL support."
 	> /etc/httpd/conf.d/ssl.conf
 fi
 
-VIRTUAL_HOST_CONFIGURATION_FILES="${OPTS_APACHE_CONTENT_ROOT}/vhost.conf"
-if [[ ${OPTS_APACHE_MOD_SSL_ENABLED} == true ]]; then
-	VIRTUAL_HOST_CONFIGURATION_FILES+=" ${OPTS_APACHE_CONTENT_ROOT}/vhost-ssl.conf"
-fi
-
-# Set the Apache (run) service user/group
-if [[ ${OPTS_APACHE_SUEXEC_USER_GROUP} == true ]]; then
-	sed -i \
-		-e 's~#SuexecUserGroup \(.*\)$~SuexecUserGroup \1~g' \
-		-e 's~app/bin/php-wrapper~app-bin/php-wrapper~g' \
-		${VIRTUAL_HOST_CONFIGURATION_FILES}
-else
-	sed -i \
-		-e 's~\([^#]\)SuexecUserGroup \(.*\)$~\1#SuexecUserGroup \2~g' \
-		-e 's~app/bin/php-wrapper~app-bin/php-wrapper~g' \
-		${VIRTUAL_HOST_CONFIGURATION_FILES}
+# Set ownership for fcgid php-wrapper and socket if necessary
+if [[ -d ${PACKAGE_PATH}/bin && -d /var/run/mod_fcgid ]]; then
+	chown -R \
+		${OPTS_APACHE_RUN_USER}:${OPTS_APACHE_RUN_GROUP} \
+		{${PACKAGE_PATH}/bin,/var/run/mod_fcgid}
 fi
 
 # Set the system user's login names and groups
@@ -403,6 +429,21 @@ update_group_name ${DEFAULT_APACHE_USER} ${OPTS_APACHE_RUN_USER}
 # Wait for background processes
 wait ${PIDS[0]}
 wait ${PIDS[1]}
+
+SSL_CRT_FINGERPRINT_DETAILS=
+if [[ ${OPTS_APACHE_MOD_SSL_ENABLED} == true ]]; then
+	# Wait for certificate generation if necessary
+	[[ -n ${PIDS[2]} ]] && wait ${PIDS[2]}
+
+	DIGEST=sha1
+	FINGERPRINT=$(
+		get_ssl_certificate_fingerprint \
+		${DIGEST}
+	)
+	DETAILS_LABEL="ssl certificate ${DIGEST} fingerprint : "
+
+	SSL_CRT_FINGERPRINT_DETAILS="$(echo -e "\n${DETAILS_LABEL}\n${FINGERPRINT}")"
+fi
 
 TIMER_TOTAL=$(
 	echo - | awk "\
@@ -423,7 +464,7 @@ cat <<-EOT
 	server alias : ${OPTS_APACHE_SERVER_ALIAS}
 	document root : ${OPTS_APACHE_DOCUMENT_ROOT} (${APACHE_DOCUMENT_ROOT_FILE_SYSTEM})
 	modules enabled :
-	${APACHE_MODULES_ENABLED}
+	${APACHE_MODULES_ENABLED}${SSL_CRT_FINGERPRINT_DETAILS}
 	--------------------------------------------------------------------------------
 	${TIMER_TOTAL}
 
