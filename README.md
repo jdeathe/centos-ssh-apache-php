@@ -313,8 +313,8 @@ You can view the output from Apache server-status either using the elinks browse
 ```
 $ docker exec -it apache-php.app-1.1.1 \
   env TERM=xterm \
-  watch -n 10 \
-  -d "curl -s http://app-1/_httpdstatus?auto"
+  watch -n 1 \
+  -d "curl -s http://app-1/server-status?auto"
 ```
 
 ##### APACHE_LOAD_MODULES
