@@ -12,24 +12,48 @@ MAINTAINER James Deathe <james.deathe@gmail.com>
 ARG PACKAGE_NAME="app"
 ARG PACKAGE_PATH="/opt/${PACKAGE_NAME}"
 
+ARG APACHE_PACKAGE_NAME=httpd
+ARG APACHE_PACKAGE_VERSION=2.2.15
+ARG APACHE_PACKAGE_RELEASE=47.el6.centos
+
+ARG ELINKS_PACKAGE_NAME=elinks
+ARG ELINKS_PACKAGE_VERSION=0.12
+ARG ELINKS_PACKAGE_RELEASE=0.21.pre5.el6_3
+
+ARG PHP_PACKAGE_NAME=php
+ARG PHP_PACKAGE_VERSION=5.3.3
+ARG PHP_PACKAGE_RELEASE=46.el6_6
+
+ARG PHP_PACKAGE_NAME=php
+ARG PHP_PACKAGE_VERSION=5.3.3
+ARG PHP_PACKAGE_RELEASE=46.el6_6
+
+ARG PHP_APC_PACKAGE_NAME=php-pecl-apc
+ARG PHP_APC_PACKAGE_VERSION=3.1.9
+ARG PHP_APC_PACKAGE_RELEASE=2.el6
+
+ARG PHP_MEMCACHE_PACKAGE_NAME=php-pecl-memcached
+ARG PHP_MEMCACHE_PACKAGE_VERSION=1.0.0
+ARG PHP_MEMCACHE_PACKAGE_RELEASE=1.el6
+
 # -----------------------------------------------------------------------------
 # Base Apache, PHP
 # -----------------------------------------------------------------------------
 RUN rpm --rebuilddb \
 	&& yum --setopt=tsflags=nodocs -y install \
-	elinks-0.12-0.21.pre5.el6_3 \
-	httpd-2.2.15-47.el6.centos \
-	mod_ssl-2.2.15-47.el6.centos \
-	php-5.3.3-46.el6_6 \
-	php-cli-5.3.3-46.el6_6 \
-	php-zts-5.3.3-46.el6_6 \
-	php-pecl-apc-3.1.9-2.el6 \
-	php-pecl-memcached-1.0.0-1.el6 \
+	${ELINKS_PACKAGE_NAME}-${ELINKS_PACKAGE_VERSION}-${ELINKS_PACKAGE_RELEASE} \
+	${APACHE_PACKAGE_NAME}-${APACHE_PACKAGE_VERSION}-${PHP_PACKAGE_RELEASE} \
+	mod_ssl-${APACHE_PACKAGE_VERSION}-${PHP_PACKAGE_RELEASE} \
+	${PHP_PACKAGE_NAME}-${PHP_PACKAGE_VERSION}-${PHP_PACKAGE_RELEASE} \
+	${PHP_PACKAGE_NAME}-cli-${PHP_PACKAGE_VERSION}-${PHP_PACKAGE_RELEASE} \
+	${PHP_PACKAGE_NAME}-zts-${PHP_PACKAGE_VERSION}-${PHP_PACKAGE_RELEASE} \
+	${PHP_APC_PACKAGE_NAME}-3.1.9-2.el6 \
+	${PHP_MEMCACHE_PACKAGE_NAME}-1.0.0-1.el6 \
 	&& yum versionlock add \
-	elinks \
-	httpd \
+	${ELINKS_PACKAGE_NAME} \
+	${APACHE_PACKAGE_NAME} \
 	mod_ssl \
-	php* \
+	${PHP_PACKAGE_NAME}* \
 	&& rm -rf /var/cache/yum/* \
 	&& yum clean all
 
@@ -143,11 +167,19 @@ RUN { \
 # -----------------------------------------------------------------------------
 # Global PHP configuration changes
 # -----------------------------------------------------------------------------
-RUN sed -i \
-	-e 's~^;date.timezone =$~date.timezone = UTC~g' \
+RUN sed \
+		-e 's~^; .*$~~' \
+		-e 's~^;*$~~' \
+		-e '/^$/d' \
+		-e 's~^\[~\n\[~g' \
+		/etc/php.ini \
+		> /etc/php.d/00-php.ini.default \
+	&& sed \
 	-e 's~^;user_ini.filename =$~user_ini.filename =~g' \
 	-e 's~^;cgi.fix_pathinfo=1$~cgi.fix_pathinfo=1~g' \
-	/etc/php.ini
+	-e 's~^;date.timezone =$~date.timezone = UTC~g' \
+	/etc/php.d/00-php.ini.default \
+	> /etc/php.d/00-php.ini
 
 # -----------------------------------------------------------------------------
 # APC op-code cache stats
@@ -172,7 +204,10 @@ RUN useradd -r -M -d /var/www/app -s /sbin/nologin app \
 # -----------------------------------------------------------------------------
 RUN mkdir -p -m 750 ${PACKAGE_PATH}
 ADD var/www/app ${PACKAGE_PATH}
-RUN find ${PACKAGE_PATH} -name '*.gitkeep' -type f -delete \
+RUN ln -sf \
+		${PACKAGE_PATH}/etc/php.d/50-php.ini \
+		/etc/php.d/50-php.ini \
+	&& find ${PACKAGE_PATH} -name '*.gitkeep' -type f -delete \
 	&& echo '<?php phpinfo(); ?>' > ${PACKAGE_PATH}/public_html/_phpinfo.php \
 	&& cp /usr/share/php-pecl-apc/apc.php ${PACKAGE_PATH}/public_html/_apc.php
 
@@ -219,6 +254,7 @@ ENV APACHE_ERROR_LOG_LEVEL warn
 ENV APACHE_EXTENDED_STATUS_ENABLED false
 ENV APACHE_LOAD_MODULES "authz_user_module log_config_module expires_module deflate_module headers_module setenvif_module mime_module status_module dir_module alias_module"
 ENV APACHE_MOD_SSL_ENABLED false
+ENV APACHE_OPERATING_MODE production
 ENV APACHE_PUBLIC_DIRECTORY public_html
 ENV APACHE_RUN_GROUP app-www
 ENV APACHE_RUN_USER app-www
