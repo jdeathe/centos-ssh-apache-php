@@ -12,48 +12,24 @@ MAINTAINER James Deathe <james.deathe@gmail.com>
 ARG PACKAGE_NAME="app"
 ARG PACKAGE_PATH="/opt/${PACKAGE_NAME}"
 
-ARG APACHE_PACKAGE_NAME=httpd
-ARG APACHE_PACKAGE_VERSION=2.2.15
-ARG APACHE_PACKAGE_RELEASE=47.el6.centos
-
-ARG ELINKS_PACKAGE_NAME=elinks
-ARG ELINKS_PACKAGE_VERSION=0.12
-ARG ELINKS_PACKAGE_RELEASE=0.21.pre5.el6_3
-
-ARG PHP_PACKAGE_NAME=php
-ARG PHP_PACKAGE_VERSION=5.3.3
-ARG PHP_PACKAGE_RELEASE=46.el6_6
-
-ARG PHP_PACKAGE_NAME=php
-ARG PHP_PACKAGE_VERSION=5.3.3
-ARG PHP_PACKAGE_RELEASE=46.el6_6
-
-ARG PHP_APC_PACKAGE_NAME=php-pecl-apc
-ARG PHP_APC_PACKAGE_VERSION=3.1.9
-ARG PHP_APC_PACKAGE_RELEASE=2.el6
-
-ARG PHP_MEMCACHE_PACKAGE_NAME=php-pecl-memcached
-ARG PHP_MEMCACHE_PACKAGE_VERSION=1.0.0
-ARG PHP_MEMCACHE_PACKAGE_RELEASE=1.el6
-
 # -----------------------------------------------------------------------------
 # Base Apache, PHP
 # -----------------------------------------------------------------------------
 RUN rpm --rebuilddb \
 	&& yum --setopt=tsflags=nodocs -y install \
-	${ELINKS_PACKAGE_NAME}-${ELINKS_PACKAGE_VERSION}-${ELINKS_PACKAGE_RELEASE} \
-	${APACHE_PACKAGE_NAME}-${APACHE_PACKAGE_VERSION}-${PHP_PACKAGE_RELEASE} \
-	mod_ssl-${APACHE_PACKAGE_VERSION}-${PHP_PACKAGE_RELEASE} \
-	${PHP_PACKAGE_NAME}-${PHP_PACKAGE_VERSION}-${PHP_PACKAGE_RELEASE} \
-	${PHP_PACKAGE_NAME}-cli-${PHP_PACKAGE_VERSION}-${PHP_PACKAGE_RELEASE} \
-	${PHP_PACKAGE_NAME}-zts-${PHP_PACKAGE_VERSION}-${PHP_PACKAGE_RELEASE} \
-	${PHP_APC_PACKAGE_NAME}-3.1.9-2.el6 \
-	${PHP_MEMCACHE_PACKAGE_NAME}-1.0.0-1.el6 \
+	elinks-0.12-0.21.pre5.el6_3 \
+	httpd-2.2.15-47.el6.centos \
+	mod_ssl-2.2.15-47.el6.centos \
+	php-5.3.3-46.el6_6 \
+	php-cli-5.3.3-46.el6_6 \
+	php-zts-5.3.3-46.el6_6 \
+	php-pecl-apc-3.1.9-2.el6 \
+	php-pecl-memcached-1.0.0-1.el6 \
 	&& yum versionlock add \
-	${ELINKS_PACKAGE_NAME} \
-	${APACHE_PACKAGE_NAME} \
+	elinks \
+	httpd \
 	mod_ssl \
-	${PHP_PACKAGE_NAME}* \
+	php* \
 	&& rm -rf /var/cache/yum/* \
 	&& yum clean all
 
