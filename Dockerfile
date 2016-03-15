@@ -143,11 +143,19 @@ RUN { \
 # -----------------------------------------------------------------------------
 # Global PHP configuration changes
 # -----------------------------------------------------------------------------
-RUN sed -i \
-	-e 's~^;date.timezone =$~date.timezone = UTC~g' \
+RUN sed \
+		-e 's~^; .*$~~' \
+		-e 's~^;*$~~' \
+		-e '/^$/d' \
+		-e 's~^\[~\n\[~g' \
+		/etc/php.ini \
+		> /etc/php.d/00-php.ini.default \
+	&& sed \
 	-e 's~^;user_ini.filename =$~user_ini.filename =~g' \
 	-e 's~^;cgi.fix_pathinfo=1$~cgi.fix_pathinfo=1~g' \
-	/etc/php.ini
+	-e 's~^;date.timezone =$~date.timezone = UTC~g' \
+	/etc/php.d/00-php.ini.default \
+	> /etc/php.d/00-php.ini
 
 # -----------------------------------------------------------------------------
 # APC op-code cache stats
@@ -172,7 +180,10 @@ RUN useradd -r -M -d /var/www/app -s /sbin/nologin app \
 # -----------------------------------------------------------------------------
 RUN mkdir -p -m 750 ${PACKAGE_PATH}
 ADD var/www/app ${PACKAGE_PATH}
-RUN find ${PACKAGE_PATH} -name '*.gitkeep' -type f -delete \
+RUN ln -sf \
+		${PACKAGE_PATH}/etc/php.d/50-php.ini \
+		/etc/php.d/50-php.ini \
+	&& find ${PACKAGE_PATH} -name '*.gitkeep' -type f -delete \
 	&& echo '<?php phpinfo(); ?>' > ${PACKAGE_PATH}/public_html/_phpinfo.php \
 	&& cp /usr/share/php-pecl-apc/apc.php ${PACKAGE_PATH}/public_html/_apc.php
 
@@ -219,6 +230,7 @@ ENV APACHE_ERROR_LOG_LEVEL warn
 ENV APACHE_EXTENDED_STATUS_ENABLED false
 ENV APACHE_LOAD_MODULES "authz_user_module log_config_module expires_module deflate_module headers_module setenvif_module mime_module status_module dir_module alias_module"
 ENV APACHE_MOD_SSL_ENABLED false
+ENV APACHE_OPERATING_MODE production
 ENV APACHE_PUBLIC_DIRECTORY public_html
 ENV APACHE_RUN_GROUP app-www
 ENV APACHE_RUN_USER app-www
