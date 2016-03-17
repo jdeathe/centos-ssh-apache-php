@@ -213,13 +213,6 @@ RUN mkdir -p /etc/services-config/{httpd/{conf,conf.d},ssl/{certs,private}} \
 	&& chmod +x /etc/apache-bootstrap
 
 # -----------------------------------------------------------------------------
-# Set default environment variables used to identify the service container
-# -----------------------------------------------------------------------------
-ENV SERVICE_UNIT_APP_GROUP app-1
-ENV SERVICE_UNIT_LOCAL_ID 1
-ENV SERVICE_UNIT_INSTANCE 1
-
-# -----------------------------------------------------------------------------
 # Set default environment variables used to configure the service container
 # -----------------------------------------------------------------------------
 ENV APACHE_CONTENT_ROOT /var/www/${PACKAGE_NAME}
@@ -240,6 +233,7 @@ ENV APACHE_SYSTEM_USER app
 ENV HTTPD /usr/sbin/httpd
 ENV PACKAGE_PATH ${PACKAGE_PATH}
 ENV PHP_OPTIONS_DATE_TIMEZONE UTC
+ENV SERVICE_UID app-1.1.1
 
 EXPOSE 80 8443 443
 

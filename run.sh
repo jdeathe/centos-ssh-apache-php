@@ -149,9 +149,6 @@ docker run \
 	${DOCKER_OPERATOR_OPTIONS} \
 	--name "${DOCKER_NAME}" \
 	${DOCKER_PORT_OPTIONS} \
-	--env "SERVICE_UNIT_APP_GROUP=${SERVICE_UNIT_APP_GROUP}" \
-	--env "SERVICE_UNIT_LOCAL_ID=${SERVICE_UNIT_LOCAL_ID}" \
-	--env "SERVICE_UNIT_INSTANCE=${SERVICE_UNIT_INSTANCE}" \
 	--env "APACHE_CONTENT_ROOT=${APACHE_CONTENT_ROOT}" \
 	--env "APACHE_CUSTOM_LOG_FORMAT=${APACHE_CUSTOM_LOG_FORMAT}" \
 	--env "APACHE_CUSTOM_LOG_LOCATION=${APACHE_CUSTOM_LOG_LOCATION}" \
@@ -169,6 +166,7 @@ docker run \
 	--env "APACHE_SYSTEM_USER=${APACHE_SYSTEM_USER}" \
 	--env "HTTPD=${HTTPD}" \
 	--env "PHP_OPTIONS_DATE_TIMEZONE=${PHP_OPTIONS_DATE_TIMEZONE}" \
+	--env "SERVICE_UID=${SERVICE_UID}" \
 	${DOCKER_VOLUMES_FROM:-} \
 	${DOCKER_IMAGE_REPOSITORY_NAME}${@:+ -c }"${@}"
 )
@@ -183,9 +181,6 @@ docker run \
 # 	-p ${DOCKER_HOST_PORT_SSH:-}:22 \
 # 	-p ${DOCKER_HOST_PORT_XDEBUG:-}:9000 \
 # 	--link ${DOCKER_LINK_NAME_DB_MYSQL}:${DOCKER_LINK_ID_DB_MYSQL} \
-# 	--env "SERVICE_UNIT_APP_GROUP=app-1" \
-# 	--env "SERVICE_UNIT_LOCAL_ID=1" \
-# 	--env "SERVICE_UNIT_INSTANCE=1" \
 # 	--env "APACHE_CONTENT_ROOT=/var/www/app-1" \
 # 	--env "APACHE_CUSTOM_LOG_FORMAT=forwarded_for_combined" \
 # 	--env "APACHE_CUSTOM_LOG_LOCATION=/var/log/httpd/access_log" \
@@ -203,6 +198,7 @@ docker run \
 # 	--env "APACHE_SYSTEM_USER=app" \
 # 	--env "HTTPD=/usr/sbin/httpd.worker" \
 # 	--env "PHP_OPTIONS_DATE_TIMEZONE=Europe/London" \
+# 	--env "SERVICE_UID=app-1.1.1" \
 # 	${DOCKER_VOLUMES_FROM:-} \
 # 	${DOCKER_IMAGE_REPOSITORY_NAME}${@:+ -c }"${@}"
 # )
