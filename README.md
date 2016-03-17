@@ -35,11 +35,7 @@ Run up a container named ```apache-php.app-1.1.1``` from the docker image ```jde
 $ docker run -d \
   --name apache-php.app-1.1.1 \
   -p 8080:80 \
-  --env "SERVICE_UNIT_APP_GROUP=app-1" \
-  --env "SERVICE_UNIT_LOCAL_ID=1" \
-  --env "SERVICE_UNIT_INSTANCE=1" \
   --env "APACHE_SERVER_NAME=app-1.local" \
-  --env "PHP_OPTIONS_DATE_TIMEZONE=UTC" \
   -v /var/www \
   jdeathe/centos-ssh-apache-php:latest
 ```
@@ -197,9 +193,6 @@ $ docker stop apache-php.app-1.1.1 && \
 $ docker run -d \
   --name apache-php.app-1.1.1 \
   -p 8080:80 \
-  --env "SERVICE_UNIT_INSTANCE=app-1" \
-  --env "SERVICE_UNIT_LOCAL_ID=1" \
-  --env "SERVICE_UNIT_INSTANCE=1" \
   --env "APACHE_CONTENT_ROOT=/var/www/app-1" \
   --env "APACHE_CUSTOM_LOG_FORMAT=combined" \
   --env "APACHE_CUSTOM_LOG_LOCATION=/var/www/app-1/var/log/apache_access_log" \
@@ -214,6 +207,7 @@ $ docker run -d \
   --env "APACHE_SERVER_NAME=app-1.local" \
   --env "APACHE_SYSTEM_USER=app" \
   --env "PHP_OPTIONS_DATE_TIMEZONE=UTC" \
+  --env "SERVICE_UID=app-1.1.1" \
   -v volume-data.apache-php.app-1.1.1:/var/www \
   jdeathe/centos-ssh-apache-php:latest
 ```
@@ -228,12 +222,10 @@ $ docker stop apache-php.app-1.1.1 && \
 $ docker run -d \
   --name apache-php.app-1.1.1 \
   -p 8080:80 \
-  --env "SERVICE_UNIT_INSTANCE=app-1" \
-  --env "SERVICE_UNIT_LOCAL_ID=1" \
-  --env "SERVICE_UNIT_INSTANCE=1" \
   --env "APACHE_SERVER_ALIAS=app-1" \
   --env "APACHE_SERVER_NAME=app-1.local" \
   --env "PHP_OPTIONS_DATE_TIMEZONE=UTC" \
+  --env "SERVICE_UID=app-1.1.1" \
   --volumes-from volume-config.apache-php.app-1.1.1 \
   -v volume-data.apache-php.app-1.1.1:/var/www \
   jdeathe/centos-ssh-apache-php:latest
@@ -247,21 +239,7 @@ $ docker logs apache-php.app-1.1.1
 
 The output of the logs should show the Apache modules being loaded and auto-generated password for the Apache user and group, (if not try again after a few seconds).
 
-#### Runtime Environment Variables
-
-There are several environmental variables defined at runtime these allow the operator to customise the running container which may become necessary when running several on the same docker host, when clustering docker hosts or to simply set the timezone.
-
-##### SERVICE_UNIT_INSTANCE, SERVICE_UNIT_LOCAL_ID & SERVICE_UNIT_INSTANCE
-
-The ```SERVICE_UNIT_INSTANCE```, ```SERVICE_UNIT_LOCAL_ID``` and ```SERVICE_UNIT_INSTANCE``` environmental variables are used to set a response header named ```X-Service-Uid``` that lets you identify the container that is serving the content. This is useful when you have many containers running on a single host using different ports (i.e with different ```SERVICE_UNIT_LOCAL_ID``` values) or if you are running a cluster and need to identify which host the content is served from (i.e with different ```SERVICE_UNIT_INSTANCE``` values). The three values should map to the last 3 dotted values of the container name; in our case that is "app-1.1.1"
-
-```
-...
-  --env "SERVICE_UNIT_APP_GROUP=app-1" \
-  --env "SERVICE_UNIT_LOCAL_ID=1" \
-  --env "SERVICE_UNIT_INSTANCE=1" \
-...
-```
+#### Environment Variables
 
 ##### APACHE_SERVER_NAME & APACHE_SERVER_ALIAS
 
@@ -271,6 +249,17 @@ The ```APACHE_SERVER_NAME``` and ```APACHE_SERVER_ALIAS``` environmental variabl
 ...
   --env "APACHE_SERVER_ALIAS=app-1" \
   --env "APACHE_SERVER_NAME=app-1.local" \
+...
+```
+
+
+##### APACHE_CONTENT_ROOT
+
+The home directory of the service user and parent directory of the Apache DocumentRoot is /var/www/app by default but can be changed if necessary using the ```APACHE_CONTENT_ROOT``` environment variable.
+
+```
+...
+  --env "APACHE_CONTENT_ROOT=/var/www/app-1" \
 ...
 ```
 
@@ -287,7 +276,7 @@ The Apache CustomLog can be defined using ```APACHE_CUSTOM_LOG_LOCATION``` to se
 ...
 ```
 
-##### APACHE_ERROR_LOG_LOCATION && APACHE_ERROR_LOG_LEVEL
+##### APACHE_ERROR_LOG_LOCATION & APACHE_ERROR_LOG_LEVEL
 
 The Apache ErrorLog can be defined using ```APACHE_ERROR_LOG_LOCATION``` to set a file | pipe location and ```APACHE_ERROR_LOG_LEVEL``` to specify the required LogLevel value.
 
@@ -340,13 +329,11 @@ $ docker run -d \
   --name apache-php.app-1.1.1 \
   -p 8080:80 \
   -p 8580:443 \
-  --env "SERVICE_UNIT_APP_GROUP=app-1" \
-  --env "SERVICE_UNIT_LOCAL_ID=1" \
-  --env "SERVICE_UNIT_INSTANCE=1" \
   --env "APACHE_SERVER_ALIAS=app-1" \
   --env "APACHE_SERVER_NAME=app-1.local" \
   --env "APACHE_MOD_SSL_ENABLED=true" \
   --env "PHP_OPTIONS_DATE_TIMEZONE=UTC" \
+  --env "SERVICE_UID=app-1.1.1" \
   -v volume-data.apache-php.app-1.1.1:/var/www \
   jdeathe/centos-ssh-apache-php:latest
 ```
@@ -362,16 +349,6 @@ The Apache process is run by the User and Group defined by ```APACHE_RUN_USER```
 ...
 ```
 
-##### APACHE_CONTENT_ROOT
-
-The home directory of the service user and parent directory of the Apache DocumentRoot is /var/www/app by default but can be changed if necessary using the ```APACHE_CONTENT_ROOT``` environment variable.
-
-```
-...
-  --env "APACHE_CONTENT_ROOT=/var/www/app-1" \
-...
-```
-
 ##### APACHE_PUBLIC_DIRECTORY
 
 The public directory is relative to the ```APACHE_CONTENT_ROOT``` and together they form the Apache DocumentRoot path. The default value is `public_html` and should not be changed unless changes are made to the source of the app to include an alternative public directory such as `web` or `public`.
@@ -379,6 +356,16 @@ The public directory is relative to the ```APACHE_CONTENT_ROOT``` and together t
 ```
 ...
   --env "APACHE_PUBLIC_DIRECTORY=web" \
+...
+```
+
+##### APACHE_SYSTEM_USER
+
+Use the ```APACHE_SYSTEM_USER``` environment variable to define a custom service username.
+
+```
+...
+  --env "APACHE_SYSTEM_USER=app-1" \
 ...
 ```
 
@@ -394,13 +381,13 @@ To set the timezone for the UK and account for British Summer Time you would use
 ...
 ```
 
-##### APACHE_SYSTEM_USER
+##### SERVICE_UID
 
-Use the ```APACHE_SYSTEM_USER``` environment variable to define a custom service username.
+The ```SERVICE_UID``` environmental variable is used to set a response header named ```X-Service-Uid``` that lets you identify the container that is serving the content. This is useful when you have many containers running on a single host using different ports or if you are running a cluster and need to identify which host the content is served from. The default value is set to the Service Unit's App Group Name, Local ID and Instance ID.
 
 ```
 ...
-  --env "APACHE_SYSTEM_USER=app-1" \
+  --env "SERVICE_UID=app-1.1.1" \
 ...
 ```
 

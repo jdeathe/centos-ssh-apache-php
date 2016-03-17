@@ -110,12 +110,10 @@ ExecStart=/bin/sudo /bin/bash -c \
       --name %p \
       -p %i:80 \
       -p 8580:8443 \
-      --env \"SERVICE_UNIT_APP_GROUP=${SERVICE_UNIT_APP_GROUP}\" \
-      --env \"SERVICE_UNIT_LOCAL_ID=${SERVICE_UNIT_LOCAL_ID}\" \
-      --env \"SERVICE_UNIT_INSTANCE=${SERVICE_UNIT_INSTANCE}\" \
       --env \"APACHE_SERVER_ALIAS=${APACHE_SERVER_ALIAS}\" \
       --env \"APACHE_SERVER_NAME=${APACHE_SERVER_NAME}\" \
       --env \"PHP_OPTIONS_DATE_TIMEZONE=${PHP_OPTIONS_DATE_TIMEZONE}\" \
+      --env \"SERVICE_UID=${SERVICE_UNIT_APP_GROUP}.${SERVICE_UNIT_LOCAL_ID}.${SERVICE_UNIT_INSTANCE}\" \
       --volumes-from volume-config.%p \
       -v ${VOLUME_DATA_NAME}:${APACHE_SERVER_HOME} \
       ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}; \
@@ -124,9 +122,6 @@ ExecStart=/bin/sudo /bin/bash -c \
       --name %p \
       -p %i:80 \
       -p 8580:8443 \
-      --env \"SERVICE_UNIT_APP_GROUP=${SERVICE_UNIT_APP_GROUP}\" \
-      --env \"SERVICE_UNIT_LOCAL_ID=${SERVICE_UNIT_LOCAL_ID}\" \
-      --env \"SERVICE_UNIT_INSTANCE=${SERVICE_UNIT_INSTANCE}\" \
       --env \"APACHE_CONTENT_ROOT=${APACHE_CONTENT_ROOT}\" \
       --env \"APACHE_CUSTOM_LOG_FORMAT=${APACHE_CUSTOM_LOG_FORMAT}\" \
       --env \"APACHE_CUSTOM_LOG_LOCATION=${APACHE_CUSTOM_LOG_LOCATION}\" \
@@ -143,6 +138,7 @@ ExecStart=/bin/sudo /bin/bash -c \
       --env \"APACHE_SYSTEM_USER=${APACHE_SYSTEM_USER}\" \
       --env \"HTTPD=${HTTPD}\" \
       --env \"PHP_OPTIONS_DATE_TIMEZONE=${PHP_OPTIONS_DATE_TIMEZONE}\" \
+      --env \"SERVICE_UID=${SERVICE_UNIT_APP_GROUP}.${SERVICE_UNIT_LOCAL_ID}.${SERVICE_UNIT_INSTANCE}\" \
       -v ${VOLUME_DATA_NAME}:${APACHE_SERVER_HOME} \
       ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}; \
   fi"
