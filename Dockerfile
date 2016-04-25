@@ -42,6 +42,7 @@ RUN sed -i \
 	-e 's~^NameVirtualHost \(.*\)$~#NameVirtualHost \1~g' \
 	-e 's~^User .*$~User ${APACHE_RUN_USER}~g' \
 	-e 's~^Group .*$~Group ${APACHE_RUN_GROUP}~g' \
+	-e 's~^DocumentRoot \(.*\)$~#DocumentRoot \1~g' \
 	/etc/httpd/conf/httpd.conf
 
 # -----------------------------------------------------------------------------
@@ -110,6 +111,7 @@ RUN { \
 		echo '# Custom configuration'; \
 		echo '#'; \
 		echo 'Options -Indexes'; \
+		echo 'TraceEnable Off'; \
 		echo 'Listen 8443'; \
 		echo 'NameVirtualHost *:80'; \
 		echo 'NameVirtualHost *:8443'; \
