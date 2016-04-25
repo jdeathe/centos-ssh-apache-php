@@ -42,6 +42,7 @@ RUN sed -i \
 	-e 's~^NameVirtualHost \(.*\)$~#NameVirtualHost \1~g' \
 	-e 's~^User .*$~User ${APACHE_RUN_USER}~g' \
 	-e 's~^Group .*$~Group ${APACHE_RUN_GROUP}~g' \
+	-e 's~^DocumentRoot \(.*\)$~#DocumentRoot \1~g' \
 	/etc/httpd/conf/httpd.conf
 
 # -----------------------------------------------------------------------------
@@ -110,6 +111,7 @@ RUN { \
 		echo '# Custom configuration'; \
 		echo '#'; \
 		echo 'Options -Indexes'; \
+		echo 'TraceEnable Off'; \
 		echo 'Listen 8443'; \
 		echo 'NameVirtualHost *:80'; \
 		echo 'NameVirtualHost *:8443'; \
@@ -143,11 +145,19 @@ RUN { \
 # -----------------------------------------------------------------------------
 # Global PHP configuration changes
 # -----------------------------------------------------------------------------
-RUN sed -i \
-	-e 's~^;date.timezone =$~date.timezone = UTC~g' \
+RUN sed \
+		-e 's~^; .*$~~' \
+		-e 's~^;*$~~' \
+		-e '/^$/d' \
+		-e 's~^\[~\n\[~g' \
+		/etc/php.ini \
+		> /etc/php.d/00-php.ini.default \
+	&& sed \
 	-e 's~^;user_ini.filename =$~user_ini.filename =~g' \
 	-e 's~^;cgi.fix_pathinfo=1$~cgi.fix_pathinfo=1~g' \
-	/etc/php.ini
+	-e 's~^;date.timezone =$~date.timezone = UTC~g' \
+	/etc/php.d/00-php.ini.default \
+	> /etc/php.d/00-php.ini
 
 # -----------------------------------------------------------------------------
 # APC op-code cache stats
@@ -172,7 +182,10 @@ RUN useradd -r -M -d /var/www/app -s /sbin/nologin app \
 # -----------------------------------------------------------------------------
 RUN mkdir -p -m 750 ${PACKAGE_PATH}
 ADD var/www/app ${PACKAGE_PATH}
-RUN find ${PACKAGE_PATH} -name '*.gitkeep' -type f -delete \
+RUN ln -sf \
+		${PACKAGE_PATH}/etc/php.d/50-php.ini \
+		/etc/php.d/50-php.ini \
+	&& find ${PACKAGE_PATH} -name '*.gitkeep' -type f -delete \
 	&& echo '<?php phpinfo(); ?>' > ${PACKAGE_PATH}/public_html/_phpinfo.php \
 	&& cp /usr/share/php-pecl-apc/apc.php ${PACKAGE_PATH}/public_html/_apc.php
 
@@ -202,13 +215,6 @@ RUN mkdir -p /etc/services-config/{httpd/{conf,conf.d},ssl/{certs,private}} \
 	&& chmod +x /etc/apache-bootstrap
 
 # -----------------------------------------------------------------------------
-# Set default environment variables used to identify the service container
-# -----------------------------------------------------------------------------
-ENV SERVICE_UNIT_APP_GROUP app-1
-ENV SERVICE_UNIT_LOCAL_ID 1
-ENV SERVICE_UNIT_INSTANCE 1
-
-# -----------------------------------------------------------------------------
 # Set default environment variables used to configure the service container
 # -----------------------------------------------------------------------------
 ENV APACHE_CONTENT_ROOT /var/www/${PACKAGE_NAME}
@@ -219,6 +225,7 @@ ENV APACHE_ERROR_LOG_LEVEL warn
 ENV APACHE_EXTENDED_STATUS_ENABLED false
 ENV APACHE_LOAD_MODULES "authz_user_module log_config_module expires_module deflate_module headers_module setenvif_module mime_module status_module dir_module alias_module"
 ENV APACHE_MOD_SSL_ENABLED false
+ENV APACHE_OPERATING_MODE production
 ENV APACHE_PUBLIC_DIRECTORY public_html
 ENV APACHE_RUN_GROUP app-www
 ENV APACHE_RUN_USER app-www
@@ -228,6 +235,7 @@ ENV APACHE_SYSTEM_USER app
 ENV HTTPD /usr/sbin/httpd
 ENV PACKAGE_PATH ${PACKAGE_PATH}
 ENV PHP_OPTIONS_DATE_TIMEZONE UTC
+ENV SERVICE_UID app-1.1.1
 
 EXPOSE 80 8443 443
 

@@ -29,7 +29,7 @@ RestartSec=30
 TimeoutStartSec=1200
 Environment="DOCKER_IMAGE_PACKAGE_PATH=/var/services-packages"
 Environment="DOCKER_IMAGE_NAME=jdeathe/centos-ssh-apache-php"
-Environment="DOCKER_IMAGE_TAG=centos-6-1.4.4"
+Environment="DOCKER_IMAGE_TAG=centos-6-1.4.5"
 Environment="SERVICE_UNIT_APP_GROUP=app-1"
 Environment="SERVICE_UNIT_LOCAL_ID=1"
 Environment="SERVICE_UNIT_INSTANCE=1"
@@ -45,6 +45,7 @@ Environment="APACHE_ERROR_LOG_LEVEL=warn"
 Environment="APACHE_EXTENDED_STATUS_ENABLED=false"
 Environment="APACHE_LOAD_MODULES=authz_user_module log_config_module expires_module deflate_module headers_module setenvif_module mime_module status_module dir_module alias_module"
 Environment="APACHE_MOD_SSL_ENABLED=false"
+Environment="APACHE_OPERATING_MODE=production"
 Environment="APACHE_PUBLIC_DIRECTORY=public_html"
 Environment="APACHE_RUN_GROUP=app-www"
 Environment="APACHE_RUN_USER=app-www"
@@ -109,12 +110,10 @@ ExecStart=/bin/sudo /bin/bash -c \
       --name %p \
       -p %i:80 \
       -p 8580:8443 \
-      --env \"SERVICE_UNIT_APP_GROUP=${SERVICE_UNIT_APP_GROUP}\" \
-      --env \"SERVICE_UNIT_LOCAL_ID=${SERVICE_UNIT_LOCAL_ID}\" \
-      --env \"SERVICE_UNIT_INSTANCE=${SERVICE_UNIT_INSTANCE}\" \
       --env \"APACHE_SERVER_ALIAS=${APACHE_SERVER_ALIAS}\" \
       --env \"APACHE_SERVER_NAME=${APACHE_SERVER_NAME}\" \
       --env \"PHP_OPTIONS_DATE_TIMEZONE=${PHP_OPTIONS_DATE_TIMEZONE}\" \
+      --env \"SERVICE_UID=${SERVICE_UNIT_APP_GROUP}.${SERVICE_UNIT_LOCAL_ID}.${SERVICE_UNIT_INSTANCE}\" \
       --volumes-from volume-config.%p \
       -v ${VOLUME_DATA_NAME}:${APACHE_SERVER_HOME} \
       ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}; \
@@ -123,9 +122,6 @@ ExecStart=/bin/sudo /bin/bash -c \
       --name %p \
       -p %i:80 \
       -p 8580:8443 \
-      --env \"SERVICE_UNIT_APP_GROUP=${SERVICE_UNIT_APP_GROUP}\" \
-      --env \"SERVICE_UNIT_LOCAL_ID=${SERVICE_UNIT_LOCAL_ID}\" \
-      --env \"SERVICE_UNIT_INSTANCE=${SERVICE_UNIT_INSTANCE}\" \
       --env \"APACHE_CONTENT_ROOT=${APACHE_CONTENT_ROOT}\" \
       --env \"APACHE_CUSTOM_LOG_FORMAT=${APACHE_CUSTOM_LOG_FORMAT}\" \
       --env \"APACHE_CUSTOM_LOG_LOCATION=${APACHE_CUSTOM_LOG_LOCATION}\" \
@@ -142,6 +138,7 @@ ExecStart=/bin/sudo /bin/bash -c \
       --env \"APACHE_SYSTEM_USER=${APACHE_SYSTEM_USER}\" \
       --env \"HTTPD=${HTTPD}\" \
       --env \"PHP_OPTIONS_DATE_TIMEZONE=${PHP_OPTIONS_DATE_TIMEZONE}\" \
+      --env \"SERVICE_UID=${SERVICE_UNIT_APP_GROUP}.${SERVICE_UNIT_LOCAL_ID}.${SERVICE_UNIT_INSTANCE}\" \
       -v ${VOLUME_DATA_NAME}:${APACHE_SERVER_HOME} \
       ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}; \
   fi"

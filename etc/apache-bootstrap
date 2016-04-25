@@ -52,14 +52,87 @@ enable_apache_modules ()
 	local MODULES_ENABLED=""
 	local SED_COMMAND=""
 
+	# Available DSO Modules
+	declare -a MODULE_IDENTFIERS=(
+		'auth_basic_module'
+		'auth_digest_module'
+		'authn_file_module'
+		'authn_alias_module'
+		'authn_anon_module'
+		'authn_dbm_module'
+		'authn_default_module'
+		'authz_host_module'
+		'authz_user_module'
+		'authz_owner_module'
+		'authz_groupfile_module'
+		'authz_dbm_module'
+		'authz_default_module'
+		'ldap_module'
+		'authnz_ldap_module'
+		'include_module'
+		'log_config_module'
+		'logio_module'
+		'env_module'
+		'ext_filter_module'
+		'mime_magic_module'
+		'expires_module'
+		'deflate_module'
+		'headers_module'
+		'usertrack_module'
+		'setenvif_module'
+		'mime_module'
+		'dav_module'
+		'status_module'
+		'autoindex_module'
+		'info_module'
+		'dav_fs_module'
+		'vhost_alias_module'
+		'negotiation_module'
+		'dir_module'
+		'actions_module'
+		'speling_module'
+		'userdir_module'
+		'alias_module'
+		'substitute_module'
+		'rewrite_module'
+		'proxy_module'
+		'proxy_balancer_module'
+		'proxy_ftp_module'
+		'proxy_http_module'
+		'proxy_ajp_module'
+		'proxy_connect_module'
+		'cache_module'
+		'suexec_module'
+		'disk_cache_module'
+		'cgi_module'
+		'version_module'
+		'reqtimeout_module'
+		'asis_module'
+		'authn_dbd_module'
+		'cern_meta_module'
+		'cgid_module'
+		'dbd_module'
+		'dumpio_module'
+		'filter_module'
+		'ident_module'
+		'log_forensic_module'
+		'unique_id_module'
+	)
+
 	if [[ -n ${MODULES} ]]; then
-		for MODULE in ${MODULES}; do
-			MODULES_ENABLED+=" - ${MODULE}\n"
-			SED_COMMAND+=" -e \"s~^#LoadModule ${MODULE} ~LoadModule ${MODULE} ~g\""
+		for MODULE_IDENTFIER in ${MODULES}; do
+			# Prevent invalid or unavailable module identifiers
+			if [[ " ${MODULE_IDENTFIERS[@]} " =~ " ${MODULE_IDENTFIER} " ]]; then
+				MODULES_ENABLED+=" - ${MODULE_IDENTFIER}\n"
+				SED_COMMAND+="$(
+					printf -- " -e 's~^#LoadModule %s ~LoadModule %s ~g'" \
+					${MODULE_IDENTFIER} ${MODULE_IDENTFIER}
+				)"
+			fi
 		done
 
 		if [[ -n ${SED_COMMAND} ]]; then
-			sed -i ${SED_COMMAND} /etc/httpd/conf/httpd.conf
+			eval "$(printf 'sed -i %s /etc/httpd/conf/httpd.conf' "${SED_COMMAND}")"
 		fi
 
 		printf -- "%b" "${MODULES_ENABLED}"
@@ -354,12 +427,12 @@ HTTPD=${HTTPD:-${HTTPD_MPM_PREFORK}}
 if [[ ${HTTPD} == ${HTTPD_MPM_PREFORK} ]]; then
 	echo "Apache Server MPM: Prefork"
 	sed -i \
-		-e "s~HTTPD=${HTTPD_MPM_WORKER}~#HTTPD=${HTTPD_MPM_WORKER}~g" \
+		-e "s~^HTTPD=${HTTPD_MPM_WORKER}~#HTTPD=${HTTPD_MPM_WORKER}~g" \
 		/etc/sysconfig/httpd
 elif [[ ${HTTPD} == ${HTTPD_MPM_WORKER} ]]; then
 	echo "Apache Server MPM: Worker"
 	sed -i \
-		-e "s~#HTTPD=${HTTPD_MPM_WORKER}~HTTPD=${HTTPD_MPM_WORKER}~g" \
+		-e "s~^#HTTPD=${HTTPD_MPM_WORKER}~HTTPD=${HTTPD_MPM_WORKER}~g" \
 		/etc/sysconfig/httpd
 else
 	echo "ERROR: Apache Server MPM (${HTTPD}) unknown."
