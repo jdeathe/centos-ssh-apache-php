@@ -137,15 +137,7 @@ $ docker run \
 ```
 
 ##### Populating Named configuration data volumes  
-When using named volumes the directory path from the docker host mounts the path on the container so we need to upload the configuration files. The simplest method of achieving this is to upload the contents of the [etc/services-config](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6/etc/services-config/) directory using ```docker cp```.
-
-```
-$ docker cp \
-  ./etc/services-config/. \
-  volume-config.apache-php.app-1.1.1:/etc/services-config
-```
-
-If you don't have a copy of the required configuration files locally you can run a temporary container as the source of the configuration files and use `docker cp` to stream the files into the named data volume container.
+When using named volumes the directory path from the docker host mounts the path on the container so we need to upload the configuration files. The simplest method of achieving this is to run a temporary container as the source of the configuration files and use `docker cp` to stream the files into the named data volume container.
 
 ```
 $ docker run -d \
