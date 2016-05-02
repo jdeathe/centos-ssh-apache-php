@@ -123,6 +123,8 @@ RUN { \
 		echo '# Custom SSL configuration'; \
 		echo '#'; \
 		echo 'NameVirtualHost *:443'; \
+		echo 'SSLSessionCache shmcb:/var/cache/mod_ssl/scache(512000)'; \
+		echo 'SSLSessionCacheTimeout 300'; \
 		echo 'Include ${APACHE_CONTENT_ROOT}/vhost-ssl.conf'; \
 	} >> /etc/httpd/conf.d/ssl.conf
 
