@@ -358,7 +358,7 @@ if [[ ${OPTS_APACHE_MOD_SSL_ENABLED} == true ]] \
 		-x509 \
 		-sha256 \
 		-nodes \
-		-newkey rsa:4096 \
+		-newkey rsa:2048 \
 		-days 365 \
 		-subj "/C=--/ST=STATE/L=LOCALITY/O=ORGANIZATION/CN=${OPTS_APACHE_SERVER_NAME}" \
 		-keyout /etc/services-config/ssl/private/localhost.key \
