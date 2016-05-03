@@ -219,8 +219,8 @@ RUN mkdir -p /etc/services-config/{httpd/{conf,conf.d},ssl/{certs,private}} \
 # -----------------------------------------------------------------------------
 # Set default environment variables used to configure the service container
 # -----------------------------------------------------------------------------
-ENV APACHE_CONTENT_ROOT="/var/www/${PACKAGE_NAME}" \
-	APACHE_CUSTOM_LOG_FORMAT="combined" \
+ENV APACHE_CONTENT_ROOT="/var/www/${PACKAGE_NAME}"
+ENV	APACHE_CUSTOM_LOG_FORMAT="combined" \
 	APACHE_CUSTOM_LOG_LOCATION="${APACHE_CONTENT_ROOT}/var/log/apache_access_log" \
 	APACHE_ERROR_LOG_LOCATION="${APACHE_CONTENT_ROOT}/var/log/apache_error_log" \
 	APACHE_ERROR_LOG_LEVEL="warn" \
