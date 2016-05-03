@@ -219,25 +219,25 @@ RUN mkdir -p /etc/services-config/{httpd/{conf,conf.d},ssl/{certs,private}} \
 # -----------------------------------------------------------------------------
 # Set default environment variables used to configure the service container
 # -----------------------------------------------------------------------------
-ENV APACHE_CONTENT_ROOT /var/www/${PACKAGE_NAME}
-ENV APACHE_CUSTOM_LOG_FORMAT combined
-ENV APACHE_CUSTOM_LOG_LOCATION ${APACHE_CONTENT_ROOT}/var/log/apache_access_log
-ENV APACHE_ERROR_LOG_LOCATION ${APACHE_CONTENT_ROOT}/var/log/apache_error_log
-ENV APACHE_ERROR_LOG_LEVEL warn
-ENV APACHE_EXTENDED_STATUS_ENABLED false
-ENV APACHE_LOAD_MODULES "authz_user_module log_config_module expires_module deflate_module headers_module setenvif_module mime_module status_module dir_module alias_module"
-ENV APACHE_MOD_SSL_ENABLED false
-ENV APACHE_OPERATING_MODE production
-ENV APACHE_PUBLIC_DIRECTORY public_html
-ENV APACHE_RUN_GROUP app-www
-ENV APACHE_RUN_USER app-www
-ENV APACHE_SERVER_ALIAS ""
-ENV APACHE_SERVER_NAME app-1.local
-ENV APACHE_SYSTEM_USER app
-ENV HTTPD /usr/sbin/httpd
-ENV PACKAGE_PATH ${PACKAGE_PATH}
-ENV PHP_OPTIONS_DATE_TIMEZONE UTC
-ENV SERVICE_UID app-1.1.1
+ENV APACHE_CONTENT_ROOT="/var/www/${PACKAGE_NAME}"
+ENV	APACHE_CUSTOM_LOG_FORMAT="combined" \
+	APACHE_CUSTOM_LOG_LOCATION="${APACHE_CONTENT_ROOT}/var/log/apache_access_log" \
+	APACHE_ERROR_LOG_LOCATION="${APACHE_CONTENT_ROOT}/var/log/apache_error_log" \
+	APACHE_ERROR_LOG_LEVEL="warn" \
+	APACHE_EXTENDED_STATUS_ENABLED="false" \
+	APACHE_LOAD_MODULES="authz_user_module log_config_module expires_module deflate_module headers_module setenvif_module mime_module status_module dir_module alias_module" \
+	APACHE_MOD_SSL_ENABLED="false" \
+	APACHE_OPERATING_MODE="production" \
+	APACHE_PUBLIC_DIRECTORY="public_html" \
+	APACHE_RUN_GROUP="app-www" \
+	APACHE_RUN_USER="app-www" \
+	APACHE_SERVER_ALIAS="" \
+	APACHE_SERVER_NAME="app-1.local" \
+	APACHE_SYSTEM_USER="app" \
+	HTTPD="/usr/sbin/httpd" \
+	PACKAGE_PATH="${PACKAGE_PATH}" \
+	PHP_OPTIONS_DATE_TIMEZONE="UTC" \
+	SERVICE_UID="app-1.1.1"
 
 EXPOSE 80 8443 443
 
