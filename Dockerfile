@@ -203,9 +203,12 @@ RUN chown -R app:app-www ${PACKAGE_PATH} \
 # -----------------------------------------------------------------------------
 # Copy files into place
 # -----------------------------------------------------------------------------
-ADD etc/apache-bootstrap /etc/
-ADD etc/services-config/httpd/apache-bootstrap.conf /etc/services-config/httpd/
-ADD etc/services-config/supervisor/supervisord.conf /etc/services-config/supervisor/
+ADD etc/apache-bootstrap \
+	/etc/
+ADD etc/services-config/httpd/apache-bootstrap.conf \
+	/etc/services-config/httpd/
+ADD etc/services-config/supervisor/supervisord.conf \
+	/etc/services-config/supervisor/
 
 RUN mkdir -p /etc/services-config/{httpd/{conf,conf.d},ssl/{certs,private}} \
 	&& cp /etc/httpd/conf/httpd.conf /etc/services-config/httpd/conf/ \
@@ -220,7 +223,7 @@ RUN mkdir -p /etc/services-config/{httpd/{conf,conf.d},ssl/{certs,private}} \
 # Set default environment variables used to configure the service container
 # -----------------------------------------------------------------------------
 ENV APACHE_CONTENT_ROOT="/var/www/${PACKAGE_NAME}"
-ENV	APACHE_CUSTOM_LOG_FORMAT="combined" \
+ENV APACHE_CUSTOM_LOG_FORMAT="combined" \
 	APACHE_CUSTOM_LOG_LOCATION="${APACHE_CONTENT_ROOT}/var/log/apache_access_log" \
 	APACHE_ERROR_LOG_LOCATION="${APACHE_CONTENT_ROOT}/var/log/apache_error_log" \
 	APACHE_ERROR_LOG_LEVEL="warn" \
