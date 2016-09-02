@@ -212,7 +212,7 @@ ADD etc/services-config/supervisor/supervisord.conf \
 
 RUN mkdir -p /etc/services-config/{httpd/{conf,conf.d},ssl/{certs,private}} \
 	&& cp /etc/httpd/conf/httpd.conf /etc/services-config/httpd/conf/ \
-	&& ln -sf /etc/services-config/httpd/apache-bootstrap.conf /etc/apache-bootstrap.conf \
+	&& ln -sf /etc/services-config/httpd/httpd-bootstrap.conf /etc/httpd-bootstrap.conf \
 	&& ln -sf /etc/services-config/httpd/conf/httpd.conf /etc/httpd/conf/httpd.conf \
 	&& ln -sf /etc/services-config/ssl/certs/localhost.crt /etc/pki/tls/certs/localhost.crt \
 	&& ln -sf /etc/services-config/ssl/private/localhost.key /etc/pki/tls/private/localhost.key \
