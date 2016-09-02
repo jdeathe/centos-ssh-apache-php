@@ -203,9 +203,9 @@ RUN chown -R app:app-www ${PACKAGE_PATH} \
 # -----------------------------------------------------------------------------
 # Copy files into place
 # -----------------------------------------------------------------------------
-ADD etc/apache-bootstrap \
-	/etc/
-ADD etc/services-config/httpd/apache-bootstrap.conf \
+ADD usr/sbin \
+	/usr/sbin/
+ADD etc/services-config/httpd/httpd-bootstrap.conf \
 	/etc/services-config/httpd/
 ADD etc/services-config/supervisor/supervisord.conf \
 	/etc/services-config/supervisor/
@@ -217,7 +217,7 @@ RUN mkdir -p /etc/services-config/{httpd/{conf,conf.d},ssl/{certs,private}} \
 	&& ln -sf /etc/services-config/ssl/certs/localhost.crt /etc/pki/tls/certs/localhost.crt \
 	&& ln -sf /etc/services-config/ssl/private/localhost.key /etc/pki/tls/private/localhost.key \
 	&& ln -sf /etc/services-config/supervisor/supervisord.conf /etc/supervisord.conf \
-	&& chmod +x /etc/apache-bootstrap
+	&& chmod +x /usr/sbin/httpd-bootstrap
 
 # -----------------------------------------------------------------------------
 # Set default environment variables used to configure the service container
