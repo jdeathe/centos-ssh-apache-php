@@ -207,8 +207,8 @@ ADD usr/sbin \
 	/usr/sbin/
 ADD etc/services-config/httpd/httpd-bootstrap.conf \
 	/etc/services-config/httpd/
-ADD etc/services-config/supervisor/supervisord.conf \
-	/etc/services-config/supervisor/
+ADD etc/services-config/supervisor/supervisord.d \
+	/etc/services-config/supervisor/supervisord.d/
 
 RUN mkdir -p /etc/services-config/{httpd/{conf,conf.d},ssl/{certs,private}} \
 	&& cp /etc/httpd/conf/httpd.conf /etc/services-config/httpd/conf/ \
@@ -217,6 +217,8 @@ RUN mkdir -p /etc/services-config/{httpd/{conf,conf.d},ssl/{certs,private}} \
 	&& ln -sf /etc/services-config/ssl/certs/localhost.crt /etc/pki/tls/certs/localhost.crt \
 	&& ln -sf /etc/services-config/ssl/private/localhost.key /etc/pki/tls/private/localhost.key \
 	&& ln -sf /etc/services-config/supervisor/supervisord.conf /etc/supervisord.conf \
+	&& ln -sf /etc/services-config/supervisor/supervisord.d/httpd-bootstrap.conf /etc/supervisord.d/httpd-bootstrap.conf \
+	&& ln -sf /etc/services-config/supervisor/supervisord.d/httpd-wrapper.conf /etc/supervisord.d/httpd-wrapper.conf \
 	&& chmod +x /usr/sbin/httpd-bootstrap
 
 # -----------------------------------------------------------------------------
@@ -240,7 +242,9 @@ ENV APACHE_CUSTOM_LOG_FORMAT="combined" \
 	HTTPD="/usr/sbin/httpd" \
 	PACKAGE_PATH="${PACKAGE_PATH}" \
 	PHP_OPTIONS_DATE_TIMEZONE="UTC" \
-	SERVICE_UID="app-1.1.1"
+	SERVICE_UID="app-1.1.1" \
+	SSH_AUTOSTART_SSHD=false \
+	SSH_AUTOSTART_SSHD_BOOTSTRAP=false
 
 EXPOSE 80 8443 443
 
