@@ -1,10 +1,8 @@
 #!/usr/bin/env bash
 
-# Change working directory
-DIR_PATH="$( if [[ $( echo "${0%/*}" ) != $( echo "${0}" ) ]]; then cd "$( echo "${0%/*}" )"; fi; pwd )"
-if [[ ${DIR_PATH} == */* ]] && [[ ${DIR_PATH} != $( pwd ) ]]; then
-	cd ${DIR_PATH}
-fi
+cd -- "$(
+	dirname "${0}"
+)" || exit 1
 
 source run.conf
 
@@ -126,9 +124,9 @@ fi
 
 # Enable/Disable SSL support
 if [[ ${APACHE_MOD_SSL_ENABLED} == true ]]; then
-	DOCKER_PORT_OPTIONS="-p ${DOCKER_HOST_PORT_HTTP:-}:80 -p ${DOCKER_HOST_PORT_HTTPS:-}:443"
+	DOCKER_PORT_OPTIONS="-p ${DOCKER_PORT_MAP_TCP_80:-}:80 -p ${DOCKER_PORT_MAP_TCP_443:-}:443"
 else
-	DOCKER_PORT_OPTIONS="-p ${DOCKER_HOST_PORT_HTTP:-}:80 -p ${DOCKER_HOST_PORT_HTTPS:-}:8443"
+	DOCKER_PORT_OPTIONS="-p ${DOCKER_PORT_MAP_TCP_80:-}:80 -p ${DOCKER_PORT_MAP_TCP_8443:-}:8443"
 fi
 
 DOCKER_VOLUMES_FROM=
@@ -178,8 +176,8 @@ docker run \
 # 	${DOCKER_OPERATOR_OPTIONS} \
 # 	--name "${DOCKER_NAME}" \
 # 	${DOCKER_PORT_OPTIONS} \
-# 	-p ${DOCKER_HOST_PORT_SSH:-}:22 \
-# 	-p ${DOCKER_HOST_PORT_XDEBUG:-}:9000 \
+# 	-p ${DOCKER_PORT_MAP_TCP_22:-}:22 \
+# 	-p ${DOCKER_PORT_MAP_TCP_9000:-}:9000 \
 # 	--link ${DOCKER_LINK_NAME_DB_MYSQL}:${DOCKER_LINK_ID_DB_MYSQL} \
 # 	--env "APACHE_CONTENT_ROOT=/var/www/app-1" \
 # 	--env "APACHE_CUSTOM_LOG_FORMAT=forwarded_for_combined" \
