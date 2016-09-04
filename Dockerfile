@@ -4,7 +4,7 @@
 # CentOS-6, Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1
 #
 # =============================================================================
-FROM jdeathe/centos-ssh:centos-6-1.4.2
+FROM jdeathe/centos-ssh:centos-6-1.6.0
 
 MAINTAINER James Deathe <james.deathe@gmail.com>
 
@@ -18,11 +18,11 @@ ARG PACKAGE_PATH="/opt/${PACKAGE_NAME}"
 RUN rpm --rebuilddb \
 	&& yum --setopt=tsflags=nodocs -y install \
 	elinks-0.12-0.21.pre5.el6_3 \
-	httpd-2.2.15-47.el6.centos \
-	mod_ssl-2.2.15-47.el6.centos \
-	php-5.3.3-46.el6_6 \
-	php-cli-5.3.3-46.el6_6 \
-	php-zts-5.3.3-46.el6_6 \
+	httpd-2.2.15-54.el6.centos \
+	mod_ssl-2.2.15-54.el6.centos \
+	php-5.3.3-48.el6_8 \
+	php-cli-5.3.3-48.el6_8 \
+	php-zts-5.3.3-48.el6_8 \
 	php-pecl-apc-3.1.9-2.el6 \
 	php-pecl-memcached-1.0.0-1.el6 \
 	&& yum versionlock add \
@@ -123,6 +123,8 @@ RUN { \
 		echo '# Custom SSL configuration'; \
 		echo '#'; \
 		echo 'NameVirtualHost *:443'; \
+		echo 'SSLSessionCache shmcb:/var/cache/mod_ssl/scache(512000)'; \
+		echo 'SSLSessionCacheTimeout 300'; \
 		echo 'Include ${APACHE_CONTENT_ROOT}/vhost-ssl.conf'; \
 	} >> /etc/httpd/conf.d/ssl.conf
 
@@ -201,41 +203,48 @@ RUN chown -R app:app-www ${PACKAGE_PATH} \
 # -----------------------------------------------------------------------------
 # Copy files into place
 # -----------------------------------------------------------------------------
-ADD etc/apache-bootstrap /etc/
-ADD etc/services-config/httpd/apache-bootstrap.conf /etc/services-config/httpd/
-ADD etc/services-config/supervisor/supervisord.conf /etc/services-config/supervisor/
+ADD usr/sbin \
+	/usr/sbin/
+ADD etc/services-config/httpd/httpd-bootstrap.conf \
+	/etc/services-config/httpd/
+ADD etc/services-config/supervisor/supervisord.d \
+	/etc/services-config/supervisor/supervisord.d/
 
 RUN mkdir -p /etc/services-config/{httpd/{conf,conf.d},ssl/{certs,private}} \
 	&& cp /etc/httpd/conf/httpd.conf /etc/services-config/httpd/conf/ \
-	&& ln -sf /etc/services-config/httpd/apache-bootstrap.conf /etc/apache-bootstrap.conf \
+	&& ln -sf /etc/services-config/httpd/httpd-bootstrap.conf /etc/httpd-bootstrap.conf \
 	&& ln -sf /etc/services-config/httpd/conf/httpd.conf /etc/httpd/conf/httpd.conf \
 	&& ln -sf /etc/services-config/ssl/certs/localhost.crt /etc/pki/tls/certs/localhost.crt \
 	&& ln -sf /etc/services-config/ssl/private/localhost.key /etc/pki/tls/private/localhost.key \
 	&& ln -sf /etc/services-config/supervisor/supervisord.conf /etc/supervisord.conf \
-	&& chmod +x /etc/apache-bootstrap
+	&& ln -sf /etc/services-config/supervisor/supervisord.d/httpd-bootstrap.conf /etc/supervisord.d/httpd-bootstrap.conf \
+	&& ln -sf /etc/services-config/supervisor/supervisord.d/httpd-wrapper.conf /etc/supervisord.d/httpd-wrapper.conf \
+	&& chmod +x /usr/sbin/httpd-bootstrap
 
 # -----------------------------------------------------------------------------
 # Set default environment variables used to configure the service container
 # -----------------------------------------------------------------------------
-ENV APACHE_CONTENT_ROOT /var/www/${PACKAGE_NAME}
-ENV APACHE_CUSTOM_LOG_FORMAT combined
-ENV APACHE_CUSTOM_LOG_LOCATION ${APACHE_CONTENT_ROOT}/var/log/apache_access_log
-ENV APACHE_ERROR_LOG_LOCATION ${APACHE_CONTENT_ROOT}/var/log/apache_error_log
-ENV APACHE_ERROR_LOG_LEVEL warn
-ENV APACHE_EXTENDED_STATUS_ENABLED false
-ENV APACHE_LOAD_MODULES "authz_user_module log_config_module expires_module deflate_module headers_module setenvif_module mime_module status_module dir_module alias_module"
-ENV APACHE_MOD_SSL_ENABLED false
-ENV APACHE_OPERATING_MODE production
-ENV APACHE_PUBLIC_DIRECTORY public_html
-ENV APACHE_RUN_GROUP app-www
-ENV APACHE_RUN_USER app-www
-ENV APACHE_SERVER_ALIAS ""
-ENV APACHE_SERVER_NAME app-1.local
-ENV APACHE_SYSTEM_USER app
-ENV HTTPD /usr/sbin/httpd
-ENV PACKAGE_PATH ${PACKAGE_PATH}
-ENV PHP_OPTIONS_DATE_TIMEZONE UTC
-ENV SERVICE_UID app-1.1.1
+ENV APACHE_CONTENT_ROOT="/var/www/${PACKAGE_NAME}"
+ENV APACHE_CUSTOM_LOG_FORMAT="combined" \
+	APACHE_CUSTOM_LOG_LOCATION="${APACHE_CONTENT_ROOT}/var/log/apache_access_log" \
+	APACHE_ERROR_LOG_LOCATION="${APACHE_CONTENT_ROOT}/var/log/apache_error_log" \
+	APACHE_ERROR_LOG_LEVEL="warn" \
+	APACHE_EXTENDED_STATUS_ENABLED="false" \
+	APACHE_LOAD_MODULES="authz_user_module log_config_module expires_module deflate_module headers_module setenvif_module mime_module status_module dir_module alias_module" \
+	APACHE_MOD_SSL_ENABLED="false" \
+	APACHE_OPERATING_MODE="production" \
+	APACHE_PUBLIC_DIRECTORY="public_html" \
+	APACHE_RUN_GROUP="app-www" \
+	APACHE_RUN_USER="app-www" \
+	APACHE_SERVER_ALIAS="" \
+	APACHE_SERVER_NAME="app-1.local" \
+	APACHE_SYSTEM_USER="app" \
+	HTTPD="/usr/sbin/httpd" \
+	PACKAGE_PATH="${PACKAGE_PATH}" \
+	PHP_OPTIONS_DATE_TIMEZONE="UTC" \
+	SERVICE_UID="app-1.1.1" \
+	SSH_AUTOSTART_SSHD=false \
+	SSH_AUTOSTART_SSHD_BOOTSTRAP=false
 
 EXPOSE 80 8443 443
 
