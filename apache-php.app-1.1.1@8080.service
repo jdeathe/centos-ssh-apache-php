@@ -30,7 +30,7 @@ TimeoutStartSec=1200
 Environment="DOCKER_IMAGE_PACKAGE_PATH=/var/services-packages"
 Environment="DOCKER_IMAGE_NAME=jdeathe/centos-ssh-apache-php"
 Environment="DOCKER_IMAGE_TAG=centos-6-1.5.0"
-Environment="SERVICE_UNIT_NAME=apache"
+Environment="SERVICE_UNIT_NAME=apache-php"
 Environment="SERVICE_UNIT_APP_GROUP=app-1"
 Environment="SERVICE_UNIT_SHARED_GROUP=pool-1"
 Environment="SERVICE_UNIT_LOCAL_ID=1"
