@@ -17,19 +17,19 @@ ARG PACKAGE_PATH="/opt/${PACKAGE_NAME}"
 # -----------------------------------------------------------------------------
 RUN rpm --rebuilddb \
 	&& yum --setopt=tsflags=nodocs -y install \
-	elinks-0.12-0.21.pre5.el6_3 \
-	httpd-2.2.15-54.el6.centos \
-	mod_ssl-2.2.15-54.el6.centos \
-	php-5.3.3-48.el6_8 \
-	php-cli-5.3.3-48.el6_8 \
-	php-zts-5.3.3-48.el6_8 \
-	php-pecl-apc-3.1.9-2.el6 \
-	php-pecl-memcached-1.0.0-1.el6 \
+		elinks-0.12-0.21.pre5.el6_3 \
+		httpd-2.2.15-54.el6.centos \
+		mod_ssl-2.2.15-54.el6.centos \
+		php-5.3.3-48.el6_8 \
+		php-cli-5.3.3-48.el6_8 \
+		php-zts-5.3.3-48.el6_8 \
+		php-pecl-apc-3.1.9-2.el6 \
+		php-pecl-memcached-1.0.0-1.el6 \
 	&& yum versionlock add \
-	elinks \
-	httpd \
-	mod_ssl \
-	php* \
+		elinks \
+		httpd \
+		mod_ssl \
+		php* \
 	&& rm -rf /var/cache/yum/* \
 	&& yum clean all
 
@@ -115,7 +115,7 @@ RUN { \
 		echo 'Listen 8443'; \
 		echo 'NameVirtualHost *:80'; \
 		echo 'NameVirtualHost *:8443'; \
-		echo 'Include ${APACHE_CONTENT_ROOT}/vhost.conf'; \
+		echo 'Include /etc/httpd/conf.d/vhost.conf'; \
 	} >> /etc/httpd/conf/httpd.conf \
 	&& { \
 		echo ''; \
@@ -125,15 +125,19 @@ RUN { \
 		echo 'NameVirtualHost *:443'; \
 		echo 'SSLSessionCache shmcb:/var/cache/mod_ssl/scache(512000)'; \
 		echo 'SSLSessionCacheTimeout 300'; \
-		echo 'Include ${APACHE_CONTENT_ROOT}/vhost-ssl.conf'; \
+		echo 'Include /etc/httpd/conf.d/vhost-ssl.conf'; \
 	} >> /etc/httpd/conf.d/ssl.conf
 
 # -----------------------------------------------------------------------------
 # Disable the SSL support by default
 # -----------------------------------------------------------------------------
-RUN mv /etc/httpd/conf.d/ssl.conf /etc/httpd/conf.d/ssl.conf.off \
-	&& touch /etc/httpd/conf.d/ssl.conf \
-	&& chmod 444 /etc/httpd/conf.d/ssl.conf
+RUN mv \
+		/etc/httpd/conf.d/ssl.conf \
+		/etc/httpd/conf.d/ssl.conf.off \
+	&& touch \
+		/etc/httpd/conf.d/ssl.conf \
+	&& chmod 444 \
+		/etc/httpd/conf.d/ssl.conf
 
 # -----------------------------------------------------------------------------
 # Limit threads for the application user
@@ -155,11 +159,11 @@ RUN sed \
 		/etc/php.ini \
 		> /etc/php.d/00-php.ini.default \
 	&& sed \
-	-e 's~^;user_ini.filename =$~user_ini.filename =~g' \
-	-e 's~^;cgi.fix_pathinfo=1$~cgi.fix_pathinfo=1~g' \
-	-e 's~^;date.timezone =$~date.timezone = UTC~g' \
-	/etc/php.d/00-php.ini.default \
-	> /etc/php.d/00-php.ini
+		-e 's~^;user_ini.filename =$~user_ini.filename =~g' \
+		-e 's~^;cgi.fix_pathinfo=1$~cgi.fix_pathinfo=1~g' \
+		-e 's~^;date.timezone =$~date.timezone = UTC~g' \
+		/etc/php.d/00-php.ini.default \
+		> /etc/php.d/00-php.ini
 
 # -----------------------------------------------------------------------------
 # APC op-code cache stats
@@ -188,8 +192,12 @@ RUN ln -sf \
 		${PACKAGE_PATH}/etc/php.d/50-php.ini \
 		/etc/php.d/50-php.ini \
 	&& find ${PACKAGE_PATH} -name '*.gitkeep' -type f -delete \
-	&& echo '<?php phpinfo(); ?>' > ${PACKAGE_PATH}/public_html/_phpinfo.php \
-	&& cp /usr/share/php-pecl-apc/apc.php ${PACKAGE_PATH}/public_html/_apc.php
+	&& echo \
+		'<?php phpinfo(); ?>' \
+		> ${PACKAGE_PATH}/public_html/_phpinfo.php \
+	&& cp \
+		/usr/share/php-pecl-apc/apc.php \
+		${PACKAGE_PATH}/public_html/_apc.php
 
 # -----------------------------------------------------------------------------
 # Set install directory/file permissions
@@ -207,19 +215,42 @@ ADD usr/sbin \
 	/usr/sbin/
 ADD etc/services-config/httpd/httpd-bootstrap.conf \
 	/etc/services-config/httpd/
+ADD etc/services-config/httpd/conf.d/vhost.conf \
+	/etc/services-config/httpd/conf.d/
 ADD etc/services-config/supervisor/supervisord.d \
 	/etc/services-config/supervisor/supervisord.d/
 
-RUN mkdir -p /etc/services-config/{httpd/{conf,conf.d},ssl/{certs,private}} \
-	&& cp /etc/httpd/conf/httpd.conf /etc/services-config/httpd/conf/ \
-	&& ln -sf /etc/services-config/httpd/httpd-bootstrap.conf /etc/httpd-bootstrap.conf \
-	&& ln -sf /etc/services-config/httpd/conf/httpd.conf /etc/httpd/conf/httpd.conf \
-	&& ln -sf /etc/services-config/ssl/certs/localhost.crt /etc/pki/tls/certs/localhost.crt \
-	&& ln -sf /etc/services-config/ssl/private/localhost.key /etc/pki/tls/private/localhost.key \
-	&& ln -sf /etc/services-config/supervisor/supervisord.conf /etc/supervisord.conf \
-	&& ln -sf /etc/services-config/supervisor/supervisord.d/httpd-bootstrap.conf /etc/supervisord.d/httpd-bootstrap.conf \
-	&& ln -sf /etc/services-config/supervisor/supervisord.d/httpd-wrapper.conf /etc/supervisord.d/httpd-wrapper.conf \
-	&& chmod +x /usr/sbin/httpd-bootstrap
+RUN mkdir -p \
+		/etc/services-config/{httpd/{conf,conf.d},ssl/{certs,private}} \
+	&& cp \
+		/etc/httpd/conf/httpd.conf \
+		/etc/services-config/httpd/conf/ \
+	&& ln -sf \
+		/etc/services-config/httpd/httpd-bootstrap.conf \
+		/etc/httpd-bootstrap.conf \
+	&& ln -sf \
+		/etc/services-config/httpd/conf.d/vhost.conf \
+		/etc/httpd/conf.d/vhost.conf \
+	&& ln -sf \
+		/etc/services-config/httpd/conf/httpd.conf \
+		/etc/httpd/conf/httpd.conf \
+	&& ln -sf \
+		/etc/services-config/ssl/certs/localhost.crt \
+		/etc/pki/tls/certs/localhost.crt \
+	&& ln -sf \
+		/etc/services-config/ssl/private/localhost.key \
+		/etc/pki/tls/private/localhost.key \
+	&& ln -sf \
+		/etc/services-config/supervisor/supervisord.conf \
+		/etc/supervisord.conf \
+	&& ln -sf \
+		/etc/services-config/supervisor/supervisord.d/httpd-bootstrap.conf \
+		/etc/supervisord.d/httpd-bootstrap.conf \
+	&& ln -sf \
+		/etc/services-config/supervisor/supervisord.d/httpd-wrapper.conf \
+		/etc/supervisord.d/httpd-wrapper.conf \
+	&& chmod 700 \
+		/usr/sbin/httpd-bootstrap
 
 # -----------------------------------------------------------------------------
 # Set default environment variables used to configure the service container
