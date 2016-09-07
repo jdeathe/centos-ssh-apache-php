@@ -59,9 +59,19 @@
   }
 ?>
         <p class="lead">
+<?php
+  if (realpath(
+      dirname(__FILE__) . "/_phpinfo.php"
+  )) {
+?>
           <a href="/_phpinfo.php" class="btn btn-lg btn-primary">PHP info</a>
-<?php 
-  if (extension_loaded('apc')) {
+<?php
+  }
+  if (extension_loaded('apc') &&
+      realpath(
+        dirname(__FILE__) . "/_apc.php"
+      )
+  ) {
 ?>
           <a href="/_apc.php" class="btn btn-lg btn-default">APC info</a>
 <?php

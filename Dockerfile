@@ -37,6 +37,9 @@ RUN rpm --rebuilddb \
 # Global Apache configuration changes
 # -----------------------------------------------------------------------------
 RUN sed -i \
+	-e 's~^KeepAlive .*$~KeepAlive On~g' \
+	-e 's~^MaxKeepAliveRequests .*$~MaxKeepAliveRequests 200~g' \
+	-e 's~^KeepAliveTimeout .*$~KeepAliveTimeout 2~g' \
 	-e 's~^ServerSignature On$~ServerSignature Off~g' \
 	-e 's~^ServerTokens OS$~ServerTokens Prod~g' \
 	-e 's~^NameVirtualHost \(.*\)$~#NameVirtualHost \1~g' \
@@ -110,23 +113,13 @@ RUN { \
 		echo '#'; \
 		echo '# Custom configuration'; \
 		echo '#'; \
+		echo 'LogFormat \'; \
+		echo '  "%{X-Forwarded-For}i %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\"" \'; \
+		echo '  forwarded_for_combined'; \
 		echo 'Options -Indexes'; \
 		echo 'TraceEnable Off'; \
-		echo 'Listen 8443'; \
-		echo 'NameVirtualHost *:80'; \
-		echo 'NameVirtualHost *:8443'; \
-		echo 'Include /etc/httpd/conf.d/vhost.conf'; \
-	} >> /etc/httpd/conf/httpd.conf \
-	&& { \
-		echo ''; \
-		echo '#'; \
-		echo '# Custom SSL configuration'; \
-		echo '#'; \
-		echo 'NameVirtualHost *:443'; \
-		echo 'SSLSessionCache shmcb:/var/cache/mod_ssl/scache(512000)'; \
-		echo 'SSLSessionCacheTimeout 300'; \
-		echo 'Include /etc/httpd/conf.d/vhost-ssl.conf'; \
-	} >> /etc/httpd/conf.d/ssl.conf
+		echo 'UseCanonicalPhysicalPort On'; \
+	} >> /etc/httpd/conf/httpd.conf
 
 # -----------------------------------------------------------------------------
 # Disable the SSL support by default
@@ -188,16 +181,30 @@ RUN useradd -r -M -d /var/www/app -s /sbin/nologin app \
 # -----------------------------------------------------------------------------
 RUN mkdir -p -m 750 ${PACKAGE_PATH}
 ADD var/www/app ${PACKAGE_PATH}
-RUN ln -sf \
-		${PACKAGE_PATH}/etc/php.d/50-php.ini \
-		/etc/php.d/50-php.ini \
-	&& find ${PACKAGE_PATH} -name '*.gitkeep' -type f -delete \
-	&& echo \
-		'<?php phpinfo(); ?>' \
-		> ${PACKAGE_PATH}/public_html/_phpinfo.php \
-	&& cp \
-		/usr/share/php-pecl-apc/apc.php \
-		${PACKAGE_PATH}/public_html/_apc.php
+RUN find ${PACKAGE_PATH} -name '*.gitkeep' -type f -delete \
+	&& $(\
+		if [[ -d ${PACKAGE_PATH}/etc/php.d ]]; then \
+			for file_path in ${PACKAGE_PATH}/etc/php.d/*.ini; do \
+				ln -sf ${file_path} \
+					/etc/php.d//${file_path##*/}; \
+			done; \
+		fi \
+	) \
+	&& $(\
+		if [[ -d ${PACKAGE_PATH}/etc/httpd/conf.d ]]; then \
+			for file_path in ${PACKAGE_PATH}/etc/httpd/conf.d/*.conf; do \
+				ln -sf ${file_path} \
+					/etc/httpd/conf.d/${file_path##*/}; \
+			done; \
+		fi \
+	) \
+	&& $(\
+		if [[ -f /usr/share/php-pecl-apc/apc.php ]]; then \
+			cp \
+				/usr/share/php-pecl-apc/apc.php \
+				${PACKAGE_PATH}/public_html/_apc.php; \
+		fi \
+	)
 
 # -----------------------------------------------------------------------------
 # Set install directory/file permissions
@@ -215,7 +222,8 @@ ADD usr/sbin \
 	/usr/sbin/
 ADD etc/services-config/httpd/httpd-bootstrap.conf \
 	/etc/services-config/httpd/
-ADD etc/services-config/httpd/conf.d/vhost.conf \
+ADD etc/services-config/httpd/conf.d/ssl-vhost.conf \
+	etc/services-config/httpd/conf.d/vhost.conf \
 	/etc/services-config/httpd/conf.d/
 ADD etc/services-config/supervisor/supervisord.d \
 	/etc/services-config/supervisor/supervisord.d/
@@ -229,11 +237,14 @@ RUN mkdir -p \
 		/etc/services-config/httpd/httpd-bootstrap.conf \
 		/etc/httpd-bootstrap.conf \
 	&& ln -sf \
-		/etc/services-config/httpd/conf.d/vhost.conf \
-		/etc/httpd/conf.d/vhost.conf \
-	&& ln -sf \
 		/etc/services-config/httpd/conf/httpd.conf \
 		/etc/httpd/conf/httpd.conf \
+	&& ln -sf \
+		/etc/services-config/httpd/conf.d/ssl-vhost.conf \
+		/etc/httpd/conf.d/ssl-vhost.conf \
+	&& ln -sf \
+		/etc/services-config/httpd/conf.d/vhost.conf \
+		/etc/httpd/conf.d/vhost.conf \
 	&& ln -sf \
 		/etc/services-config/ssl/certs/localhost.crt \
 		/etc/pki/tls/certs/localhost.crt \

@@ -463,21 +463,6 @@ APACHE_MODULES_ENABLED=$(
 	| sort
 )
 
-# Generate an SSL VirtualHost configuration if required
-if [[ ${OPTS_APACHE_MOD_SSL_ENABLED} == true ]] \
-	&& [[ ! -f /etc/httpd/conf.d/vhost-ssl.conf ]] \
-	&& [[ -f /etc/httpd/conf.d/vhost.conf ]]; then
-	echo "Generating SSL VirtualHost configuration."
-
-	SED_UNCOMMENT='s~\( *\)\(#\( \([^ ]\)\)\?\)\(.*\)$~\1\4\5~'
-
-	sed \
-		-e 's~^<VirtualHost \*:80 \*:8443>$~<VirtualHost \*:443>~g' \
-		-e "/<IfModule mod_ssl.c>/,/<\/IfModule>/ ${SED_UNCOMMENT}" \
-		/etc/httpd/conf.d/vhost.conf > \
-		/etc/httpd/conf.d/vhost-ssl.conf
-fi
-
 # Enable/Disable SSL support
 if [[ ${OPTS_APACHE_MOD_SSL_ENABLED} == true ]]; then
 	echo "Enabling SSL support."
