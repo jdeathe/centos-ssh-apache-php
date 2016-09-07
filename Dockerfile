@@ -113,6 +113,7 @@ RUN { \
 		echo '#'; \
 		echo '# Custom configuration'; \
 		echo '#'; \
+		echo 'Include /etc/services-config/httpd/conf.d/*.conf'; \
 		echo 'LogFormat \'; \
 		echo '  "%{X-Forwarded-For}i %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\"" \'; \
 		echo '  forwarded_for_combined'; \
@@ -177,6 +178,55 @@ RUN useradd -r -M -d /var/www/app -s /sbin/nologin app \
 	&& usermod -a -G app-www,app apache
 
 # -----------------------------------------------------------------------------
+# Copy files into place
+# -----------------------------------------------------------------------------
+ADD usr/sbin \
+	/usr/sbin/
+ADD etc/services-config/httpd/httpd-bootstrap.conf \
+	/etc/services-config/httpd/
+ADD etc/services-config/httpd/conf.d/*.conf \
+	/etc/services-config/httpd/conf.d/
+ADD etc/services-config/supervisor/supervisord.d \
+	/etc/services-config/supervisor/supervisord.d/
+
+RUN mkdir -p \
+		/etc/services-config/{httpd/{conf,conf.d},ssl/{certs,private}} \
+	&& $(\
+		if [[ -d /etc/services-config/httpd/conf.d/DISABLED ]]; then \
+			for file_path in /etc/services-config/httpd/conf.d/*.conf; do \
+				ln -sf ${file_path} \
+					/etc/httpd/conf.d/${file_path##*/}; \
+			done; \
+		fi \
+	) \
+	&& cp \
+		/etc/httpd/conf/httpd.conf \
+		/etc/services-config/httpd/conf/ \
+	&& ln -sf \
+		/etc/services-config/httpd/httpd-bootstrap.conf \
+		/etc/httpd-bootstrap.conf \
+	&& ln -sf \
+		/etc/services-config/httpd/conf/httpd.conf \
+		/etc/httpd/conf/httpd.conf \
+	&& ln -sf \
+		/etc/services-config/ssl/certs/localhost.crt \
+		/etc/pki/tls/certs/localhost.crt \
+	&& ln -sf \
+		/etc/services-config/ssl/private/localhost.key \
+		/etc/pki/tls/private/localhost.key \
+	&& ln -sf \
+		/etc/services-config/supervisor/supervisord.conf \
+		/etc/supervisord.conf \
+	&& ln -sf \
+		/etc/services-config/supervisor/supervisord.d/httpd-bootstrap.conf \
+		/etc/supervisord.d/httpd-bootstrap.conf \
+	&& ln -sf \
+		/etc/services-config/supervisor/supervisord.d/httpd-wrapper.conf \
+		/etc/supervisord.d/httpd-wrapper.conf \
+	&& chmod 700 \
+		/usr/sbin/httpd-bootstrap
+
+# -----------------------------------------------------------------------------
 # Create and populate the install directory
 # -----------------------------------------------------------------------------
 RUN mkdir -p -m 750 ${PACKAGE_PATH}
@@ -186,15 +236,15 @@ RUN find ${PACKAGE_PATH} -name '*.gitkeep' -type f -delete \
 		if [[ -d ${PACKAGE_PATH}/etc/php.d ]]; then \
 			for file_path in ${PACKAGE_PATH}/etc/php.d/*.ini; do \
 				ln -sf ${file_path} \
-					/etc/php.d//${file_path##*/}; \
+					/etc/php.d/${file_path##*/}; \
 			done; \
 		fi \
 	) \
 	&& $(\
 		if [[ -d ${PACKAGE_PATH}/etc/httpd/conf.d ]]; then \
 			for file_path in ${PACKAGE_PATH}/etc/httpd/conf.d/*.conf; do \
-				ln -sf ${file_path} \
-					/etc/httpd/conf.d/${file_path##*/}; \
+				cp -f ${file_path} \
+					/etc/services-config/httpd/conf.d/${file_path##*/}; \
 			done; \
 		fi \
 	) \
@@ -214,54 +264,6 @@ RUN chown -R app:app-www ${PACKAGE_PATH} \
 	&& find ${PACKAGE_PATH}/var -type d -exec chmod 770 {} + \
 	&& find ${PACKAGE_PATH} -type f -exec chmod 640 {} + \
 	&& find ${PACKAGE_PATH}/bin -type f -exec chmod 750 {} +
-
-# -----------------------------------------------------------------------------
-# Copy files into place
-# -----------------------------------------------------------------------------
-ADD usr/sbin \
-	/usr/sbin/
-ADD etc/services-config/httpd/httpd-bootstrap.conf \
-	/etc/services-config/httpd/
-ADD etc/services-config/httpd/conf.d/ssl-vhost.conf \
-	etc/services-config/httpd/conf.d/vhost.conf \
-	/etc/services-config/httpd/conf.d/
-ADD etc/services-config/supervisor/supervisord.d \
-	/etc/services-config/supervisor/supervisord.d/
-
-RUN mkdir -p \
-		/etc/services-config/{httpd/{conf,conf.d},ssl/{certs,private}} \
-	&& cp \
-		/etc/httpd/conf/httpd.conf \
-		/etc/services-config/httpd/conf/ \
-	&& ln -sf \
-		/etc/services-config/httpd/httpd-bootstrap.conf \
-		/etc/httpd-bootstrap.conf \
-	&& ln -sf \
-		/etc/services-config/httpd/conf/httpd.conf \
-		/etc/httpd/conf/httpd.conf \
-	&& ln -sf \
-		/etc/services-config/httpd/conf.d/ssl-vhost.conf \
-		/etc/httpd/conf.d/ssl-vhost.conf \
-	&& ln -sf \
-		/etc/services-config/httpd/conf.d/vhost.conf \
-		/etc/httpd/conf.d/vhost.conf \
-	&& ln -sf \
-		/etc/services-config/ssl/certs/localhost.crt \
-		/etc/pki/tls/certs/localhost.crt \
-	&& ln -sf \
-		/etc/services-config/ssl/private/localhost.key \
-		/etc/pki/tls/private/localhost.key \
-	&& ln -sf \
-		/etc/services-config/supervisor/supervisord.conf \
-		/etc/supervisord.conf \
-	&& ln -sf \
-		/etc/services-config/supervisor/supervisord.d/httpd-bootstrap.conf \
-		/etc/supervisord.d/httpd-bootstrap.conf \
-	&& ln -sf \
-		/etc/services-config/supervisor/supervisord.d/httpd-wrapper.conf \
-		/etc/supervisord.d/httpd-wrapper.conf \
-	&& chmod 700 \
-		/usr/sbin/httpd-bootstrap
 
 # -----------------------------------------------------------------------------
 # Set default environment variables used to configure the service container
