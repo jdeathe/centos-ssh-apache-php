@@ -156,6 +156,7 @@ RUN sed \
 		-e 's~^;user_ini.filename =$~user_ini.filename =~g' \
 		-e 's~^;cgi.fix_pathinfo=1$~cgi.fix_pathinfo=1~g' \
 		-e 's~^;date.timezone =$~date.timezone = UTC~g' \
+		-e 's~^expose_php = On$~expose_php = Off~g' \
 		/etc/php.d/00-php.ini.default \
 		> /etc/php.d/00-php.ini
 
