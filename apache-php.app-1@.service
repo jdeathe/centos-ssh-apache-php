@@ -51,7 +51,7 @@ TimeoutStartSec=1200
 Environment="DOCKER_USER=jdeathe"
 Environment="DOCKER_IMAGE_PACKAGE_PATH=/var/services-packages"
 Environment="DOCKER_IMAGE_NAME=centos-ssh-apache-php"
-Environment="DOCKER_IMAGE_TAG=centos-6-1.5.0"
+Environment="DOCKER_IMAGE_TAG=centos-6-1.6.0"
 Environment="DOCKER_PORT_MAP_TCP_80=8080"
 Environment="DOCKER_PORT_MAP_TCP_443=9443"
 Environment="DOCKER_PORT_MAP_TCP_8443=8580"
