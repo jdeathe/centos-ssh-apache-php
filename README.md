@@ -66,7 +66,7 @@ $ docker inspect \
   apache-php.app-1.1.1
 ```
 
-On first run, the bootstrap script, ([/etc/apache-bootstrap](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6/etc/apache-bootstrap)), will check if the DocumentRoot directory is empty and, if so, will populate it with the example app scripts and VirtualHost configuration files. If you place your own app in this directory it will not be overwritten but you must ensure to include at least a vhost.conf file and, if enabling SSL a vhost-ssl.conf file too.
+On first run, the bootstrap script, ([/etc/apache-bootstrap](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6/etc/apache-bootstrap)), will check if the DocumentRoot directory is empty and, if so, will populate it with the example app scripts and app specific configuration files.
 
 The ```apachectl``` command can be accessed as follows.
 
@@ -375,11 +375,11 @@ To set the timezone for the UK and account for British Summer Time you would use
 
 ##### SERVICE_UID
 
-The ```SERVICE_UID``` environmental variable is used to set a response header named ```X-Service-Uid``` that lets you identify the container that is serving the content. This is useful when you have many containers running on a single host using different ports or if you are running a cluster and need to identify which host the content is served from. The default value is set to the Service Unit's App Group Name, Local ID and Instance ID.
+The ```SERVICE_UID``` environmental variable is used to set a response header named ```X-Service-Uid``` that lets you identify the container that is serving the content. This is useful when you have many containers running on a single host using different ports or if you are running a cluster and need to identify which host the content is served from. If the value contains the placeholder `{{HOSTNAME}}` it will be replaced with the system `hostname` value; by default this is the container id but the hostname can be modified using the `--hostname` docker create|run parameter.
 
 ```
 ...
-  --env "SERVICE_UID=app-1.1.1" \
+  --env "SERVICE_UID={{HOSTNAME}}" \
 ...
 ```
 
