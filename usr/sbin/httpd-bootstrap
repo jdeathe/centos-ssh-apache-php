@@ -312,6 +312,26 @@ get_ssl_certificate_fingerprint ()
 	printf "%s" "${VALUE}"
 }
 
+parse_php_ini_scan_files ()
+{
+	local FILE_PATH
+	local PACKAGE_PATH="${1:-}"
+
+	if [[ -n ${PACKAGE_PATH} ]] && [[ -d ${PACKAGE_PATH}/etc/php.d ]]; then
+		for FILE_PATH in "${PACKAGE_PATH}"/etc/php.d/*.ini; do
+			printf -- \
+				'%s' \
+				"$(
+					eval \
+						"cat <<-EOF
+							$(<"${FILE_PATH}")
+						EOF" 2> /dev/null
+				)" \
+			> "/etc/php.d/${FILE_PATH##*/}"
+		done
+	fi
+}
+
 update_group_name ()
 {
 	local GROUP_FROM=${1}
@@ -369,6 +389,11 @@ OPTS_APACHE_SYSTEM_USER="${APACHE_SYSTEM_USER:-${DEFAULT_SYSTEM_USER}}"
 OPTS_SERVICE_UID="$(
 	get_service_uid
 )"
+
+# Parse PHP configuration files - variables are replaced with text values.
+# This is neccessary for use in fcgid php-wrapper.
+parse_php_ini_scan_files
+parse_php_ini_scan_files "${PACKAGE_PATH}"
 
 # Generate SSL certificate.
 if [[ ${OPTS_APACHE_MOD_SSL_ENABLED} == true ]] \

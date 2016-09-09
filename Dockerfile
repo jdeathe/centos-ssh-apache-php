@@ -234,14 +234,6 @@ RUN mkdir -p -m 750 ${PACKAGE_PATH}
 ADD var/www/app ${PACKAGE_PATH}
 RUN find ${PACKAGE_PATH} -name '*.gitkeep' -type f -delete \
 	&& $(\
-		if [[ -d ${PACKAGE_PATH}/etc/php.d ]]; then \
-			for file_path in ${PACKAGE_PATH}/etc/php.d/*.ini; do \
-				ln -sf ${file_path} \
-					/etc/php.d/${file_path##*/}; \
-			done; \
-		fi \
-	) \
-	&& $(\
 		if [[ -d ${PACKAGE_PATH}/etc/httpd/conf.d ]]; then \
 			for file_path in ${PACKAGE_PATH}/etc/httpd/conf.d/*.conf; do \
 				cp -f ${file_path} \
