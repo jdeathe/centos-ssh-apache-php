@@ -192,14 +192,6 @@ ADD etc/services-config/supervisor/supervisord.d \
 
 RUN mkdir -p \
 		/etc/services-config/{httpd/{conf,conf.d},ssl/{certs,private}} \
-	&& $(\
-		if [[ -d /etc/services-config/httpd/conf.d/DISABLED ]]; then \
-			for file_path in /etc/services-config/httpd/conf.d/*.conf; do \
-				ln -sf ${file_path} \
-					/etc/httpd/conf.d/${file_path##*/}; \
-			done; \
-		fi \
-	) \
 	&& cp \
 		/etc/httpd/conf/httpd.conf \
 		/etc/services-config/httpd/conf/ \
