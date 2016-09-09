@@ -312,12 +312,27 @@ get_ssl_certificate_fingerprint ()
 	printf "%s" "${VALUE}"
 }
 
-parse_php_ini_scan_files ()
+load_httpd_conf_scan_files ()
 {
 	local FILE_PATH
 	local PACKAGE_PATH="${1:-}"
 
 	if [[ -n ${PACKAGE_PATH} ]] && [[ -d ${PACKAGE_PATH}/etc/php.d ]]; then
+		for FILE_PATH in "${PACKAGE_PATH}"/etc/httpd/conf.d/*.conf; do
+			cat  \
+				"${FILE_PATH}" \
+			> "/etc/services-config/httpd/conf.d/${FILE_PATH##*/}"
+		done
+	fi
+}
+
+load_php_ini_scan_files ()
+{
+	local FILE_PATH
+	local PACKAGE_PATH="${1:-}"
+
+	if [[ -n ${PACKAGE_PATH} ]] && [[ -d ${PACKAGE_PATH}/etc/php.d ]]; then
+		# Replace environment variables to support fcgid php-wrapper
 		for FILE_PATH in "${PACKAGE_PATH}"/etc/php.d/*.ini; do
 			printf -- \
 				'%s' \
@@ -390,10 +405,11 @@ OPTS_SERVICE_UID="$(
 	get_service_uid
 )"
 
-# Parse PHP configuration files - variables are replaced with text values.
-# This is neccessary for use in fcgid php-wrapper.
-parse_php_ini_scan_files
-parse_php_ini_scan_files "${PACKAGE_PATH}"
+# Load app package Apache configuration files.
+load_httpd_conf_scan_files "${PACKAGE_PATH}"
+
+# Load app package PHP configuration files.
+load_php_ini_scan_files "${PACKAGE_PATH}"
 
 # Generate SSL certificate.
 if [[ ${OPTS_APACHE_MOD_SSL_ENABLED} == true ]] \
