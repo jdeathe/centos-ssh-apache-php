@@ -226,14 +226,6 @@ RUN mkdir -p -m 750 ${PACKAGE_PATH}
 ADD var/www/app ${PACKAGE_PATH}
 RUN find ${PACKAGE_PATH} -name '*.gitkeep' -type f -delete \
 	&& $(\
-		if [[ -d ${PACKAGE_PATH}/etc/httpd/conf.d ]]; then \
-			for file_path in ${PACKAGE_PATH}/etc/httpd/conf.d/*.conf; do \
-				cp -f ${file_path} \
-					/etc/services-config/httpd/conf.d/${file_path##*/}; \
-			done; \
-		fi \
-	) \
-	&& $(\
 		if [[ -f /usr/share/php-pecl-apc/apc.php ]]; then \
 			cp \
 				/usr/share/php-pecl-apc/apc.php \
