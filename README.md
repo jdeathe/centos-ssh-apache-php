@@ -3,7 +3,7 @@ centos-ssh-apache-php
 
 Docker Image including CentOS-6 6.8 x86_64, Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1.
 
-Apache PHP web server, loading only a minimal set of Apache modules by default. Supports custom configuration via environment variables and/or a configuration data volume.
+Apache PHP web server, loading only a minimal set of Apache modules by default. Supports custom configuration via environment variables.
 
 ## Overview & links
 
@@ -66,7 +66,7 @@ $ docker inspect \
   apache-php.app-1.1.1
 ```
 
-On first run, the bootstrap script, ([/etc/apache-bootstrap](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6/etc/apache-bootstrap)), will check if the DocumentRoot directory is empty and, if so, will populate it with the example app scripts and app specific configuration files.
+On first run, the bootstrap script, ([/usr/sbin/httpd-bootstrap](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6/usr/sbin/httpd-bootstrap)), will check if the DocumentRoot directory is empty and, if so, will populate it with the example app scripts and app specific configuration files.
 
 The ```apachectl``` command can be accessed as follows.
 
@@ -76,108 +76,11 @@ $ docker exec -it apache-php.app-1.1.1 apachectl -h
 
 ## Instructions
 
-### (Optional) Configuration Data Volume
-
-A configuration "data volume" allows you to share the same configuration files between multiple docker containers. Docker mounts a host directory into the data volume allowing you to edit the default configuration files and have those changes persist.
-
-Each service that requires a common set of configuration files could use a single Configuration Volume as illustrated in the following diagram:
-
-```
-+---------------------------------------------------+
-|                (Docker Host system)               |
-|                                                   |
-| /var/lib/docker/volumes/<volume-name>/_data       |
-|                         +                         |
-|                         |                         |
-|            +============*===========+             |
-|            |  Configuration Volume  |             |
-|            |    Service Container   |             |
-|            +============*===========+             |
-|                         |                         |
-|         +---------------*---------------+         |
-|         |               |               |         |
-|   +=====*=====+   +=====*=====+   +=====*=====+   |
-|   |  Service  |   |  Service  |   |  Service  |   |
-|   | Container |   | Container |   | Container |   |
-|   |    (1)    |   |    (2)    |   |    (n)    |   |
-|   +===========+   +===========+   +===========+   |
-+---------------------------------------------------+
-```
-
-#### Standard data volume container
-
-Naming of the container's volume is optional, it is possible to leave the naming up to Docker by simply specifying the container path only.
-
-```
-$ docker run \
-  --name volume-config.apache-php.app-1.1.1 \
-  -v /etc/services-config \
-  jdeathe/centos-ssh-apache-php:latest \
-  /bin/true
-```
-
-To identify the docker host directory path to the volume within the container ```volume-config.apache-php.app-1.1.1``` you can use ```docker inspect``` to view the Mounts.
-
-```
-$ docker inspect \
-  --format '{{ json (index .Mounts 0).Source }}' \
-  volume-config.apache-php.app-1.1.1
-```
-
-#### Named data volume container
-
-To create a named data volume, mounting our docker host's configuration directory /var/lib/docker/volumes/volume-config.apache-php.app-1.1.1 to /etc/services-config in the docker container use the following run command. Note that we use the same image as for the application container to reduce the number of images/layers required.
-
-```
-$ docker run \
-  --name volume-config.apache-php.app-1.1.1 \
-  -v volume-config.apache-php.app-1.1.1:/etc/services-config \
-  jdeathe/centos-ssh-apache-php:latest \
-  /bin/true
-```
-
-##### Populating Named configuration data volumes  
-When using named volumes the directory path from the docker host mounts the path on the container so we need to upload the configuration files. The simplest method of achieving this is to run a temporary container as the source of the configuration files and use `docker cp` to stream the files into the named data volume container.
-
-```
-$ docker run -d \
-  --name apache-php.tmp \
-  jdeathe/centos-ssh-apache-php:latest \
-  /bin/sh -c 'while true; do echo -ne .; sleep 1; done';
-  && docker cp \
-  apache-php.tmp:/etc/services-config/. - | \
-  docker cp - \
-  volume-config.apache-php.app-1.1.1:/etc/services-config
-  && docker rm -f apache-php.tmp
-```
-
-#### Editing configuration
-
-To make changes to the configuration files you need a running container that uses the volumes from the configuration volume. To edit a single file you could use the following, where <path_to_file> can be one of the [required configuration files](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6/README.md#required-configuration-files), or you could run a ```bash``` shell and then make the changes required using ```vi```. On exiting the container it will be removed since we specify the ```--rm``` parameter.
-
-```
-$ docker run --rm -it \
-  --volumes-from volume-config.apache-php.app-1.1.1 \
-  jdeathe/centos-ssh-apache-php:latest \
-  vi /etc/services-config/<path_to_file>
-```
-
-##### Required configuration files
-
-The following configuration files are required to run the application container and should be located in the directory /etc/services-config/.
-
-- [httpd/conf/httpd.conf](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6/etc/services-config/httpd/conf/httpd.conf)
-- [httpd/conf.d/php.conf](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6/etc/services-config/httpd/conf.d/php.conf)
-- [httpd/conf.d/ssl.conf](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6/etc/services-config/httpd/conf.d/ssl.conf)
-- [supervisor/supervisord.conf](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6/etc/services-config/supervisor/supervisord.conf)
-
 ### Running
 
 To run the a docker container from this image you can use the included [run.sh](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6/run.sh) and [run.conf](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6/run.conf) scripts. The helper script will stop any running container of the same name, remove it and run a new daemonised container on an unspecified host port. Alternatively you can use the following methods to make the http service available on ports 8080 of the docker host.
 
 #### Using environment variables
-
-*Note:* Settings applied by environment variables will override those set within configuration volumes from release 1.3.1. Existing installations that use the apache-bootstrap.conf saved on a configuration "data" volume will not allow override by the environment variables. Also apache-bootstrap.conf can be updated to prevent the value being replaced by that set using the environment variable.
 
 ```
 $ docker stop apache-php.app-1.1.1 && \
@@ -204,33 +107,6 @@ $ docker run -d \
   jdeathe/centos-ssh-apache-php:latest
 ```
 
-#### Using configuration volume
-
-The following example uses the settings from the optional configuration volume volume-config.apache-php.app-1.1.1 and maps a data volume for persistent storage of the Apache app data on the docker host.
-
-```
-$ docker stop apache-php.app-1.1.1 && \
-  docker rm apache-php.app-1.1.1
-$ docker run -d \
-  --name apache-php.app-1.1.1 \
-  -p 8080:80 \
-  --env "APACHE_SERVER_ALIAS=app-1" \
-  --env "APACHE_SERVER_NAME=app-1.local" \
-  --env "PHP_OPTIONS_DATE_TIMEZONE=UTC" \
-  --env "SERVICE_UID=app-1.1.1" \
-  --volumes-from volume-config.apache-php.app-1.1.1 \
-  -v volume-data.apache-php.app-1.1.1:/var/www \
-  jdeathe/centos-ssh-apache-php:latest
-```
-
-Now you can verify it is initialised and running successfully by inspecting the container's logs
-
-```
-$ docker logs apache-php.app-1.1.1
-```
-
-The output of the logs should show the Apache modules being loaded and auto-generated password for the Apache user and group, (if not try again after a few seconds).
-
 #### Environment Variables
 
 ##### APACHE_SERVER_NAME & APACHE_SERVER_ALIAS
@@ -243,7 +119,6 @@ The ```APACHE_SERVER_NAME``` and ```APACHE_SERVER_ALIAS``` environmental variabl
   --env "APACHE_SERVER_NAME=app-1.local" \
 ...
 ```
-
 
 ##### APACHE_CONTENT_ROOT
 
@@ -311,8 +186,6 @@ The variable ```APACHE_LOAD_MODULES``` defines all Apache modules to be loaded f
 ##### APACHE_MOD_SSL_ENABLED
 
 By default SSL support is disabled but a second port, (mapped to 8443), is available for traffic that has been been through upstream SSL termination (SSL Offloading). If you want the container to support SSL directly then set ```APACHE_MOD_SSL_ENABLED=true``` this will then generate a self signed certificate and will update Apache to accept traffic on port 443.
-
-*Note:* The included helper script [run.sh](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6/run.sh) will automatically map the docker host port 8580 to 443 but if you are running docker manually can use the following.
 
 ```
 $ docker stop apache-php.app-1.1.1 && \
@@ -382,35 +255,3 @@ The ```SERVICE_UID``` environmental variable is used to set a response header na
   --env "SERVICE_UID={{HOSTNAME}}" \
 ...
 ```
-
-### Custom Configuration
-
-If using the optional data volume for container configuration you are able to customise the configuration. In the following examples your custom docker configuration files should be located on the Docker host under the directory ```/var/lib/docker/volumes/<volume-name>/``` where ```<container-name>``` should match the applicable container name such as "apache-php.app-1.1.1" if using named volumes or will be an ID generated automatically by Docker. To identify the correct path on the Docker host use the ```docker inspect``` command.
-
-#### [httpd/apache-bootstrap.conf](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6/etc/services-config/httpd/apache-bootstrap.conf)
-
-The bootstrap script initialises the app. It sets up the Apache service user + group, generates passwords, enables Apache modules and adds/removes SSL support.
-
-#### ssl/certs/localhost.crt
-
-You may need to override the default auto-generated self signed certificate. To do this you can add the SSLCertificateFile to the Docker hosts directory using the filename ```localhost.crt``` for example:
-
-```
-/etc/services-config/apache-php.app-1.1.1/ssl/certs/localhost.crt
-```
-
-*Note:* You must also specify the associated SSLCertificateKeyFile in this case.
-
-#### ssl/private/localhost.key
-
-To override the SSLCertificateKeyFile add it to your config directory using the filename ```localhost.key``` for example:
-
-```
-/etc/services-config/apache-php.app-1.1.1/ssl/certs/localhost.key
-```
-
-*Note:* You must also specify the associated SSLCertificateFile in this case.
-
-#### [supervisor/supervisord.conf](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6/etc/services-config/supervisor/supervisord.conf)
-
-The supervisor service's configuration can also be overridden by editing the custom supervisord.conf file. It shouldn't be necessary to change the existing configuration here but you could include more [program:x] sections to run additional commands at startup.
