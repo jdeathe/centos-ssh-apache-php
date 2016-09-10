@@ -1,30 +1,31 @@
 # -----------------------------------------------------------------------------
 # Naming convention:
 #
-#    apache-php.app-1.register@.service = {service-unit-template-name}
-#      |      |      |
-#      |      |      +------------ {service-unit-companion-name}
-#      |      +------------------- {service-unit-group-name}
-#      +-------------------------- {service-unit-name}
+#    centos-ssh-apache-php@.service = {service-unit-install-template-name}
+#              |
+#              +----------------------- {image-name}
 #
-#    apache-php.app-1.register@1.1.service = {service-unit-instance-name}
-#      |      |      |     | |
-#      |      |      |     | +---- {service-unit-instance}
-#      |      |      |     +------ {service-unit-local-id}
-#      |      |      +------------ {service-unit-companion-name}
-#      |      +------------------- {service-unit-group-name}
-#      +-------------------------- {service-unit-name}
+#    apache-php.pool-1.register@.service = {service-unit-template-name}
+#              Y         |
+#              |         +------------- {service-unit-companion-name}
+#              +----------------------- {service-unit-name}
 #
-#    apache-php.app-1.1.1.register = {service-unit-long-name}
-#      |      |   | |    |
-#      |      |   | |    +-------- {service-unit-companion-name}
-#      |      |   | +------------- {service-unit-instance}
-#      |      |   +--------------- {service-unit-local-id}
-#      |      +------------------- {service-unit-group-name}
-#      +-------------------------- {service-unit-name}
+#    apache-php.pool-1.register@1.1.service = {service-unit-instance-name}
+#              Y          |      Y
+#              |          |      +----- {service-unit-instance}
+#              |          +------------ {service-unit-companion-name}
+#              +----------------------- {service-unit-name}
+#
+#    apache-php.pool-1.1.1.register = {service-unit-long-name}
+#              Y        Y     |
+#              |        |     +-------- {service-unit-companion-name}
+#              |        +-------------- {service-unit-instance}
+#              +----------------------- {service-unit-name}
 #
 # To install:
-#     sudo cp {service-unit-template-name} /etc/systemd/system/
+#     sudo sed -e "s~{{SERVICE_UNIT_NAME}}~{service-unit-name}~g" \
+#       {service-unit-install-template-name} \
+#       > /etc/systemd/system/{service-unit-template-name}
 #     sudo systemctl daemon-reload
 #     sudo systemctl enable -f {service-unit-instance-name}
 #
@@ -42,16 +43,16 @@
 Description=centos-apache-php etcd registration // %p@%i
 After=etcd.service
 After=etcd2.service
-After=apache-php.app-1@%i.service
-BindsTo=apache-php.app-1@%i.service
+After={{SERVICE_UNIT_NAME}}@%i.service
+BindsTo={{SERVICE_UNIT_NAME}}@%i.service
 RefuseManualStart=true
 RefuseManualStop=true
 
 [Service]
 Environment="REGISTER_ETCD_PARAMETERS="
-Environment="REGISTER_KEY_ROOT=/services/apache-php.app-1.%i"
-Environment="REGISTER_TTL=120"
-Environment="REGISTER_UPDATE_INTERVAL=95"
+Environment="REGISTER_KEY_ROOT=/services/{{SERVICE_UNIT_NAME}}.%i"
+Environment="REGISTER_TTL=60"
+Environment="REGISTER_UPDATE_INTERVAL=55"
 
 # Unregister service
 ExecStartPre=/bin/bash -c \
@@ -68,28 +69,28 @@ ExecStart=/bin/bash -c \
   "until /usr/bin/etcdctl ${REGISTER_ETCD_PARAMETERS} get ${REGISTER_KEY_ROOT}/ports/tcp/80 &> /dev/null \
     || /usr/bin/etcdctl ${REGISTER_ETCD_PARAMETERS} get ${REGISTER_KEY_ROOT}/ports/tcp/443 &> /dev/null \
     || /usr/bin/etcdctl ${REGISTER_ETCD_PARAMETERS} get ${REGISTER_KEY_ROOT}/ports/tcp/8443 &> /dev/null; do \
-    if /usr/bin/docker port apache-php.app-1.%i 80 &> /dev/null; then \
+    if /usr/bin/docker port {{SERVICE_UNIT_NAME}}.%i 80 &> /dev/null; then \
       /usr/bin/etcdctl \
         ${REGISTER_ETCD_PARAMETERS} \
         mk \
         ${REGISTER_KEY_ROOT}/ports/tcp/80 \
-        \"$(/usr/bin/docker port apache-php.app-1.%i 80 | /usr/bin/sed 's~^[0-9.]*:~~')\" \
+        \"$(/usr/bin/docker port {{SERVICE_UNIT_NAME}}.%i 80 | /usr/bin/sed 's~^[0-9.]*:~~')\" \
         --ttl ${REGISTER_TTL} 2> /dev/null; \
     fi; \
-    if /usr/bin/docker port apache-php.app-1.%i 443 &> /dev/null; then \
+    if /usr/bin/docker port {{SERVICE_UNIT_NAME}}.%i 443 &> /dev/null; then \
       /usr/bin/etcdctl \
         ${REGISTER_ETCD_PARAMETERS} \
         mk \
         ${REGISTER_KEY_ROOT}/ports/tcp/443 \
-        \"$(/usr/bin/docker port apache-php.app-1.%i 443 | /usr/bin/sed 's~^[0-9.]*:~~')\" \
+        \"$(/usr/bin/docker port {{SERVICE_UNIT_NAME}}.%i 443 | /usr/bin/sed 's~^[0-9.]*:~~')\" \
         --ttl ${REGISTER_TTL} 2> /dev/null; \
     fi; \
-    if /usr/bin/docker port apache-php.app-1.%i 8443 &> /dev/null; then \
+    if /usr/bin/docker port {{SERVICE_UNIT_NAME}}.%i 8443 &> /dev/null; then \
       /usr/bin/etcdctl \
         ${REGISTER_ETCD_PARAMETERS} \
         mk \
         ${REGISTER_KEY_ROOT}/ports/tcp/8443 \
-        \"$(/usr/bin/docker port apache-php.app-1.%i 8443 | /usr/bin/sed 's~^[0-9.]*:~~')\" \
+        \"$(/usr/bin/docker port {{SERVICE_UNIT_NAME}}.%i 8443 | /usr/bin/sed 's~^[0-9.]*:~~')\" \
         --ttl ${REGISTER_TTL} 2> /dev/null; \
     fi; \
     sleep 0.5; \
@@ -102,28 +103,28 @@ ExecStart=/bin/bash -c \
     --ttl ${REGISTER_TTL}; \
   while true; do \
     sleep ${REGISTER_UPDATE_INTERVAL}; \
-    if /usr/bin/docker port apache-php.app-1.%i 80 &> /dev/null; then \
+    if /usr/bin/docker port {{SERVICE_UNIT_NAME}}.%i 80 &> /dev/null; then \
       /usr/bin/etcdctl \
         ${REGISTER_ETCD_PARAMETERS} \
         $(if ! /usr/bin/etcdctl ${REGISTER_ETCD_PARAMETERS} get ${REGISTER_KEY_ROOT}/ports/tcp/80 &> /dev/null; then echo set; else echo update; fi) \
         ${REGISTER_KEY_ROOT}/ports/tcp/80 \
-        \"$(/usr/bin/docker port apache-php.app-1.%i 80 | /usr/bin/sed 's~^[0-9.]*:~~')\" \
+        \"$(/usr/bin/docker port {{SERVICE_UNIT_NAME}}.%i 80 | /usr/bin/sed 's~^[0-9.]*:~~')\" \
         --ttl ${REGISTER_TTL}; \
     fi; \
-    if /usr/bin/docker port apache-php.app-1.%i 443 &> /dev/null; then \
+    if /usr/bin/docker port {{SERVICE_UNIT_NAME}}.%i 443 &> /dev/null; then \
       /usr/bin/etcdctl \
         ${REGISTER_ETCD_PARAMETERS} \
         $(if ! /usr/bin/etcdctl ${REGISTER_ETCD_PARAMETERS} get ${REGISTER_KEY_ROOT}/ports/tcp/443 &> /dev/null; then echo set; else echo update; fi) \
         ${REGISTER_KEY_ROOT}/ports/tcp/443 \
-        $(/usr/bin/docker port apache-php.app-1.%i 443 | /usr/bin/sed 's/^[0-9.]*://') \
+        $(/usr/bin/docker port {{SERVICE_UNIT_NAME}}.%i 443 | /usr/bin/sed 's/^[0-9.]*://') \
         --ttl ${REGISTER_TTL}; \
     fi; \
-    if /usr/bin/docker port apache-php.app-1.%i 8443 &> /dev/null; then \
+    if /usr/bin/docker port {{SERVICE_UNIT_NAME}}.%i 8443 &> /dev/null; then \
       /usr/bin/etcdctl \
         ${REGISTER_ETCD_PARAMETERS} \
         $(if ! /usr/bin/etcdctl ${REGISTER_ETCD_PARAMETERS} get ${REGISTER_KEY_ROOT}/ports/tcp/8443 &> /dev/null; then echo set; else echo update; fi) \
         ${REGISTER_KEY_ROOT}/ports/tcp/8443 \
-        $(/usr/bin/docker port apache-php.app-1.%i 8443 | /usr/bin/sed 's/^[0-9.]*://') \
+        $(/usr/bin/docker port {{SERVICE_UNIT_NAME}}.%i 8443 | /usr/bin/sed 's/^[0-9.]*://') \
         --ttl ${REGISTER_TTL}; \
     fi; \
     /usr/bin/etcdctl \
@@ -146,7 +147,7 @@ ExecStop=/bin/bash -c \
 
 [Install]
 DefaultInstance=1.1
-RequiredBy=apache-php.app-1@%i.service
+RequiredBy={{SERVICE_UNIT_NAME}}@%i.service
 
 [X-Fleet]
-MachineOf=apache-php.app-1@%i.service
+MachineOf={{SERVICE_UNIT_NAME}}@%i.service
