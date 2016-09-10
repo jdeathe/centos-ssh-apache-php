@@ -282,7 +282,7 @@ jdeathe/centos-ssh-apache-php:centos-6-${RELEASE_VERSION} \
 /sbin/scmi install \
 --chroot=/media/root \
 --name=\${NAME} \
---tag=centos-6-${RELEASE_VERSION} \
+--tag=centos-6-${RELEASE_VERSION}" \
 	uninstall="docker run \
 --rm \
 --privileged \
@@ -291,7 +291,7 @@ jdeathe/centos-ssh-apache-php:centos-6-${RELEASE_VERSION} \
 /sbin/scmi uninstall \
 --chroot=/media/root \
 --name=\${NAME} \
---tag=centos-6-${RELEASE_VERSION} \
+--tag=centos-6-${RELEASE_VERSION}" \
 	org.deathe.name="centos-ssh-apache-php" \
 	org.deathe.version="${RELEASE_VERSION}" \
 	org.deathe.release="jdeathe/centos-ssh-apache-php:centos-6-${RELEASE_VERSION}" \
