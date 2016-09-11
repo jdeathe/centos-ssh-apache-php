@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+
+function get_httpd_bin ()
+{
+	local HTTPD=/usr/sbin/httpd
+
+	if [[ -n ${APACHE_MPM} && ${APACHE_MPM,,} == worker ]] \
+		&& [[ -f ${HTTPD}.worker ]]; then
+		printf -- \
+			'%s.worker' \
+			"${HTTPD}"
+	else
+		printf -- \
+			'%s' \
+			"${HTTPD}"
+	fi
+}
+
+function get_apache_header_x_service_uid ()
+{
+	local DEFAULT_VALUE="${1:-}"
+	local HOST_NAME="${HOSTNAME:-}"
+	local VALUE="${APACHE_HEADER_X_SERVICE_UID:-}"
+
+	if [[ -z ${VALUE} ]] && [[ -n ${DEFAULT_VALUE} ]]; then
+		VALUE="${DEFAULT_VALUE}"
+	else
+		if [[ -z ${HOST_NAME} ]]; then
+			HOST_NAME="$(
+				hostname
+			)"
+		fi
+
+		# Replace {{HOSTNAME}} with system hostname
+		VALUE="${VALUE//\{\{HOSTNAME\}\}/${HOST_NAME}}"
+	fi
+
+	printf -- \
+		'%s' \
+		"${VALUE}"
+}
+
+HTTPD="$(
+	get_httpd_bin
+)"
+HTTPD_NICENESS="${APACHE_NICENESS:-0}"
+
+while true; do 
+	sleep 0.1
+	[[ -e /tmp/httpd-bootstrap.lock ]] || break
+done
+
+export APACHE_HEADER_X_SERVICE_UID="$(
+	get_apache_header_x_service_uid
+)"
+
+exec /bin/nice \
+	-n ${HTTPD_NICENESS} \
+	${HTTPD} \
+	-c "ErrorLog /dev/stdout" \
+	-DFOREGROUND \
+	-D ${APACHE_OPERATING_MODE:-production}
