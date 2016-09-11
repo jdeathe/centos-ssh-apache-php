@@ -4,7 +4,7 @@
 # CentOS-6, Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1
 #
 # =============================================================================
-FROM jdeathe/centos-ssh:centos-6-1.6.0
+FROM jdeathe/centos-ssh:centos-6-1.7.0
 
 MAINTAINER James Deathe <james.deathe@gmail.com>
 
@@ -242,6 +242,8 @@ RUN chown -R app:app-www ${PACKAGE_PATH} \
 	&& find ${PACKAGE_PATH} -type f -exec chmod 640 {} + \
 	&& find ${PACKAGE_PATH}/bin -type f -exec chmod 750 {} +
 
+EXPOSE 80 8443 443
+
 # -----------------------------------------------------------------------------
 # Set default environment variables used to configure the service container
 # -----------------------------------------------------------------------------
@@ -267,6 +269,35 @@ ENV APACHE_CUSTOM_LOG_FORMAT="combined" \
 	SSH_AUTOSTART_SSHD=false \
 	SSH_AUTOSTART_SSHD_BOOTSTRAP=false
 
-EXPOSE 80 8443 443
+# -----------------------------------------------------------------------------
+# Set image metadata
+# -----------------------------------------------------------------------------
+ARG RELEASE_VERSION="1.7.0"
+LABEL \
+	install="docker run \
+--rm \
+--privileged \
+--volume /:/media/root \
+jdeathe/centos-ssh-apache-php:centos-6-${RELEASE_VERSION} \
+/sbin/scmi install \
+--chroot=/media/root \
+--name=\${NAME} \
+--tag=centos-6-${RELEASE_VERSION}" \
+	uninstall="docker run \
+--rm \
+--privileged \
+--volume /:/media/root \
+jdeathe/centos-ssh-apache-php:centos-6-${RELEASE_VERSION} \
+/sbin/scmi uninstall \
+--chroot=/media/root \
+--name=\${NAME} \
+--tag=centos-6-${RELEASE_VERSION}" \
+	org.deathe.name="centos-ssh-apache-php" \
+	org.deathe.version="${RELEASE_VERSION}" \
+	org.deathe.release="jdeathe/centos-ssh-apache-php:centos-6-${RELEASE_VERSION}" \
+	org.deathe.license="MIT" \
+	org.deathe.vendor="jdeathe" \
+	org.deathe.url="https://github.com/jdeathe/centos-ssh-apache-php" \
+	org.deathe.description="CentOS-6 6.8 x86_64 - Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1."
 
 CMD ["/usr/bin/supervisord", "--configuration=/etc/supervisord.conf"]
