@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# Create lock file
+touch /tmp/httpd-bootstrap.lock
+
 TIMER_START=$(
 	date +%s.%N
 )
@@ -29,7 +32,7 @@ add_hosts_entry ()
 
 	shift
 	if [[ ${#} -eq 0 ]]; then
-		echo ${USAGE}
+		echo ${USAGE} >&2
 		exit 1
 	fi
 
@@ -143,9 +146,9 @@ get_password ()
 {
 	local PASSWORD_LENGTH=${1:-16}
 	local PASSWORD=$(
-		head -n 4096 /dev/urandom 2> /dev/null | \
-		tr -cd '[:alnum:]' 2> /dev/null | \
-		head -c ${PASSWORD_LENGTH} 2> /dev/null
+		head -n 4096 /dev/urandom | \
+		tr -cd '[:alnum:]' | \
+		cut -c1-${PASSWORD_LENGTH}
 	)
 
 	printf -- "%s" "${PASSWORD}"
@@ -264,6 +267,30 @@ get_apache_content_root ()
 	printf "%s" "${VALUE}"
 }
 
+get_apache_header_x_service_uid ()
+{
+	local DEFAULT_VALUE="${1:-}"
+	local HOST_NAME="${HOSTNAME:-}"
+	local VALUE="${APACHE_HEADER_X_SERVICE_UID:-}"
+
+	if [[ -z ${VALUE} ]] && [[ -n ${DEFAULT_VALUE} ]]; then
+		VALUE="${DEFAULT_VALUE}"
+	else
+		if [[ -z ${HOST_NAME} ]]; then
+			HOST_NAME="$(
+				hostname
+			)"
+		fi
+
+		# Replace {{HOSTNAME}} with system hostname
+		VALUE="${VALUE//\{\{HOSTNAME\}\}/${HOST_NAME}}"
+	fi
+
+	printf -- \
+		'%s' \
+		"${VALUE}"
+}
+
 get_apache_public_directory ()
 {
 	local DEFAULT_VALUE="${1:-public_html}"
@@ -271,24 +298,6 @@ get_apache_public_directory ()
 
 	if [[ -z ${VALUE} ]] || ! is_valid_apache_public_directory "${VALUE}"; then
 		VALUE="${DEFAULT_VALUE}"
-	fi
-
-	printf "%s" "${VALUE}"
-}
-
-get_service_uid ()
-{
-	local DEFAULT_VALUE="${1:-}"
-	local HOST_NAME="$(
-		hostname
-	)"
-	local VALUE="${APACHE_HEADER_X_SERVICE_UID}"
-
-	if [[ -z ${VALUE} ]] && [[ -n ${DEFAULT_VALUE} ]]; then
-		VALUE="${DEFAULT_VALUE}"
-	else
-		# Replace {{HOSTNAME}} with system hostname
-		VALUE="${VALUE//\{\{HOSTNAME\}\}/${HOST_NAME}}"
 	fi
 
 	printf "%s" "${VALUE}"
@@ -403,7 +412,7 @@ OPTS_APACHE_SERVER_ALIAS="${APACHE_SERVER_ALIAS:-}"
 OPTS_APACHE_SERVER_NAME="${APACHE_SERVER_NAME:-$(hostname)}"
 OPTS_APACHE_SYSTEM_USER="${APACHE_SYSTEM_USER:-${DEFAULT_SYSTEM_USER}}"
 OPTS_APACHE_HEADER_X_SERVICE_UID="$(
-	get_service_uid
+	get_apache_header_x_service_uid
 )"
 
 # Load app package Apache configuration files.
@@ -446,7 +455,7 @@ PIDS[1]=${!}
 
 # Verify package installation directory exists
 if [[ ! -d ${PACKAGE_PATH} ]]; then
-	echo "ERROR: ${PACKAGE_PATH} not found."
+	echo "ERROR: ${PACKAGE_PATH} not found." >&2
 	exit 1
 fi
 
@@ -474,7 +483,7 @@ fi
 
 # Verify Apache DocumentRoot directory exists
 if [[ ! -d ${OPTS_APACHE_DOCUMENT_ROOT} ]]; then
-	echo "ERROR: ${OPTS_APACHE_DOCUMENT_ROOT} not found."
+	echo "ERROR: ${OPTS_APACHE_DOCUMENT_ROOT} not found." >&2
 	exit 1
 fi
 
@@ -499,7 +508,7 @@ if [[ -f /usr/sbin/httpd.worker ]]; then
 		*)
 			printf -- \
 				'ERROR: Invalid Apache Server MPM: %s\n' \
-				"${OPTS_APACHE_MPM}"
+				"${OPTS_APACHE_MPM}" >&2
 			exit 1
 			;;
 	esac
@@ -612,5 +621,8 @@ cat <<-EOT
 	${TIMER_TOTAL}
 
 EOT
+
+# Release lock file
+rm -f /tmp/httpd-bootstrap.lock
 
 exit 0
