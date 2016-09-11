@@ -282,7 +282,7 @@ get_service_uid ()
 	local HOST_NAME="$(
 		hostname
 	)"
-	local VALUE="${SERVICE_UID}"
+	local VALUE="${APACHE_HEADER_X_SERVICE_UID}"
 
 	if [[ -z ${VALUE} ]] && [[ -n ${DEFAULT_VALUE} ]]; then
 		VALUE="${DEFAULT_VALUE}"
@@ -402,7 +402,7 @@ OPTS_APACHE_RUN_USER="${APACHE_RUN_USER:-${DEFAULT_APACHE_USER}}"
 OPTS_APACHE_SERVER_ALIAS="${APACHE_SERVER_ALIAS:-}"
 OPTS_APACHE_SERVER_NAME="${APACHE_SERVER_NAME:-$(hostname)}"
 OPTS_APACHE_SYSTEM_USER="${APACHE_SYSTEM_USER:-${DEFAULT_SYSTEM_USER}}"
-OPTS_SERVICE_UID="$(
+OPTS_APACHE_HEADER_X_SERVICE_UID="$(
 	get_service_uid
 )"
 
@@ -607,7 +607,7 @@ cat <<-EOT
 	document root : ${OPTS_APACHE_DOCUMENT_ROOT} (${APACHE_DOCUMENT_ROOT_FILE_SYSTEM})
 	modules enabled :
 	${APACHE_MODULES_ENABLED}${SSL_CRT_FINGERPRINT_DETAILS}
-	service uid : ${OPTS_SERVICE_UID}
+	service uid : ${OPTS_APACHE_HEADER_X_SERVICE_UID}
 	--------------------------------------------------------------------------------
 	${TIMER_TOTAL}
 

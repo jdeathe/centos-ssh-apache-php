@@ -253,6 +253,7 @@ ENV APACHE_CUSTOM_LOG_FORMAT="combined" \
 	APACHE_ERROR_LOG_LOCATION="${APACHE_CONTENT_ROOT}/var/log/apache_error_log" \
 	APACHE_ERROR_LOG_LEVEL="warn" \
 	APACHE_EXTENDED_STATUS_ENABLED="false" \
+	APACHE_HEADER_X_SERVICE_UID="app-1.1.1" \
 	APACHE_LOAD_MODULES="authz_user_module log_config_module expires_module deflate_module headers_module setenvif_module mime_module status_module dir_module alias_module" \
 	APACHE_MOD_SSL_ENABLED="false" \
 	APACHE_MPM="prefork" \
@@ -265,7 +266,6 @@ ENV APACHE_CUSTOM_LOG_FORMAT="combined" \
 	APACHE_SYSTEM_USER="app" \
 	PACKAGE_PATH="${PACKAGE_PATH}" \
 	PHP_OPTIONS_DATE_TIMEZONE="UTC" \
-	SERVICE_UID="app-1.1.1" \
 	SSH_AUTOSTART_SSHD=false \
 	SSH_AUTOSTART_SSHD_BOOTSTRAP=false
 
