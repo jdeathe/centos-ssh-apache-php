@@ -87,7 +87,7 @@ $ docker run \
   /sbin/scmi install \
     --chroot=/media/root \
     --tag=centos-6-1.7.0 \
-    --name=apache-php.app-1.1.1'
+    --name=apache-php.app-1.1.1
 ```
 
 #### SCMI Uninstall
@@ -103,7 +103,7 @@ $ docker run \
   /sbin/scmi uninstall \
     --chroot=/media/root \
     --tag=centos-6-1.7.0 \
-    --name=apache-php.app-1.1.1'
+    --name=apache-php.app-1.1.1
 ```
 
 #### SCMI Systemd Support
