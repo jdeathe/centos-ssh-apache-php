@@ -36,7 +36,6 @@ $ docker run -d \
   --name apache-php.app-1.1.1 \
   -p 8080:80 \
   --env "APACHE_SERVER_NAME=app-1.local" \
-  -v /var/www \
   jdeathe/centos-ssh-apache-php:latest
 ```
 
@@ -57,14 +56,6 @@ To verify the container is initialised and running successfully by inspecting th
 
 ```
 $ docker logs apache-php.app-1.1.1
-```
-
-The Apache data is persistent across container restarts by setting the data directory `/var/www` as a data volume. No name or docker_host path was specified so Docker will give it a unique name and store it in `/var/lib/docker/volumes/`; to find out where the data is stored on the Docker host you can use `docker inspect`.
-
-```
-$ docker inspect \
-  --format '{{ json (index .Mounts 0).Source }}' \
-  apache-php.app-1.1.1
 ```
 
 On first run, the bootstrap script, ([/usr/sbin/httpd-bootstrap](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6/usr/sbin/httpd-bootstrap)), will check if the DocumentRoot directory is empty and, if so, will populate it with the example app scripts and app specific configuration files.
@@ -263,7 +254,7 @@ The variable `APACHE_EXTENDED_STATUS_ENABLED` allows you to turn ExtendedStatus 
 
 ```
 ...
-  --env "APACHE_EXTENDED_STATUS_ENABLED=true"
+  --env "APACHE_EXTENDED_STATUS_ENABLED=true" \
 ...
 ```
 
