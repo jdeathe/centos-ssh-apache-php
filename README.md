@@ -269,7 +269,7 @@ $ docker exec -it apache-php.app-1.1.1 \
 
 ##### APACHE_HEADER_X_SERVICE_UID
 
-The `APACHE_HEADER_X_SERVICE_UID` environmental variable is used to set a response header named `X-Service-Uid` that lets you identify the container that is serving the content. This is useful when you have many containers running on a single host using different ports or if you are running a cluster and need to identify which host the content is served from. If the value contains the placeholder `{{HOSTNAME}}` it will be replaced with the system `hostname` value; by default this is the container id but the hostname can be modified using the `--hostname` docker create|run parameter.
+The `APACHE_HEADER_X_SERVICE_UID` environmental variable is used to set a response header named `X-Service-UID` that lets you identify the container that is serving the content. This is useful when you have many containers running on a single host using different ports or if you are running a cluster and need to identify which host the content is served from. If the value contains the placeholder `{{HOSTNAME}}` it will be replaced with the system `hostname` value; by default this is the container id but the hostname can be modified using the `--hostname` docker create|run parameter.
 
 ```
 ...

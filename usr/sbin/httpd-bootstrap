@@ -607,7 +607,7 @@ cat <<-EOT
 	document root : ${OPTS_APACHE_DOCUMENT_ROOT} (${APACHE_DOCUMENT_ROOT_FILE_SYSTEM})
 	modules enabled :
 	${APACHE_MODULES_ENABLED}${SSL_CRT_FINGERPRINT_DETAILS}
-	service uid : ${OPTS_APACHE_HEADER_X_SERVICE_UID}
+	header x-service-uid : ${OPTS_APACHE_HEADER_X_SERVICE_UID}
 	--------------------------------------------------------------------------------
 	${TIMER_TOTAL}
 
