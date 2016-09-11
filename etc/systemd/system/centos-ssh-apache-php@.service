@@ -62,8 +62,10 @@ Environment="APACHE_CUSTOM_LOG_LOCATION=/var/www/app/var/log/apache_access_log"
 Environment="APACHE_ERROR_LOG_LOCATION=/var/www/app/var/log/apache_error_log"
 Environment="APACHE_ERROR_LOG_LEVEL=warn"
 Environment="APACHE_EXTENDED_STATUS_ENABLED=false"
+Environment="APACHE_HEADER_X_SERVICE_UID=app-1.%i"
 Environment="APACHE_LOAD_MODULES=authz_user_module log_config_module expires_module deflate_module headers_module setenvif_module mime_module status_module dir_module alias_module"
 Environment="APACHE_MOD_SSL_ENABLED=false"
+Environment="APACHE_MPM=prefork"
 Environment="APACHE_OPERATING_MODE=production"
 Environment="APACHE_PUBLIC_DIRECTORY=public_html"
 Environment="APACHE_RUN_GROUP=app-www"
@@ -71,9 +73,7 @@ Environment="APACHE_RUN_USER=app-www"
 Environment="APACHE_SERVER_ALIAS=app-1"
 Environment="APACHE_SERVER_NAME=app-1.local"
 Environment="APACHE_SYSTEM_USER=app"
-Environment="HTTPD=/usr/sbin/httpd"
 Environment="PHP_OPTIONS_DATE_TIMEZONE=UTC"
-Environment="SERVICE_UID=app-1.%i"
 
 # Initialisation: Load image from local storage if available, otherwise pull.
 ExecStartPre=/bin/bash -c \
@@ -141,8 +141,10 @@ ExecStart=/bin/bash -c \
     --env \"APACHE_ERROR_LOG_LOCATION=${APACHE_ERROR_LOG_LOCATION}\" \
     --env \"APACHE_ERROR_LOG_LEVEL=${APACHE_ERROR_LOG_LEVEL}\" \
     --env \"APACHE_EXTENDED_STATUS_ENABLED=${APACHE_EXTENDED_STATUS_ENABLED}\" \
+    --env \"APACHE_HEADER_X_SERVICE_UID=${APACHE_HEADER_X_SERVICE_UID}\" \
     --env \"APACHE_LOAD_MODULES=${APACHE_LOAD_MODULES}\" \
     --env \"APACHE_MOD_SSL_ENABLED=${APACHE_MOD_SSL_ENABLED}\" \
+    --env \"APACHE_MPM=${APACHE_MPM}\" \
     --env \"APACHE_OPERATING_MODE=${APACHE_OPERATING_MODE}\" \
     --env \"APACHE_PUBLIC_DIRECTORY=${APACHE_PUBLIC_DIRECTORY}\" \
     --env \"APACHE_RUN_GROUP=${APACHE_RUN_GROUP}\" \
@@ -150,9 +152,7 @@ ExecStart=/bin/bash -c \
     --env \"APACHE_SERVER_ALIAS=${APACHE_SERVER_ALIAS}\" \
     --env \"APACHE_SERVER_NAME=${APACHE_SERVER_NAME}\" \
     --env \"APACHE_SYSTEM_USER=${APACHE_SYSTEM_USER}\" \
-    --env \"HTTPD=${HTTPD}\" \
     --env \"PHP_OPTIONS_DATE_TIMEZONE=${PHP_OPTIONS_DATE_TIMEZONE}\" \
-    --env \"SERVICE_UID=${SERVICE_UID}\" \
     ${DOCKER_CONTAINER_PARAMETERS_APPEND} \
     ${DOCKER_USER}/${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}; \
   "

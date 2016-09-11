@@ -267,6 +267,16 @@ $ docker exec -it apache-php.app-1.1.1 \
   -d "curl -s http://app-1/server-status?auto"
 ```
 
+##### APACHE_HEADER_X_SERVICE_UID
+
+The `APACHE_HEADER_X_SERVICE_UID` environmental variable is used to set a response header named `X-Service-UID` that lets you identify the container that is serving the content. This is useful when you have many containers running on a single host using different ports or if you are running a cluster and need to identify which host the content is served from. If the value contains the placeholder `{{HOSTNAME}}` it will be replaced with the system `hostname` value; by default this is the container id but the hostname can be modified using the `--hostname` docker create|run parameter.
+
+```
+...
+  --env "APACHE_HEADER_X_SERVICE_UID={{HOSTNAME}}" \
+...
+```
+
 ##### APACHE_LOAD_MODULES
 
 The variable `APACHE_LOAD_MODULES` defines all Apache modules to be loaded from `/etc/httpd/conf/http.conf`. The default is the minimum required so you may need to add more as necessary. To add the "mod\_rewrite" Apache Module you would add it's identifier `rewrite_module` to the array as follows.
@@ -293,6 +303,16 @@ $ docker run -d \
   --env "APACHE_MOD_SSL_ENABLED=true" \
   --volume apache-php.app-1.1.1.data-ssl:/etc/services-config/ssl \
   jdeathe/centos-ssh-apache-php:latest
+```
+
+##### APACHE_MPM
+
+Using `APACHE_MPM` the Apache MPM can be set. Defaults to `prefork` and in most cases this shouldn't be altered.
+
+```
+...
+  --env "APACHE_MPM=prefork" \
+...
 ```
 
 ##### APACHE_RUN_USER & APACHE_RUN_GROUP
@@ -335,15 +355,5 @@ To set the timezone for the UK and account for British Summer Time you would use
 ```
 ...
   --env "PHP_OPTIONS_DATE_TIMEZONE=Europe/London" \
-...
-```
-
-##### SERVICE_UID
-
-The `SERVICE_UID` environmental variable is used to set a response header named `X-Service-Uid` that lets you identify the container that is serving the content. This is useful when you have many containers running on a single host using different ports or if you are running a cluster and need to identify which host the content is served from. If the value contains the placeholder `{{HOSTNAME}}` it will be replaced with the system `hostname` value; by default this is the container id but the hostname can be modified using the `--hostname` docker create|run parameter.
-
-```
-...
-  --env "SERVICE_UID={{HOSTNAME}}" \
 ...
 ```

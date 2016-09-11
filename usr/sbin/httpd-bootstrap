@@ -282,7 +282,7 @@ get_service_uid ()
 	local HOST_NAME="$(
 		hostname
 	)"
-	local VALUE="${SERVICE_UID}"
+	local VALUE="${APACHE_HEADER_X_SERVICE_UID}"
 
 	if [[ -z ${VALUE} ]] && [[ -n ${DEFAULT_VALUE} ]]; then
 		VALUE="${DEFAULT_VALUE}"
@@ -396,12 +396,13 @@ OPTS_APACHE_DOCUMENT_ROOT="${OPTS_APACHE_CONTENT_ROOT}/$(get_apache_public_direc
 OPTS_APACHE_EXTENDED_STATUS_ENABLED="${APACHE_EXTENDED_STATUS_ENABLED:-false}"
 OPTS_APACHE_LOAD_MODULES="${APACHE_LOAD_MODULES:-${DEFAULT_APACHE_LOAD_MODULES}}"
 OPTS_APACHE_MOD_SSL_ENABLED="${APACHE_MOD_SSL_ENABLED:-false}"
+OPTS_APACHE_MPM="${APACHE_MPM:-prefork}"
 OPTS_APACHE_RUN_GROUP="${APACHE_RUN_GROUP:-${DEFAULT_APACHE_USER}}"
 OPTS_APACHE_RUN_USER="${APACHE_RUN_USER:-${DEFAULT_APACHE_USER}}"
 OPTS_APACHE_SERVER_ALIAS="${APACHE_SERVER_ALIAS:-}"
 OPTS_APACHE_SERVER_NAME="${APACHE_SERVER_NAME:-$(hostname)}"
 OPTS_APACHE_SYSTEM_USER="${APACHE_SYSTEM_USER:-${DEFAULT_SYSTEM_USER}}"
-OPTS_SERVICE_UID="$(
+OPTS_APACHE_HEADER_X_SERVICE_UID="$(
 	get_service_uid
 )"
 
@@ -483,22 +484,29 @@ APACHE_DOCUMENT_ROOT_FILE_SYSTEM=$(
 )
 
 # Server MPM
-HTTPD_MPM_PREFORK=/usr/sbin/httpd
-HTTPD_MPM_WORKER=/usr/sbin/httpd.worker
-HTTPD=${HTTPD:-${HTTPD_MPM_PREFORK}}
-if [[ ${HTTPD} == ${HTTPD_MPM_PREFORK} ]]; then
-	echo "Apache Server MPM: Prefork"
-	sed -i \
-		-e "s~^HTTPD=${HTTPD_MPM_WORKER}~#HTTPD=${HTTPD_MPM_WORKER}~g" \
-		/etc/sysconfig/httpd
-elif [[ ${HTTPD} == ${HTTPD_MPM_WORKER} ]]; then
-	echo "Apache Server MPM: Worker"
-	sed -i \
-		-e "s~^#HTTPD=${HTTPD_MPM_WORKER}~HTTPD=${HTTPD_MPM_WORKER}~g" \
-		/etc/sysconfig/httpd
-else
-	echo "ERROR: Apache Server MPM (${HTTPD}) unknown."
-	exit 1
+if [[ -f /usr/sbin/httpd.worker ]]; then
+	case "${OPTS_APACHE_MPM,,}" in
+		worker)
+			sed -i \
+				-e "s~^#HTTPD=/usr/sbin/httpd.worker~HTTPD=/usr/sbin/httpd.worker~g" \
+				/etc/sysconfig/httpd
+			;;
+		prefork)
+			sed -i \
+				-e "s~^HTTPD=/usr/sbin/httpd.worker~#HTTPD=/usr/sbin/httpd.worker~g" \
+				/etc/sysconfig/httpd
+			;;
+		*)
+			printf -- \
+				'ERROR: Invalid Apache Server MPM: %s\n' \
+				"${OPTS_APACHE_MPM}"
+			exit 1
+			;;
+	esac
+
+	printf -- \
+		'Apache Server MPM: %s\n' \
+		"${OPTS_APACHE_MPM^}"
 fi
 
 # Add local hosts entries
@@ -599,7 +607,7 @@ cat <<-EOT
 	document root : ${OPTS_APACHE_DOCUMENT_ROOT} (${APACHE_DOCUMENT_ROOT_FILE_SYSTEM})
 	modules enabled :
 	${APACHE_MODULES_ENABLED}${SSL_CRT_FINGERPRINT_DETAILS}
-	service uid : ${OPTS_SERVICE_UID}
+	header x-service-uid : ${OPTS_APACHE_HEADER_X_SERVICE_UID}
 	--------------------------------------------------------------------------------
 	${TIMER_TOTAL}
 
