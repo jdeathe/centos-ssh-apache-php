@@ -295,6 +295,16 @@ $ docker run -d \
   jdeathe/centos-ssh-apache-php:latest
 ```
 
+##### APACHE_MPM
+
+Using `APACHE_MPM` the Apache MPM can be set. Defaults to `prefork` and in most cases this shouldn't be altered.
+
+```
+...
+  --env "APACHE_MPM=prefork" \
+...
+```
+
 ##### APACHE_RUN_USER & APACHE_RUN_GROUP
 
 The Apache process is run by the User and Group defined by `APACHE_RUN_USER` and `APACHE_RUN_GROUP` respectively.
