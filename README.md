@@ -79,33 +79,135 @@ $ docker exec -it apache-php.app-1.1.1 apachectl -h
 
 ### Running
 
-To run the a docker container from this image you can use the included [run.sh](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6/run.sh) and [run.conf](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6/run.conf) scripts. The helper script will stop any running container of the same name, remove it and run a new daemonised container on an unspecified host port. Alternatively you can use the following methods to make the http service available on ports 8080 of the docker host.
+To run the a docker container from this image you can use the standard docker commands. Alternatively, you can use the embedded (Service Container Manager Interface) [scmi](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6/usr/sbin/scmi) that is included in the image since `centos-6-1.7.0` or, if you have a checkout of the [source repository](https://github.com/jdeathe/centos-ssh-apache-php), and have make installed the Makefile provides targets to build, install, start, stop etc. where environment variables can be used to configure the container options and set custom docker run parameters.
 
-#### Using environment variables
+#### SCMI Installation Examples
+
+The following example uses docker to run the SCMI install command to create and start a container named `apache-php.app-1.1.1`. To use SCMI it requires the use of the `--privileged` docker run parameter and the docker host's root directory mounted as a volume with the container's mount directory also being set in the `scmi` `--chroot` option. The `--setopt` option is used to add extra parameters to the default docker run command template; in the following example a named configuration volume is added which allows the SSH host keys to persist after the first container initialisation. Not that the placeholder `{{NAME}}` can be used in this option and is replaced with the container's name.
+
+##### SCMI Install
 
 ```
-$ docker stop apache-php.app-1.1.1 && \
-  docker rm apache-php.app-1.1.1
-$ docker run -d \
-  --name apache-php.app-1.1.1 \
-  -p 8080:80 \
-  --env "APACHE_CONTENT_ROOT=/var/www/app-1" \
-  --env "APACHE_CUSTOM_LOG_FORMAT=combined" \
-  --env "APACHE_CUSTOM_LOG_LOCATION=/var/www/app-1/var/log/apache_access_log" \
-  --env "APACHE_ERROR_LOG_LOCATION=/var/www/app-1/var/log/apache_error_log" \
-  --env "APACHE_ERROR_LOG_LEVEL=warn" \
-  --env "APACHE_EXTENDED_STATUS_ENABLED=false" \
-  --env "APACHE_LOAD_MODULES=authz_user_module log_config_module expires_module deflate_module headers_module setenvif_module mime_module status_module dir_module alias_module rewrite_module" \
-  --env "APACHE_MOD_SSL_ENABLED=false" \
-  --env "APACHE_RUN_GROUP=www-app" \
-  --env "APACHE_RUN_USER=www-app" \
-  --env "APACHE_SERVER_ALIAS=app-1" \
-  --env "APACHE_SERVER_NAME=app-1.local" \
-  --env "APACHE_SYSTEM_USER=app" \
-  --env "PHP_OPTIONS_DATE_TIMEZONE=UTC" \
-  --env "SERVICE_UID=app-1.1.1" \
-  -v volume-data.apache-php.app-1.1.1:/var/www \
-  jdeathe/centos-ssh-apache-php:latest
+$ docker run \
+  --rm \
+  --privileged \
+  --volume /:/media/root \
+  jdeathe/centos-ssh-apache-php:centos-6-1.7.0 \
+  /sbin/scmi install \
+    --chroot=/media/root \
+    --tag=centos-6-1.7.0 \
+    --name=apache-php.app-1.1.1'
+```
+
+#### SCMI Uninstall
+
+To uninstall the previous example simply run the same docker run command with the scmi `uninstall` command.
+
+```
+$ docker run \
+  --rm \
+  --privileged \
+  --volume /:/media/root \
+  jdeathe/centos-ssh-apache-php:centos-6-1.7.0 \
+  /sbin/scmi uninstall \
+    --chroot=/media/root \
+    --tag=centos-6-1.7.0 \
+    --name=apache-php.app-1.1.1'
+```
+
+#### SCMI Systemd Support
+
+If your docker host has systemd (and optionally etcd) installed then `scmi` provides a method to install the container as a systemd service unit. This provides some additional features for managing a group of instances on a single docker host and has the option to use an etcd backed service registry. Using a systemd unit file allows the System Administrator to use a Drop-In to override the settings of a unit-file template used to create service instances. To use the systemd method of installation use the `-m` or `--manager` option of `scmi` and to include the optional etcd register companion unit use the `--register` option.
+
+```
+$ docker run \
+  --rm \
+  --privileged \
+  --volume /:/media/root \
+  jdeathe/centos-ssh-apache-php:centos-6-1.7.0 \
+  /sbin/scmi install \
+    --chroot=/media/root \
+    --tag=centos-6-1.7.0 \
+    --name=apache-php.app-1.1.1 \
+    --manager=systemd \
+    --register \
+    --env='APACHE_MOD_SSL_ENABLED=true' \
+    --setopt='--volume {{NAME}}.data-ssl:/etc/services-config/ssl'
+```
+
+#### SCMI Fleet Support
+
+If your docker host has systemd, fleetd (and optionally etcd) installed then `scmi` provides a method to schedule the container  to run on the cluster. This provides some additional features for managing a group of instances on a [fleet](https://github.com/coreos/fleet) cluster and has the option to use an etcd backed service registry. To use the fleet method of installation use the `-m` or `--manager` option of `scmi` and to include the optional etcd register companion unit use the `--register` option.
+
+##### SCMI Image Information
+
+Since release `centos-6-1.7.0` the install template has been added to the image metadata. Using docker inspect you can access `scmi` to simplify install/uninstall tasks.
+
+To see detailed information about the image run `scmi` with the `--info` option. To see all available `scmi` options run with the `--help` option.
+
+```
+$ eval "sudo -E $(
+    docker inspect \
+    -f "{{.ContainerConfig.Labels.install}}" \
+    jdeathe/centos-ssh-apache-php:centos-6-1.7.0
+  ) --info"
+```
+
+To perform an installation using the docker name `apache-php.app-1.2.1` simply use the `--name` or `-n` option.
+
+```
+$ eval "sudo -E $(
+    docker inspect \
+    -f "{{.ContainerConfig.Labels.install}}" \
+    jdeathe/centos-ssh-apache-php:centos-6-1.7.0
+  ) --name=apache-php.app-1.2.1"
+```
+
+To uninstall use the *same command* that was used to install but with the `uninstall` Label.
+
+```
+$ eval "sudo -E $(
+    docker inspect \
+    -f "{{.ContainerConfig.Labels.uninstall}}" \
+    jdeathe/centos-ssh-apache-php:centos-6-1.7.0
+  ) --name=apache-php.app-1.2.1"
+```
+
+##### SCMI on Atomic Host
+
+With the addition of install/uninstall image labels it is possible to use [Project Atomic's](http://www.projectatomic.io/) `atomic install` command to simplify install/uninstall tasks on [CentOS Atomic](https://wiki.centos.org/SpecialInterestGroup/Atomic) Hosts.
+
+To see detailed information about the image run `scmi` with the `--info` option. To see all available `scmi` options run with the `--help` option.
+
+```
+$ sudo -E atomic install \
+  -n apache-php.app-1.3.1 \
+  jdeathe/centos-ssh-apache-php:centos-6-1.7.0 \
+  --info
+```
+
+To perform an installation using the docker name `apache-php.app-1.3.1` simply use the `-n` option of the `atomic install` command.
+
+```
+$ sudo -E atomic install \
+  -n apache-php.app-1.3.1 \
+  jdeathe/centos-ssh-apache-php:centos-6-1.7.0
+```
+
+Alternatively, you could use the `scmi` options `--name` or `-n` for naming the container.
+
+```
+$ sudo -E atomic install \
+  jdeathe/centos-ssh-apache-php:centos-6-1.7.0 \
+  --name apache-php.app-1.3.1
+```
+
+To uninstall use the *same command* that was used to install but with the `uninstall` Label.
+
+```
+$ sudo -E atomic uninstall \
+  -n apache-php.app-1.3.1 \
+  jdeathe/centos-ssh-apache-php:centos-6-1.7.0
 ```
 
 #### Environment Variables
@@ -198,9 +300,7 @@ $ docker run -d \
   --env "APACHE_SERVER_ALIAS=app-1" \
   --env "APACHE_SERVER_NAME=app-1.local" \
   --env "APACHE_MOD_SSL_ENABLED=true" \
-  --env "PHP_OPTIONS_DATE_TIMEZONE=UTC" \
-  --env "SERVICE_UID=app-1.1.1" \
-  -v volume-data.apache-php.app-1.1.1:/var/www \
+  --volume apache-php.app-1.1.1.data-ssl:/etc/services-config/ssl \
   jdeathe/centos-ssh-apache-php:latest
 ```
 
