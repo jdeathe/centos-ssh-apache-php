@@ -147,20 +147,6 @@ function enable_apache_modules ()
 	fi
 }
 
-function get_password ()
-{
-	local PASSWORD_LENGTH="${1:-16}"
-	local PASSWORD="$(
-		head -n 4096 /dev/urandom \
-		| tr -cd '[:alnum:]' \
-		| cut -c1-"${PASSWORD_LENGTH}"
-	)"
-
-	printf -- "%s" "${PASSWORD}"
-
-	return 0
-}
-
 function is_valid_apache_content_root ()
 {
 	local DIRECTORY_PATH="${1:-}"
@@ -287,13 +273,10 @@ function get_apache_content_root ()
 
 function get_apache_header_x_service_uid ()
 {
-	local DEFAULT_VALUE="${1:-}"
 	local HOST_NAME="${HOSTNAME:-}"
 	local VALUE="${APACHE_HEADER_X_SERVICE_UID:-}"
 
-	if [[ -z ${VALUE} ]] && [[ -n ${DEFAULT_VALUE} ]]; then
-		VALUE="${DEFAULT_VALUE}"
-	else
+	if [[ -n ${VALUE} ]]; then
 		if [[ -z ${HOST_NAME} ]]; then
 			HOST_NAME="$(
 				hostname
@@ -319,6 +302,20 @@ function get_apache_public_directory ()
 	fi
 
 	printf -- "%s" "${VALUE}"
+}
+
+function get_password ()
+{
+	local PASSWORD_LENGTH="${1:-16}"
+	local PASSWORD="$(
+		head -n 4096 /dev/urandom \
+		| tr -cd '[:alnum:]' \
+		| cut -c1-"${PASSWORD_LENGTH}"
+	)"
+
+	printf -- "%s" "${PASSWORD}"
+
+	return 0
 }
 
 function get_ssl_certificate_fingerprint ()

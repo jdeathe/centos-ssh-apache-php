@@ -249,8 +249,8 @@ EXPOSE 80 8443 443
 # -----------------------------------------------------------------------------
 ENV APACHE_CONTENT_ROOT="/var/www/${PACKAGE_NAME}"
 ENV APACHE_CUSTOM_LOG_FORMAT="combined" \
-	APACHE_CUSTOM_LOG_LOCATION="${APACHE_CONTENT_ROOT}/var/log/apache_access_log" \
-	APACHE_ERROR_LOG_LOCATION="${APACHE_CONTENT_ROOT}/var/log/apache_error_log" \
+	APACHE_CUSTOM_LOG_LOCATION="var/log/apache_access_log" \
+	APACHE_ERROR_LOG_LOCATION="var/log/apache_error_log" \
 	APACHE_ERROR_LOG_LEVEL="warn" \
 	APACHE_EXTENDED_STATUS_ENABLED="false" \
 	APACHE_HEADER_X_SERVICE_UID="{{HOSTNAME}}" \
