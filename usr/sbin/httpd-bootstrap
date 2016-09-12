@@ -251,6 +251,18 @@ function set_apache_extended_status ()
 		/etc/httpd/conf/httpd.conf
 }
 
+function set_apache_header_x_service_uid ()
+{
+	local HEADER="${1:-}"
+
+	# Disable setting the X-Service-UID header if an empty value.
+	if [[ -z ${HEADER} ]]; then
+		sed -i \
+			-e 's~^\([ \t]*\)\(Header set X-Service-UID .*\)$~\1#\2~g' \
+			/etc/services-config/httpd/conf.d/00-headers.conf
+	fi
+}
+
 function set_apache_server_name ()
 {
 	local HOST_NAME="${1:-${APACHE_SERVER_NAME:-$(hostname)}}"
@@ -554,6 +566,9 @@ fi
 # Set Apache ExtendedStatus
 set_apache_extended_status "${OPTS_APACHE_EXTENDED_STATUS_ENABLED}"
 
+# Set Apache X-Service-UID Header
+set_apache_header_x_service_uid "${OPTS_APACHE_HEADER_X_SERVICE_UID}"
+
 # Set Apache ServerName
 set_apache_server_name "${OPTS_APACHE_SERVER_NAME}" 80
 
@@ -642,7 +657,7 @@ cat <<-EOT
 	run group : ${OPTS_APACHE_RUN_GROUP}
 	server name : ${OPTS_APACHE_SERVER_NAME}
 	server alias : ${OPTS_APACHE_SERVER_ALIAS}
-	header x-service-uid : ${OPTS_APACHE_HEADER_X_SERVICE_UID}
+	header x-service-uid : ${OPTS_APACHE_HEADER_X_SERVICE_UID:-unset}
 	document root : ${OPTS_APACHE_DOCUMENT_ROOT} (${APACHE_DOCUMENT_ROOT_FILE_SYSTEM})
 	modules enabled :
 	${APACHE_MODULES_ENABLED}${SSL_CRT_FINGERPRINT_DETAILS}
