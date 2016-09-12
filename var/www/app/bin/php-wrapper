@@ -56,7 +56,7 @@ case "${PHP_PACKAGE_NAME}" in
 			X_PHP_CGI=/opt/rh/php54/root/usr/bin/php-cgi
 		fi
 		;;
-	*)
+	php53|*)
 		X_PHP_CGI=/usr/bin/php-cgi
 		;;
 esac
