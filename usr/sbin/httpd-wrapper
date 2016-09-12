@@ -43,7 +43,8 @@ function get_apache_header_x_service_uid ()
 HTTPD="$(
 	get_httpd_bin
 )"
-HTTPD_NICENESS="${APACHE_NICENESS:-0}"
+NICE=/usr/bin/nice
+NICENESS="${APACHE_NICENESS:-10}"
 
 while true; do 
 	sleep 0.1
@@ -54,8 +55,8 @@ export APACHE_HEADER_X_SERVICE_UID="$(
 	get_apache_header_x_service_uid
 )"
 
-exec /bin/nice \
-	-n ${HTTPD_NICENESS} \
+exec ${NICE} \
+	-n ${NICENESS} \
 	${HTTPD} \
 	-c "ErrorLog /dev/stdout" \
 	-DFOREGROUND \
