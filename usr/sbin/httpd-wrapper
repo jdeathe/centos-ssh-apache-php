@@ -43,7 +43,7 @@ function get_apache_header_x_service_uid ()
 HTTPD="$(
 	get_httpd_bin
 )"
-NICE=/usr/bin/nice
+NICE=/bin/nice
 NICENESS="${APACHE_NICENESS:-10}"
 
 while true; do 

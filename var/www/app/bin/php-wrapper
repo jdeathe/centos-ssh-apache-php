@@ -2,6 +2,9 @@
 
 source /etc/httpd-bootstrap.conf
 
+NICE=/bin/nice
+NICENESS="${PHP_CGI_NICENESS:-15}"
+
 # Allow PHP settings to be varied by passing a parameter to php-wrapper
 PHP_PACKAGE_NAME="${1:-php53}"
 
@@ -21,7 +24,6 @@ export TEMP="${TMP}"
 export TMPDIR="${TMP}"
 
 X_PHP_CGI=/usr/bin/php-cgi
-X_PHP_CGI_NICENESS=15
 
 case "${PHP_PACKAGE_NAME}" in
 	rh-php56)
@@ -54,7 +56,7 @@ case "${PHP_PACKAGE_NAME}" in
 			X_PHP_CGI=/opt/rh/php54/root/usr/bin/php-cgi
 		fi
 		;;
-	*)
+	php53|*)
 		X_PHP_CGI=/usr/bin/php-cgi
 		;;
 esac
@@ -137,8 +139,8 @@ PHP_OPERATING_MODE_OPTIONS="
 "
 
 # FastCGI-enabled PHP executable
-exec /bin/nice \
-	-n ${X_PHP_CGI_NICENESS} \
+exec ${NICE} \
+	-n ${NICENESS} \
 	${X_PHP_CGI} \
 	${PHP_OPERATING_MODE_OPTIONS} \
 	${PHP_OPTIONS}
