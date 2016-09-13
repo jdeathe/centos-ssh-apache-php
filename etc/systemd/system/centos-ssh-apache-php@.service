@@ -1,32 +1,32 @@
 # -----------------------------------------------------------------------------
 # Naming convention:
 #
-#    apache.app-1.register@.service = {service-unit-template-name}
-#      |      |      |
-#      |      |      +------------ {service-unit-companion-name}
-#      |      +------------------- {service-unit-group-name}
-#      +-------------------------- {service-unit-name}
+#    centos-ssh-apache-php@.service = {service-unit-install-template-name}
+#              |
+#              +------------ {image-name}
 #
-#    apache.app-1.register@1.1.service = {service-unit-instance-name}
-#      |      |      |     | |
-#      |      |      |     | +---- {service-unit-instance}
-#      |      |      |     +------ {service-unit-local-id}
-#      |      |      +------------ {service-unit-companion-name}
-#      |      +------------------- {service-unit-group-name}
-#      +-------------------------- {service-unit-name}
+#    apache-php.pool-1@.service = {service-unit-template-name}
+#              Y
+#              +------------- {service-unit-name}
 #
-#    apache.app-1.1.1.register = {service-unit-long-name}
-#      |      |   | |    |
-#      |      |   | |    +-------- {service-unit-companion-name}
-#      |      |   | +------------- {service-unit-instance}
-#      |      |   +--------------- {service-unit-local-id}
-#      |      +------------------- {service-unit-group-name}
-#      +-------------------------- {service-unit-name}
+#    apache-php.pool-1@1.1.service = {service-unit-instance-name}
+#              Y        Y
+#              |        +---- {service-unit-instance}
+#              +------------- {service-unit-name}
+#
+#    apache-php.pool-1.1.1 = {service-unit-long-name}
+#              Y        Y
+#              |        +---- {service-unit-instance}
+#              +------------- {service-unit-name}
 #
 # To install:
-#     sudo cp {service-unit-template-name} /etc/systemd/system/
+#     sudo cat {service-unit-install-template-name} \
+#       > /etc/systemd/system/{service-unit-template-name}
 #     sudo systemctl daemon-reload
 #     sudo systemctl enable -f {service-unit-instance-name}
+#
+# Start using:
+#     sudo systemctl [start|stop|restart|kill|status] {service-unit-instance-name}
 #
 # Debugging:
 #     sudo systemctl status {service-unit-instance-name}
@@ -34,8 +34,8 @@
 #
 # To uninstall:
 #     sudo systemctl disable -f {service-unit-instance-name}
+#     sudo systemctl stop {service-unit-instance-name}
 #     sudo rm /etc/systemd/system/{service-unit-template-name}
-#     sudo systemctl daemon-reload
 #     sudo docker rm -f {service-unit-long-name}
 # -----------------------------------------------------------------------------
 
@@ -49,35 +49,31 @@ Restart=on-failure
 RestartSec=30
 TimeoutStartSec=1200
 Environment="DOCKER_USER=jdeathe"
-Environment="DOCKER_IMAGE_PACKAGE_PATH=/var/services-packages"
+Environment="DOCKER_CONTAINER_PARAMETERS_APPEND="
+Environment="DOCKER_IMAGE_PACKAGE_PATH=/var/opt/scmi/packages"
 Environment="DOCKER_IMAGE_NAME=centos-ssh-apache-php"
-Environment="DOCKER_IMAGE_TAG=centos-6-1.6.1"
+Environment="DOCKER_IMAGE_TAG=centos-6-1.7.0"
 Environment="DOCKER_PORT_MAP_TCP_80=8080"
 Environment="DOCKER_PORT_MAP_TCP_443=9443"
-Environment="DOCKER_PORT_MAP_TCP_8443=8580"
-Environment="VOLUME_CONFIG_ENABLED=false"
-Environment="VOLUME_CONFIG_NAMED=false"
-Environment="VOLUME_CONFIG_NAME=volume-config.%p.%i"
-Environment="VOLUME_DATA_NAME=volume-data.%p.%i"
+Environment="DOCKER_PORT_MAP_TCP_8443=NULL"
 Environment="APACHE_CONTENT_ROOT=/var/www/app"
 Environment="APACHE_CUSTOM_LOG_FORMAT=combined"
-Environment="APACHE_CUSTOM_LOG_LOCATION=/var/www/app/var/log/apache_access_log"
-Environment="APACHE_ERROR_LOG_LOCATION=/var/www/app/var/log/apache_error_log"
+Environment="APACHE_CUSTOM_LOG_LOCATION=var/log/apache_access_log"
+Environment="APACHE_ERROR_LOG_LOCATION=var/log/apache_error_log"
 Environment="APACHE_ERROR_LOG_LEVEL=warn"
 Environment="APACHE_EXTENDED_STATUS_ENABLED=false"
+Environment="APACHE_HEADER_X_SERVICE_UID={{HOSTNAME}}"
 Environment="APACHE_LOAD_MODULES=authz_user_module log_config_module expires_module deflate_module headers_module setenvif_module mime_module status_module dir_module alias_module"
 Environment="APACHE_MOD_SSL_ENABLED=false"
+Environment="APACHE_MPM=prefork"
 Environment="APACHE_OPERATING_MODE=production"
 Environment="APACHE_PUBLIC_DIRECTORY=public_html"
 Environment="APACHE_RUN_GROUP=app-www"
 Environment="APACHE_RUN_USER=app-www"
 Environment="APACHE_SERVER_ALIAS=app-1"
-Environment="APACHE_SERVER_HOME=/var/www"
 Environment="APACHE_SERVER_NAME=app-1.local"
 Environment="APACHE_SYSTEM_USER=app"
-Environment="HTTPD=/usr/sbin/httpd"
 Environment="PHP_OPTIONS_DATE_TIMEZONE=UTC"
-Environment="SERVICE_UID=app-1.%i"
 
 # Initialisation: Load image from local storage if available, otherwise pull.
 ExecStartPre=/bin/bash -c \
@@ -108,17 +104,19 @@ ExecStart=/bin/bash -c \
   "exec /usr/bin/docker run \
     --name %p.%i \
     $(\
-      if [[ -n $(/usr/bin/gawk 'match($0, /^([0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}:)?([0-9]+)$/, matches) { print matches[2]; }' <<< \"${DOCKER_PORT_MAP_TCP_80}\") ]]; then \
-        printf -- '--publish %%s%%s:80' \
-          \"$(/usr/bin/gawk 'match($0, /^([0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}:)?([0-9]+)$/, matches) { print matches[1]; }' <<< \"${DOCKER_PORT_MAP_TCP_80}\")\" \
-          \"$(( $(/usr/bin/gawk 'match($0, /^([0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}:)?([0-9]+)$/, matches) { print matches[2]; }' <<< \"${DOCKER_PORT_MAP_TCP_80}\") + $(/usr/bin/awk -F. '$0=$1' <<< %i) - 1 ))\"; \
-      else \
-        printf -- '--publish %%s:80' \
-          \"${DOCKER_PORT_MAP_TCP_80}\"; \
+      if [[ ${DOCKER_PORT_MAP_TCP_80} != NULL ]]; then \
+        if [[ -n $(/usr/bin/gawk 'match($0, /^([0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}:)?([0-9]+)$/, matches) { print matches[2]; }' <<< \"${DOCKER_PORT_MAP_TCP_80}\") ]]; then \
+          printf -- '--publish %%s%%s:80' \
+            \"$(/usr/bin/gawk 'match($0, /^([0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}:)?([0-9]+)$/, matches) { print matches[1]; }' <<< \"${DOCKER_PORT_MAP_TCP_80}\")\" \
+            \"$(( $(/usr/bin/gawk 'match($0, /^([0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}:)?([0-9]+)$/, matches) { print matches[2]; }' <<< \"${DOCKER_PORT_MAP_TCP_80}\") + $(/usr/bin/awk -F. '$0=$1' <<< %i) - 1 ))\"; \
+        else \
+          printf -- '--publish %%s:80' \
+            \"${DOCKER_PORT_MAP_TCP_80}\"; \
+        fi; \
       fi; \
     ) \
     $(\
-      if [[ ${APACHE_MOD_SSL_ENABLED} == true ]]; then \
+      if [[ ${DOCKER_PORT_MAP_TCP_443} != NULL ]] && [[ ${APACHE_MOD_SSL_ENABLED} == true ]]; then \
         if [[ -n $(/usr/bin/gawk 'match($0, /^([0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}:)?([0-9]+)$/, matches) { print matches[2]; }' <<< \"${DOCKER_PORT_MAP_TCP_443}\") ]]; then \
           printf -- '--publish %%s%%s:443' \
             \"$(/usr/bin/gawk 'match($0, /^([0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}:)?([0-9]+)$/, matches) { print matches[1]; }' <<< \"${DOCKER_PORT_MAP_TCP_443}\")\" \
@@ -130,13 +128,15 @@ ExecStart=/bin/bash -c \
       fi; \
     ) \
     $(\
-      if [[ -n $(/usr/bin/gawk 'match($0, /^([0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}:)?([0-9]+)$/, matches) { print matches[2]; }' <<< \"${DOCKER_PORT_MAP_TCP_8443}\") ]]; then \
-        printf -- '--publish %%s%%s:8443' \
-          \"$(/usr/bin/gawk 'match($0, /^([0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}:)?([0-9]+)$/, matches) { print matches[1]; }' <<< \"${DOCKER_PORT_MAP_TCP_8443}\")\" \
-          \"$(( $(/usr/bin/gawk 'match($0, /^([0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}:)?([0-9]+)$/, matches) { print matches[2]; }' <<< \"${DOCKER_PORT_MAP_TCP_8443}\") + $(/usr/bin/awk -F. '$0=$1' <<< %i) - 1 ))\"; \
-      else \
-        printf -- '--publish %%s:8443' \
-          \"${DOCKER_PORT_MAP_TCP_8443}\"; \
+      if [[ ${DOCKER_PORT_MAP_TCP_8443} != NULL ]]; then \
+        if [[ -n $(/usr/bin/gawk 'match($0, /^([0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}:)?([0-9]+)$/, matches) { print matches[2]; }' <<< \"${DOCKER_PORT_MAP_TCP_8443}\") ]]; then \
+          printf -- '--publish %%s%%s:8443' \
+            \"$(/usr/bin/gawk 'match($0, /^([0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}:)?([0-9]+)$/, matches) { print matches[1]; }' <<< \"${DOCKER_PORT_MAP_TCP_8443}\")\" \
+            \"$(( $(/usr/bin/gawk 'match($0, /^([0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}:)?([0-9]+)$/, matches) { print matches[2]; }' <<< \"${DOCKER_PORT_MAP_TCP_8443}\") + $(/usr/bin/awk -F. '$0=$1' <<< %i) - 1 ))\"; \
+        else \
+          printf -- '--publish %%s:8443' \
+            \"${DOCKER_PORT_MAP_TCP_8443}\"; \
+        fi; \
       fi; \
     ) \
     --env \"APACHE_CONTENT_ROOT=${APACHE_CONTENT_ROOT}\" \
@@ -145,8 +145,10 @@ ExecStart=/bin/bash -c \
     --env \"APACHE_ERROR_LOG_LOCATION=${APACHE_ERROR_LOG_LOCATION}\" \
     --env \"APACHE_ERROR_LOG_LEVEL=${APACHE_ERROR_LOG_LEVEL}\" \
     --env \"APACHE_EXTENDED_STATUS_ENABLED=${APACHE_EXTENDED_STATUS_ENABLED}\" \
+    --env \"APACHE_HEADER_X_SERVICE_UID=${APACHE_HEADER_X_SERVICE_UID}\" \
     --env \"APACHE_LOAD_MODULES=${APACHE_LOAD_MODULES}\" \
     --env \"APACHE_MOD_SSL_ENABLED=${APACHE_MOD_SSL_ENABLED}\" \
+    --env \"APACHE_MPM=${APACHE_MPM}\" \
     --env \"APACHE_OPERATING_MODE=${APACHE_OPERATING_MODE}\" \
     --env \"APACHE_PUBLIC_DIRECTORY=${APACHE_PUBLIC_DIRECTORY}\" \
     --env \"APACHE_RUN_GROUP=${APACHE_RUN_GROUP}\" \
@@ -154,10 +156,8 @@ ExecStart=/bin/bash -c \
     --env \"APACHE_SERVER_ALIAS=${APACHE_SERVER_ALIAS}\" \
     --env \"APACHE_SERVER_NAME=${APACHE_SERVER_NAME}\" \
     --env \"APACHE_SYSTEM_USER=${APACHE_SYSTEM_USER}\" \
-    --env \"HTTPD=${HTTPD}\" \
     --env \"PHP_OPTIONS_DATE_TIMEZONE=${PHP_OPTIONS_DATE_TIMEZONE}\" \
-    --env \"SERVICE_UID=${SERVICE_UID}\" \
-    --volume ${VOLUME_DATA_NAME}:${APACHE_SERVER_HOME} \
+    ${DOCKER_CONTAINER_PARAMETERS_APPEND} \
     ${DOCKER_USER}/${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}; \
   "
 
