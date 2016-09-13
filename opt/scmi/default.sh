@@ -17,20 +17,22 @@ else
 		"${DOCKER_PORT_MAP_TCP_80}"
 fi
 
-if command -v gawk &> /dev/null \
-	&& [[ -n $(gawk 'match($0, /^([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}:)?([0-9]+)$/, matches) { print matches[2]; }' <<< "${DOCKER_PORT_MAP_TCP_443}") ]]; then
-	printf -v \
-		DOCKER_PUBLISH \
-		-- '%s --publish %s%s:443' \
-		"${DOCKER_PUBLISH}" \
-		"$(gawk 'match($0, /^([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}:)?([0-9]+)$/, matches) { print matches[1]; }' <<< "${DOCKER_PORT_MAP_TCP_443}")" \
-		"$(( $(gawk 'match($0, /^([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}:)?([0-9]+)$/, matches) { print matches[2]; }' <<< "${DOCKER_PORT_MAP_TCP_443}") + $(gawk 'match($0, /^.+\.([0-9]+)\.([0-9]+)$/, matches) { print matches[1]; }' <<< "${DOCKER_NAME}") - 1 ))"
-else
-	printf -v \
-		DOCKER_PUBLISH \
-		-- '%s --publish %s:443' \
-		"${DOCKER_PUBLISH}" \
-		"${DOCKER_PORT_MAP_TCP_443}"
+if [[ ${APACHE_MOD_SSL_ENABLED} == true ]]; then
+	if command -v gawk &> /dev/null \
+		&& [[ -n $(gawk 'match($0, /^([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}:)?([0-9]+)$/, matches) { print matches[2]; }' <<< "${DOCKER_PORT_MAP_TCP_443}") ]]; then
+		printf -v \
+			DOCKER_PUBLISH \
+			-- '%s --publish %s%s:443' \
+			"${DOCKER_PUBLISH}" \
+			"$(gawk 'match($0, /^([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}:)?([0-9]+)$/, matches) { print matches[1]; }' <<< "${DOCKER_PORT_MAP_TCP_443}")" \
+			"$(( $(gawk 'match($0, /^([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}:)?([0-9]+)$/, matches) { print matches[2]; }' <<< "${DOCKER_PORT_MAP_TCP_443}") + $(gawk 'match($0, /^.+\.([0-9]+)\.([0-9]+)$/, matches) { print matches[1]; }' <<< "${DOCKER_NAME}") - 1 ))"
+	else
+		printf -v \
+			DOCKER_PUBLISH \
+			-- '%s --publish %s:443' \
+			"${DOCKER_PUBLISH}" \
+			"${DOCKER_PORT_MAP_TCP_443}"
+	fi
 fi
 
 if command -v gawk &> /dev/null \
