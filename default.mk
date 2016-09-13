@@ -2,9 +2,6 @@
 # Common parameters of create and run targets
 define DOCKER_CONTAINER_PARAMETERS
 --name $(DOCKER_NAME) \
---publish $(DOCKER_PORT_MAP_TCP_80):80 \
---publish $(DOCKER_PORT_MAP_TCP_443):443 \
---publish $(DOCKER_PORT_MAP_TCP_8443):8443 \
 --restart $(DOCKER_RESTART_POLICY) \
 --env "APACHE_CONTENT_ROOT=$(APACHE_CONTENT_ROOT)" \
 --env "APACHE_CUSTOM_LOG_FORMAT=$(APACHE_CUSTOM_LOG_FORMAT)" \
@@ -65,3 +62,9 @@ define DOCKER_CONTAINER_PARAMETERS_FULL
 --env "SSH_USER_SHELL=$(SSH_USER_SHELL)" \
 --env "SSH_USER_ID=$(SSH_USER_ID)"
 endef
+
+DOCKER_PUBLISH := $(shell \
+	if [[ $(DOCKER_PORT_MAP_TCP_80) != NULL ]]; then printf -- '--publish %s%s:80\n' $(DOCKER_PORT_MAP_TCP_80); fi; \
+	if [[ $(DOCKER_PORT_MAP_TCP_443) != NULL ]] && [[ $(APACHE_MOD_SSL_ENABLED) == true ]]; then printf -- '--publish %s%s:443\n' $(DOCKER_PORT_MAP_TCP_443); fi; \
+	if [[ $(DOCKER_PORT_MAP_TCP_8443) != NULL ]]; then printf -- '--publish %s%s:8443\n' $(DOCKER_PORT_MAP_TCP_8443); fi; \
+)
