@@ -181,8 +181,13 @@ RUN useradd -r -M -d /var/www/app -s /sbin/nologin app \
 # -----------------------------------------------------------------------------
 # Copy files into place
 # -----------------------------------------------------------------------------
-ADD usr/sbin \
+ADD usr/sbin/httpd-bootstrap \
+	usr/sbin/httpd-wrapper \
 	/usr/sbin/
+ADD opt/scmi \
+	/opt/scmi/
+ADD etc/systemd/system \
+	/etc/systemd/system/
 ADD etc/services-config/httpd/httpd-bootstrap.conf \
 	/etc/services-config/httpd/
 ADD etc/services-config/httpd/conf.d/*.conf \

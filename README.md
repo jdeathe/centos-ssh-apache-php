@@ -7,7 +7,9 @@ Apache PHP web server, loading only a minimal set of Apache modules by default. 
 
 ## Overview & links
 
-The [Dockerfile](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6/Dockerfile) can be used to build a base image that can be run as-is or used as the bases for other more specific builds.
+The latest CentOS-6 based release can be pulled from the centos-6 Docker tag. For a specific release tag the convention is `centos-6-1.7.0` for the [1.7.0](https://github.com/jdeathe/centos-ssh-apache-php/tree/1.7.0) release tag.
+
+- centos-6 [(centos-6/Dockerfile)](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6/Dockerfile)
 
 This build of [Apache](https://httpd.apache.org/), (httpd CentOS package), uses the mpm_prefork_module and php5_module modules for handling [PHP](http://php.net/).
 
@@ -35,8 +37,8 @@ Run up a container named `apache-php.pool-1.1.1` from the docker image `jdeathe/
 $ docker run -d \
   --name apache-php.pool-1.1.1 \
   -p 8080:80 \
-  --env "APACHE_SERVER_NAME=app-1.local" \
-  jdeathe/centos-ssh-apache-php:latest
+  -e "APACHE_SERVER_NAME=app-1.local" \
+  jdeathe/centos-ssh-apache-php:centos-6
 ```
 
 Now point your browser to `http://{docker-host}:8080` where `{docker-host}` is the host name of your docker server and, if all went well, you should see the "Hello, world!" page.
@@ -90,7 +92,7 @@ $ docker run \
     --name=apache-php.pool-1.1.1
 ```
 
-#### SCMI Uninstall
+##### SCMI Uninstall
 
 To uninstall the previous example simply run the same docker run command with the scmi `uninstall` command.
 
@@ -106,7 +108,7 @@ $ docker run \
     --name=apache-php.pool-1.1.1
 ```
 
-#### SCMI Systemd Support
+##### SCMI Systemd Support
 
 If your docker host has systemd (and optionally etcd) installed then `scmi` provides a method to install the container as a systemd service unit. This provides some additional features for managing a group of instances on a single docker host and has the option to use an etcd backed service registry. Using a systemd unit file allows the System Administrator to use a Drop-In to override the settings of a unit-file template used to create service instances. To use the systemd method of installation use the `-m` or `--manager` option of `scmi` and to include the optional etcd register companion unit use the `--register` option.
 
@@ -126,7 +128,7 @@ $ docker run \
     --setopt='--volume {{NAME}}.data-ssl:/etc/services-config/ssl'
 ```
 
-#### SCMI Fleet Support
+##### SCMI Fleet Support
 
 If your docker host has systemd, fleetd (and optionally etcd) installed then `scmi` provides a method to schedule the container  to run on the cluster. This provides some additional features for managing a group of instances on a [fleet](https://github.com/coreos/fleet) cluster and has the option to use an etcd backed service registry. To use the fleet method of installation use the `-m` or `--manager` option of `scmi` and to include the optional etcd register companion unit use the `--register` option.
 
@@ -296,13 +298,13 @@ $ docker stop apache-php.pool-1.1.1 && \
   docker rm apache-php.pool-1.1.1
 $ docker run -d \
   --name apache-php.pool-1.1.1 \
-  -p 8080:80 \
-  -p 8580:443 \
+  --publish 8080:80 \
+  --publish 9443:443 \
   --env "APACHE_SERVER_ALIAS=app-1" \
   --env "APACHE_SERVER_NAME=app-1.local" \
   --env "APACHE_MOD_SSL_ENABLED=true" \
   --volume apache-php.pool-1.1.1.data-ssl:/etc/services-config/ssl \
-  jdeathe/centos-ssh-apache-php:latest
+  jdeathe/centos-ssh-apache-php:centos-6
 ```
 
 ##### APACHE_MPM
