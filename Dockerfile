@@ -181,8 +181,13 @@ RUN useradd -r -M -d /var/www/app -s /sbin/nologin app \
 # -----------------------------------------------------------------------------
 # Copy files into place
 # -----------------------------------------------------------------------------
-ADD usr/sbin \
+ADD usr/sbin/httpd-bootstrap \
+	usr/sbin/httpd-wrapper \
 	/usr/sbin/
+ADD opt/scmi \
+	/opt/scmi/
+ADD etc/systemd/system \
+	/etc/systemd/system/
 ADD etc/services-config/httpd/httpd-bootstrap.conf \
 	/etc/services-config/httpd/
 ADD etc/services-config/httpd/conf.d/*.conf \
@@ -272,7 +277,7 @@ ENV APACHE_CUSTOM_LOG_FORMAT="combined" \
 # -----------------------------------------------------------------------------
 # Set image metadata
 # -----------------------------------------------------------------------------
-ARG RELEASE_VERSION="1.7.0"
+ARG RELEASE_VERSION="1.7.1"
 LABEL \
 	install="docker run \
 --rm \
