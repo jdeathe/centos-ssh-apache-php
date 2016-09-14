@@ -277,7 +277,7 @@ ENV APACHE_CUSTOM_LOG_FORMAT="combined" \
 # -----------------------------------------------------------------------------
 # Set image metadata
 # -----------------------------------------------------------------------------
-ARG RELEASE_VERSION="1.7.0"
+ARG RELEASE_VERSION="1.7.1"
 LABEL \
 	install="docker run \
 --rm \
