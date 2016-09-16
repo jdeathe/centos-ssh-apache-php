@@ -24,7 +24,7 @@ define DOCKER_CONTAINER_PARAMETERS
 endef
 
 DOCKER_PUBLISH := $(shell \
-	if [[ $(DOCKER_PORT_MAP_TCP_80) != NULL ]]; then printf -- '--publish %s%s:80\n' $(DOCKER_PORT_MAP_TCP_80); fi; \
-	if [[ $(DOCKER_PORT_MAP_TCP_443) != NULL ]] && [[ $(APACHE_MOD_SSL_ENABLED) == true ]]; then printf -- '--publish %s%s:443\n' $(DOCKER_PORT_MAP_TCP_443); fi; \
-	if [[ $(DOCKER_PORT_MAP_TCP_8443) != NULL ]]; then printf -- '--publish %s%s:8443\n' $(DOCKER_PORT_MAP_TCP_8443); fi; \
+	if [[ $(DOCKER_PORT_MAP_TCP_80) != NULL ]]; then printf -- '--publish %s:80\n' $(DOCKER_PORT_MAP_TCP_80); fi; \
+	if [[ $(DOCKER_PORT_MAP_TCP_443) != NULL ]] && [[ $(APACHE_MOD_SSL_ENABLED) == true ]]; then printf -- '--publish %s:443\n' $(DOCKER_PORT_MAP_TCP_443); fi; \
+	if [[ $(DOCKER_PORT_MAP_TCP_8443) != NULL ]]; then printf -- '--publish %s:8443\n' $(DOCKER_PORT_MAP_TCP_8443); fi; \
 )
