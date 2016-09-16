@@ -210,6 +210,9 @@ RUN mkdir -p \
 		/etc/services-config/ssl/certs/localhost.crt \
 		/etc/pki/tls/certs/localhost.crt \
 	&& ln -sf \
+		/etc/services-config/ssl/certs/server-chain.crt \
+		/etc/pki/tls/certs/server-chain.crt \
+	&& ln -sf \
 		/etc/services-config/ssl/private/localhost.key \
 		/etc/pki/tls/private/localhost.key \
 	&& ln -sf \
