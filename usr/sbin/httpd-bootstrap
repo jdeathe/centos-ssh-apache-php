@@ -197,6 +197,26 @@ function is_valid_user_login ()
 	return 1
 }
 
+function make_self_signed_certificate ()
+{
+	local C="${1:-'--'}"
+	local ST="${2:-STATE}"
+	local L="${3:-LOCALITY}"
+	local O="${4:-ORGANIZATION}"
+	local CN="${5:-localhost.localdomain}"
+
+	openssl req \
+		-x509 \
+		-sha256 \
+		-nodes \
+		-newkey rsa:2048 \
+		-days 365 \
+		-subj "/C=${C}/ST=${ST}/L=${L}/O=${O}/CN=${CN}" \
+		-keyout /etc/services-config/ssl/private/localhost.key \
+		-out /etc/services-config/ssl/certs/localhost.crt
+
+}
+
 function set_apache_enable_sendfile ()
 {
 	local ENABLED=${1:-true}
@@ -445,16 +465,13 @@ if [[ ${OPTS_APACHE_MOD_SSL_ENABLED} == true ]] \
  	&& [[ ! -f /etc/services-config/ssl/private/localhost.key \
 	|| ! -f /etc/services-config/ssl/certs/localhost.crt ]]; then
 
-	openssl req \
-		-x509 \
-		-sha256 \
-		-nodes \
-		-newkey rsa:2048 \
-		-days 365 \
-		-subj "/C=--/ST=STATE/L=LOCALITY/O=ORGANIZATION/CN=${OPTS_APACHE_SERVER_NAME}" \
-		-keyout /etc/services-config/ssl/private/localhost.key \
-		-out /etc/services-config/ssl/certs/localhost.crt \
-	&
+	make_self_signed_certificate \
+		'--' \
+		'STATE' \
+		'LOCALITY' \
+		'ORGANIZATION' \
+		"${OPTS_APACHE_SERVER_NAME}" \
+		&
 
 	PIDS[2]=${!}
 fi
