@@ -163,6 +163,27 @@ function is_valid_apache_content_root ()
 	return 1
 }
 
+function is_valid_apache_ssl_certificate ()
+{
+	local VALID_PATTERN='^SHA1 Fingerprint='
+	local SHA1_FINGERPRINT
+
+	SHA1_FINGERPRINT="$(
+		openssl \
+			x509 \
+			-sha1 \
+			-in /etc/services-config/ssl/certs/localhost.crt \
+			-noout \
+			-fingerprint
+	)"
+
+	if [[ ${SHA1_FINGERPRINT} =~ ${VALID_PATTERN} ]]; then
+		return 0
+	fi
+
+	return 1
+}
+
 function is_valid_apache_public_directory ()
 {
 	local DIRECTORY="${1:-}"
@@ -212,9 +233,17 @@ function make_self_signed_certificate ()
 		-newkey rsa:2048 \
 		-days 365 \
 		-subj "/C=${C}/ST=${ST}/L=${L}/O=${O}/CN=${CN}" \
-		-keyout /etc/services-config/ssl/private/localhost.key \
-		-out /etc/services-config/ssl/certs/localhost.crt
+		-keyout /tmp/localhost.key \
+		-out /tmp/localhost.crt
 
+	# Combine the key and certificate
+	cat \
+		/tmp/localhost.key \
+		/tmp/localhost.crt \
+	> /etc/services-config/ssl/certs/localhost.crt
+
+	rm -f \
+		/tmp/localhost.{crt,key}
 }
 
 function set_apache_enable_sendfile ()
@@ -277,6 +306,24 @@ function set_apache_server_name ()
 	sed -i \
 		-e "s~^#ServerName \(.*\):80$~ServerName ${HOST_NAME}:${PORT}~g" \
 		/etc/httpd/conf/httpd.conf
+}
+
+function set_apache_ssl_certificate ()
+{
+	local SSL_CERTIFICATE="${1:-}"
+
+	if [[ -n ${SSL_CERTIFICATE:-} ]]; then
+		printf \
+			-- '%s' \
+			"${SSL_CERTIFICATE}" \
+		> /etc/services-config/ssl/certs/localhost.crt
+
+		if [[ -s /etc/services-config/ssl/certs/localhost.crt ]] \
+			&& ! is_valid_apache_ssl_certificate; then
+			echo "ERROR: Invalid APACHE_SSL_CERTIFICATE"
+			exit 1
+		fi
+	fi
 }
 
 function get_apache_content_root ()
@@ -442,6 +489,9 @@ OPTS_APACHE_DOCUMENT_ROOT="${OPTS_APACHE_CONTENT_ROOT}/$(
 	get_apache_public_directory
 )"
 OPTS_APACHE_EXTENDED_STATUS_ENABLED="${APACHE_EXTENDED_STATUS_ENABLED:-false}"
+OPTS_APACHE_HEADER_X_SERVICE_UID="$(
+	get_apache_header_x_service_uid
+)"
 OPTS_APACHE_LOAD_MODULES="${APACHE_LOAD_MODULES:-${DEFAULT_APACHE_LOAD_MODULES}}"
 OPTS_APACHE_MOD_SSL_ENABLED="${APACHE_MOD_SSL_ENABLED:-false}"
 OPTS_APACHE_MPM="${APACHE_MPM:-prefork}"
@@ -449,10 +499,8 @@ OPTS_APACHE_RUN_GROUP="${APACHE_RUN_GROUP:-${DEFAULT_APACHE_USER}}"
 OPTS_APACHE_RUN_USER="${APACHE_RUN_USER:-${DEFAULT_APACHE_USER}}"
 OPTS_APACHE_SERVER_ALIAS="${APACHE_SERVER_ALIAS:-}"
 OPTS_APACHE_SERVER_NAME="${APACHE_SERVER_NAME:-$(hostname)}"
+OPTS_APACHE_SSL_CERTIFICATE="${APACHE_SSL_CERTIFICATE:-}"
 OPTS_APACHE_SYSTEM_USER="${APACHE_SYSTEM_USER:-${DEFAULT_SYSTEM_USER}}"
-OPTS_APACHE_HEADER_X_SERVICE_UID="$(
-	get_apache_header_x_service_uid
-)"
 
 # Load app package Apache configuration files.
 load_httpd_conf_scan_files "${PACKAGE_PATH}"
@@ -460,10 +508,15 @@ load_httpd_conf_scan_files "${PACKAGE_PATH}"
 # Load app package PHP configuration files.
 load_php_ini_scan_files "${PACKAGE_PATH}"
 
+# Populate SSL certificate file.
+if [[ ${OPTS_APACHE_MOD_SSL_ENABLED} == true ]] \
+	&& [[ -n ${OPTS_APACHE_SSL_CERTIFICATE} ]]; then
+	set_apache_ssl_certificate "${OPTS_APACHE_SSL_CERTIFICATE}"
+fi
+
 # Generate SSL certificate.
 if [[ ${OPTS_APACHE_MOD_SSL_ENABLED} == true ]] \
- 	&& [[ ! -f /etc/services-config/ssl/private/localhost.key \
-	|| ! -f /etc/services-config/ssl/certs/localhost.crt ]]; then
+	&& [[ ! -f /etc/services-config/ssl/certs/localhost.crt ]]; then
 
 	make_self_signed_certificate \
 		'--' \
