@@ -424,8 +424,25 @@ function set_apache_server_name ()
 function set_apache_ssl_certificate ()
 {
 	local SSL_CERTIFICATE="${1:-}"
+	local PLAIN_TEXT_PATTERN='^-----BEGIN '
+	local BASE64_PATTERN='^[A-Za-z0-9/+=]*$'
 
-	if [[ -n ${SSL_CERTIFICATE:-} ]]; then
+	if [[ -n ${SSL_CERTIFICATE} ]]; then
+		# Decode base64 encoded values
+		if [[ ${SSL_CERTIFICATE} =~ ${BASE64_PATTERN} ]]; then
+			SSL_CERTIFICATE="$(
+				base64 -d -i <<< "${SSL_CERTIFICATE}"
+			)"
+		fi
+
+		if [[ ! ${SSL_CERTIFICATE} =~ ${PLAIN_TEXT_PATTERN} ]]; then
+			printf -- \
+				'ERROR: Invalid APACHE_SSL_CERTIFICATE\n' \
+				>&2
+			sleep 0.1
+			exit 1
+		fi
+
 		printf \
 			-- '%s' \
 			"${SSL_CERTIFICATE}" \
@@ -433,7 +450,10 @@ function set_apache_ssl_certificate ()
 
 		if [[ -s /etc/services-config/ssl/certs/localhost.crt ]] \
 			&& ! is_valid_apache_ssl_certificate; then
-			echo "ERROR: Invalid APACHE_SSL_CERTIFICATE"
+			printf -- \
+				'ERROR: Invalid APACHE_SSL_CERTIFICATE\n' \
+				>&2
+			sleep 0.1
 			exit 1
 		fi
 	fi
