@@ -147,6 +147,84 @@ function enable_apache_modules ()
 	fi
 }
 
+function get_apache_content_root ()
+{
+	local DEFAULT_VALUE="${1:-/var/www/app}"
+	local VALUE="${APACHE_CONTENT_ROOT:-}"
+
+	if [[ -z ${VALUE} ]] || ! is_valid_apache_content_root "${VALUE}"; then
+		VALUE="${DEFAULT_VALUE}"
+	fi
+
+	printf -- "%s" "${VALUE}"
+}
+
+function get_apache_header_x_service_uid ()
+{
+	local HOST_NAME="${HOSTNAME:-}"
+	local VALUE="${APACHE_HEADER_X_SERVICE_UID:-}"
+
+	if [[ -n ${VALUE} ]]; then
+		if [[ -z ${HOST_NAME} ]]; then
+			HOST_NAME="$(
+				hostname
+			)"
+		fi
+
+		# Replace {{HOSTNAME}} with system hostname
+		VALUE="${VALUE//\{\{HOSTNAME\}\}/${HOST_NAME}}"
+	fi
+
+	printf -- \
+		'%s' \
+		"${VALUE}"
+}
+
+function get_apache_public_directory ()
+{
+	local DEFAULT_VALUE="${1:-public_html}"
+	local VALUE="${APACHE_PUBLIC_DIRECTORY:-}"
+
+	if [[ -z ${VALUE} ]] || ! is_valid_apache_public_directory "${VALUE}"; then
+		VALUE="${DEFAULT_VALUE}"
+	fi
+
+	printf -- "%s" "${VALUE}"
+}
+
+function get_password ()
+{
+	local PASSWORD_LENGTH="${1:-16}"
+	local PASSWORD="$(
+		head -n 4096 /dev/urandom \
+		| tr -cd '[:alnum:]' \
+		| cut -c1-"${PASSWORD_LENGTH}"
+	)"
+
+	printf -- "%s" "${PASSWORD}"
+
+	return 0
+}
+
+function get_ssl_certificate_fingerprint ()
+{
+	local DIGEST="${1:-sha1}"
+	local VALUE
+
+	VALUE="$(
+		openssl x509 \
+			-"${DIGEST,,}" \
+			-in /etc/services-config/ssl/certs/localhost.crt \
+			-noout \
+			-fingerprint
+	)"
+
+	VALUE="${VALUE//${DIGEST^^}' Fingerprint='/}"
+
+	printf -- "%s" "${VALUE}"
+}
+
+
 function is_valid_apache_content_root ()
 {
 	local DIRECTORY_PATH="${1:-}"
@@ -157,27 +235,6 @@ function is_valid_apache_content_root ()
 	local VALID_DIRECTORY='^\/(?!\/|bin|dev|etc|lib|lib64|lost+found|media|proc|root|sbin|sys|tmp|usr).+$'
 
 	if grep -qoP "${VALID_DIRECTORY}" <<< "${DIRECTORY_PATH_ABSOLUTE}"; then
-		return 0
-	fi
-
-	return 1
-}
-
-function is_valid_apache_ssl_certificate ()
-{
-	local VALID_PATTERN='^SHA1 Fingerprint='
-	local SHA1_FINGERPRINT
-
-	SHA1_FINGERPRINT="$(
-		openssl \
-			x509 \
-			-sha1 \
-			-in /etc/services-config/ssl/certs/localhost.crt \
-			-noout \
-			-fingerprint
-	)"
-
-	if [[ ${SHA1_FINGERPRINT} =~ ${VALID_PATTERN} ]]; then
 		return 0
 	fi
 
@@ -206,6 +263,27 @@ function is_valid_apache_public_directory ()
 	return 1
 }
 
+function is_valid_apache_ssl_certificate ()
+{
+	local VALID_PATTERN='^SHA1 Fingerprint='
+	local SHA1_FINGERPRINT
+
+	SHA1_FINGERPRINT="$(
+		openssl \
+			x509 \
+			-sha1 \
+			-in /etc/services-config/ssl/certs/localhost.crt \
+			-noout \
+			-fingerprint
+	)"
+
+	if [[ ${SHA1_FINGERPRINT} =~ ${VALID_PATTERN} ]]; then
+		return 0
+	fi
+
+	return 1
+}
+
 function is_valid_user_login ()
 {
 	local LOGIN="${1}"
@@ -216,6 +294,41 @@ function is_valid_user_login ()
 	fi
 
 	return 1
+}
+
+function load_httpd_conf_scan_files ()
+{
+	local FILE_PATH
+	local PACKAGE_PATH="${1:-}"
+
+	if [[ -n ${PACKAGE_PATH} ]] && [[ -d ${PACKAGE_PATH}/etc/php.d ]]; then
+		for FILE_PATH in "${PACKAGE_PATH}"/etc/httpd/conf.d/*.conf; do
+			cat  \
+				"${FILE_PATH}" \
+			> "/etc/services-config/httpd/conf.d/${FILE_PATH##*/}"
+		done
+	fi
+}
+
+function load_php_ini_scan_files ()
+{
+	local FILE_PATH
+	local PACKAGE_PATH="${1:-}"
+
+	if [[ -n ${PACKAGE_PATH} ]] && [[ -d ${PACKAGE_PATH}/etc/php.d ]]; then
+		# Replace environment variables to support fcgid php-wrapper
+		for FILE_PATH in "${PACKAGE_PATH}"/etc/php.d/*.ini; do
+			printf -- \
+				'%s' \
+				"$(
+					eval \
+						"cat <<-EOF
+							$(<"${FILE_PATH}")
+						EOF" 2> /dev/null
+				)" \
+			> "/etc/php.d/${FILE_PATH##*/}"
+		done
+	fi
 }
 
 function make_self_signed_certificate ()
@@ -323,118 +436,6 @@ function set_apache_ssl_certificate ()
 			echo "ERROR: Invalid APACHE_SSL_CERTIFICATE"
 			exit 1
 		fi
-	fi
-}
-
-function get_apache_content_root ()
-{
-	local DEFAULT_VALUE="${1:-/var/www/app}"
-	local VALUE="${APACHE_CONTENT_ROOT:-}"
-
-	if [[ -z ${VALUE} ]] || ! is_valid_apache_content_root "${VALUE}"; then
-		VALUE="${DEFAULT_VALUE}"
-	fi
-
-	printf -- "%s" "${VALUE}"
-}
-
-function get_apache_header_x_service_uid ()
-{
-	local HOST_NAME="${HOSTNAME:-}"
-	local VALUE="${APACHE_HEADER_X_SERVICE_UID:-}"
-
-	if [[ -n ${VALUE} ]]; then
-		if [[ -z ${HOST_NAME} ]]; then
-			HOST_NAME="$(
-				hostname
-			)"
-		fi
-
-		# Replace {{HOSTNAME}} with system hostname
-		VALUE="${VALUE//\{\{HOSTNAME\}\}/${HOST_NAME}}"
-	fi
-
-	printf -- \
-		'%s' \
-		"${VALUE}"
-}
-
-function get_apache_public_directory ()
-{
-	local DEFAULT_VALUE="${1:-public_html}"
-	local VALUE="${APACHE_PUBLIC_DIRECTORY:-}"
-
-	if [[ -z ${VALUE} ]] || ! is_valid_apache_public_directory "${VALUE}"; then
-		VALUE="${DEFAULT_VALUE}"
-	fi
-
-	printf -- "%s" "${VALUE}"
-}
-
-function get_password ()
-{
-	local PASSWORD_LENGTH="${1:-16}"
-	local PASSWORD="$(
-		head -n 4096 /dev/urandom \
-		| tr -cd '[:alnum:]' \
-		| cut -c1-"${PASSWORD_LENGTH}"
-	)"
-
-	printf -- "%s" "${PASSWORD}"
-
-	return 0
-}
-
-function get_ssl_certificate_fingerprint ()
-{
-	local DIGEST="${1:-sha1}"
-	local VALUE
-
-	VALUE="$(
-		openssl x509 \
-			-"${DIGEST,,}" \
-			-in /etc/services-config/ssl/certs/localhost.crt \
-			-noout \
-			-fingerprint
-	)"
-
-	VALUE="${VALUE//${DIGEST^^}' Fingerprint='/}"
-
-	printf -- "%s" "${VALUE}"
-}
-
-function load_httpd_conf_scan_files ()
-{
-	local FILE_PATH
-	local PACKAGE_PATH="${1:-}"
-
-	if [[ -n ${PACKAGE_PATH} ]] && [[ -d ${PACKAGE_PATH}/etc/php.d ]]; then
-		for FILE_PATH in "${PACKAGE_PATH}"/etc/httpd/conf.d/*.conf; do
-			cat  \
-				"${FILE_PATH}" \
-			> "/etc/services-config/httpd/conf.d/${FILE_PATH##*/}"
-		done
-	fi
-}
-
-function load_php_ini_scan_files ()
-{
-	local FILE_PATH
-	local PACKAGE_PATH="${1:-}"
-
-	if [[ -n ${PACKAGE_PATH} ]] && [[ -d ${PACKAGE_PATH}/etc/php.d ]]; then
-		# Replace environment variables to support fcgid php-wrapper
-		for FILE_PATH in "${PACKAGE_PATH}"/etc/php.d/*.ini; do
-			printf -- \
-				'%s' \
-				"$(
-					eval \
-						"cat <<-EOF
-							$(<"${FILE_PATH}")
-						EOF" 2> /dev/null
-				)" \
-			> "/etc/php.d/${FILE_PATH##*/}"
-		done
 	fi
 }
 
