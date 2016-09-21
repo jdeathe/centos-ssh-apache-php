@@ -338,6 +338,58 @@ The public directory is relative to the `APACHE_CONTENT_ROOT` and together they 
 ...
 ```
 
+##### APACHE_SSL_CERTIFICATE
+
+The `APACHE_SSL_CERTIFICATE` environment variable is used to define a PEM, (and optionally base64), encoded certificate bundle. Base64 encoding of the PEM file contents is recommended. To make a compatible certificate bundle use the `cat` command to combine the certificate files together.
+
+```
+$ cat /usr/share/private/server-key.pem \
+    /usr/share/certs/server-certificate.pem \
+    /usr/share/certs/intermediate-certificate.pem \
+  > /usr/share/certs/server-bundle.pem
+```
+
+*Note:* The `base64` command on Mac OSX will encode a file without line breaks by default but if using the command on Linux you need to include use the `-w` option to prevent wrapping lines at 80 characters. i.e. `base64 -w 0 -i {certificate-path}`.
+
+```
+...
+  --env "APACHE_SSL_CERTIFICATE=$(
+    base64 -i "/usr/share/certs/server-bundle.pem"
+  )" \
+...
+```
+
+##### APACHE_SSL_CIPHER_SUITE
+
+Use the `APACHE_SSL_CIPHER_SUITE` environment variable to define an appropriate Cipher Suite. The default "intermediate" selection should be suitable for most use-cases where support for a wide range browsers is necessary. 
+
+References:
+- [OpenSSL ciphers documentation](https://www.openssl.org/docs/manmaster/apps/ciphers.html).
+- [Mozilla Security/Server Side TLS guidance](https://wiki.mozilla.org/Security/Server_Side_TLS).
+
+*Note:* The value show is using space separated values to allow for readablity in the documentation; this is valid syntax however using the colon separator is the recommended form.
+
+```
+...
+  --env "APACHE_SSL_CIPHER_SUITE=ECDHE-ECDSA-AES256-GCM-SHA384 \
+ECDHE-RSA-AES256-GCM-SHA384 ECDHE-ECDSA-CHACHA20-POLY1305 \
+ECDHE-RSA-CHACHA20-POLY1305 ECDHE-ECDSA-AES128-GCM-SHA256 \
+ECDHE-RSA-AES128-GCM-SHA256 ECDHE-ECDSA-AES256-SHA384 \
+ECDHE-RSA-AES256-SHA384 ECDHE-ECDSA-AES128-SHA256 \
+ECDHE-RSA-AES128-SHA256" \
+...
+```
+
+##### APACHE_SSL_PROTOCOL
+
+Use the `APACHE_SSL_PROTOCOL` environment variable to define the supported protocols. The default protocols are suitable for most "intermediate" use-cases however you might want to restrict the TLS version support for example.
+
+```
+...
+  --env "APACHE_SSL_PROTOCOL=All -SSLv2 -SSLv3 -TLSv1 -TLSv1.1" \
+...
+```
+
 ##### APACHE_SYSTEM_USER
 
 Use the `APACHE_SYSTEM_USER` environment variable to define a custom service username.
