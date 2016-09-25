@@ -22,15 +22,6 @@ export TMPDIR="${TMP}"
 
 X_PHP_CGI=/usr/bin/php-cgi
 
-# Unset MySQL environment variables if they are not set in the vhost
-if [[ ${DB_MYSQL_PORT_3306_TCP_ADDR} == '${DB_MYSQL_PORT_3306_TCP_ADDR}' ]]; then
-	unset DB_MYSQL_PORT_3306_TCP_ADDR
-fi
-
-if [[ ${DB_MYSQL_PORT_3306_TCP_PORT} == '${DB_MYSQL_PORT_3306_TCP_PORT}' ]]; then
-	unset DB_MYSQL_PORT_3306_TCP_PORT
-fi
-
 # Use numeric values here. 
 # To identify the correct value use: php -r "echo E_ALL & ~E_DEPRECATED;"
 #   Default Value: E_ALL & ~E_NOTICE        = 30711
