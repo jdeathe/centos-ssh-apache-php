@@ -4,23 +4,19 @@ source /etc/httpd-bootstrap.conf
 
 NICE=/bin/nice
 NICENESS="${PHP_CGI_NICENESS:-15}"
+PHP_CGI=/usr/bin/php-cgi
 
 # Used to override the PHP operating mode options
 PHP_OPTIONS="${1:-}"
 
-# Set path to php.ini
-export PHPRC=/etc
-
 # PHP child process management should always be disabled with mod_fcgid
 export PHP_FCGI_CHILDREN=0
 export PHP_FCGI_MAX_REQUESTS=15000
-
+export PHPRC=/etc
 export REDIRECT_STATUS=200
 export TMP="${APACHE_CONTENT_ROOT}/var/tmp"
 export TEMP="${TMP}"
 export TMPDIR="${TMP}"
-
-X_PHP_CGI=/usr/bin/php-cgi
 
 # Use numeric values here. 
 # To identify the correct value use: php -r "echo E_ALL & ~E_DEPRECATED;"
@@ -93,6 +89,6 @@ PHP_OPERATING_MODE_OPTIONS="
 # FastCGI-enabled PHP executable
 exec ${NICE} \
 	-n ${NICENESS} \
-	${X_PHP_CGI} \
+	${PHP_CGI} \
 	${PHP_OPERATING_MODE_OPTIONS} \
 	${PHP_OPTIONS}
