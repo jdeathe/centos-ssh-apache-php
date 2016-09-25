@@ -5,11 +5,8 @@ source /etc/httpd-bootstrap.conf
 NICE=/bin/nice
 NICENESS="${PHP_CGI_NICENESS:-15}"
 
-# Allow PHP settings to be varied by passing a parameter to php-wrapper
-PHP_PACKAGE_NAME="${1:-php53}"
-
 # Used to override the PHP operating mode options
-PHP_OPTIONS="${2:-}"
+PHP_OPTIONS="${1:-}"
 
 # Set path to php.ini
 export PHPRC=/etc
@@ -24,42 +21,6 @@ export TEMP="${TMP}"
 export TMPDIR="${TMP}"
 
 X_PHP_CGI=/usr/bin/php-cgi
-
-case "${PHP_PACKAGE_NAME}" in
-	rh-php56)
-		if [[ -f /opt/rh/rh-php56/enable ]] \
-			&& [[ -f /opt/rh/rh-php56/root/usr/bin/php-cgi ]]; then
-			source /opt/rh/rh-php56/enable
-			export X_SCLS="$(
-				scl enable rh-php56 'echo $X_SCLS'
-			)"
-			X_PHP_CGI=/opt/rh/rh-php56/root/usr/bin/php-cgi
-		fi
-		;;
-	php55)
-		if [[ -f /opt/rh/php55/enable ]] \
-			&& [[ -f /opt/rh/php55/root/usr/bin/php-cgi ]]; then
-			source /opt/rh/php55/enable
-			export X_SCLS="$(
-				scl enable php55 'echo $X_SCLS'
-			)"
-			X_PHP_CGI=/opt/rh/php55/root/usr/bin/php-cgi
-		fi
-		;;
-	php54)
-		if [[ -f /opt/rh/php54/enable ]] \
-			&& [[ -f /opt/rh/php54/root/usr/bin/php-cgi ]]; then
-			source /opt/rh/php54/enable
-			export X_SCLS="$(
-				scl enable php54 'echo $X_SCLS'
-			)"
-			X_PHP_CGI=/opt/rh/php54/root/usr/bin/php-cgi
-		fi
-		;;
-	php53|*)
-		X_PHP_CGI=/usr/bin/php-cgi
-		;;
-esac
 
 # Unset MySQL environment variables if they are not set in the vhost
 if [[ ${DB_MYSQL_PORT_3306_TCP_ADDR} == '${DB_MYSQL_PORT_3306_TCP_ADDR}' ]]; then
