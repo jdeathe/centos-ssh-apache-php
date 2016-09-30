@@ -287,7 +287,7 @@ LABEL \
 --privileged \
 --volume /:/media/root \
 jdeathe/centos-ssh-apache-php:centos-6-${RELEASE_VERSION} \
-/sbin/scmi install \
+/usr/sbin/scmi install \
 --chroot=/media/root \
 --name=\${NAME} \
 --tag=centos-6-${RELEASE_VERSION}" \
@@ -296,7 +296,7 @@ jdeathe/centos-ssh-apache-php:centos-6-${RELEASE_VERSION} \
 --privileged \
 --volume /:/media/root \
 jdeathe/centos-ssh-apache-php:centos-6-${RELEASE_VERSION} \
-/sbin/scmi uninstall \
+/usr/sbin/scmi uninstall \
 --chroot=/media/root \
 --name=\${NAME} \
 --tag=centos-6-${RELEASE_VERSION}" \
