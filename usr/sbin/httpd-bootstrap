@@ -346,17 +346,9 @@ function make_self_signed_certificate ()
 		-newkey rsa:2048 \
 		-days 365 \
 		-subj "/C=${C}/ST=${ST}/L=${L}/O=${O}/CN=${CN}" \
-		-keyout /tmp/localhost.key \
-		-out /tmp/localhost.crt
+		-keyout /etc/services-config/ssl/certs/localhost.crt \
+		-out /etc/services-config/ssl/certs/localhost.crt
 
-	# Combine the key and certificate
-	cat \
-		/tmp/localhost.key \
-		/tmp/localhost.crt \
-	> /etc/services-config/ssl/certs/localhost.crt
-
-	rm -f \
-		/tmp/localhost.{crt,key}
 }
 
 function set_apache_enable_sendfile ()
