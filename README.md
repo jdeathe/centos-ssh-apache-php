@@ -72,7 +72,7 @@ $ docker exec -it apache-php.pool-1.1.1 apachectl -h
 
 ### Running
 
-To run the a docker container from this image you can use the standard docker commands. Alternatively, you can use the embedded (Service Container Manager Interface) [scmi](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6/usr/sbin/scmi) that is included in the image since `centos-6-1.7.0` or, if you have a checkout of the [source repository](https://github.com/jdeathe/centos-ssh-apache-php), and have make installed the Makefile provides targets to build, install, start, stop etc. where environment variables can be used to configure the container options and set custom docker run parameters.
+To run the a docker container from this image you can use the standard docker commands. Alternatively, you can use the embedded (Service Container Manager Interface) [scmi](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6/usr/sbin/scmi) that is included in the image since `centos-6-1.7.2` or, if you have a checkout of the [source repository](https://github.com/jdeathe/centos-ssh-apache-php), and have make installed the Makefile provides targets to build, install, start, stop etc. where environment variables can be used to configure the container options and set custom docker run parameters.
 
 #### SCMI Installation Examples
 
@@ -85,10 +85,10 @@ $ docker run \
   --rm \
   --privileged \
   --volume /:/media/root \
-  jdeathe/centos-ssh-apache-php:centos-6-1.7.0 \
+  jdeathe/centos-ssh-apache-php:centos-6-1.7.2 \
   /sbin/scmi install \
     --chroot=/media/root \
-    --tag=centos-6-1.7.0 \
+    --tag=centos-6-1.7.2 \
     --name=apache-php.pool-1.1.1
 ```
 
@@ -101,10 +101,10 @@ $ docker run \
   --rm \
   --privileged \
   --volume /:/media/root \
-  jdeathe/centos-ssh-apache-php:centos-6-1.7.0 \
+  jdeathe/centos-ssh-apache-php:centos-6-1.7.2 \
   /sbin/scmi uninstall \
     --chroot=/media/root \
-    --tag=centos-6-1.7.0 \
+    --tag=centos-6-1.7.2 \
     --name=apache-php.pool-1.1.1
 ```
 
@@ -117,10 +117,10 @@ $ docker run \
   --rm \
   --privileged \
   --volume /:/media/root \
-  jdeathe/centos-ssh-apache-php:centos-6-1.7.0 \
+  jdeathe/centos-ssh-apache-php:centos-6-1.7.2 \
   /sbin/scmi install \
     --chroot=/media/root \
-    --tag=centos-6-1.7.0 \
+    --tag=centos-6-1.7.2 \
     --name=apache-php.pool-1.1.1 \
     --manager=systemd \
     --register \
@@ -134,7 +134,7 @@ If your docker host has systemd, fleetd (and optionally etcd) installed then `sc
 
 ##### SCMI Image Information
 
-Since release `centos-6-1.7.0` the install template has been added to the image metadata. Using docker inspect you can access `scmi` to simplify install/uninstall tasks.
+Since release `centos-6-1.7.2` the install template has been added to the image metadata. Using docker inspect you can access `scmi` to simplify install/uninstall tasks.
 
 To see detailed information about the image run `scmi` with the `--info` option. To see all available `scmi` options run with the `--help` option.
 
@@ -142,7 +142,7 @@ To see detailed information about the image run `scmi` with the `--info` option.
 $ eval "sudo -E $(
     docker inspect \
     -f "{{.ContainerConfig.Labels.install}}" \
-    jdeathe/centos-ssh-apache-php:centos-6-1.7.0
+    jdeathe/centos-ssh-apache-php:centos-6-1.7.2
   ) --info"
 ```
 
@@ -152,7 +152,7 @@ To perform an installation using the docker name `apache-php.pool-1.2.1` simply 
 $ eval "sudo -E $(
     docker inspect \
     -f "{{.ContainerConfig.Labels.install}}" \
-    jdeathe/centos-ssh-apache-php:centos-6-1.7.0
+    jdeathe/centos-ssh-apache-php:centos-6-1.7.2
   ) --name=apache-php.pool-1.2.1"
 ```
 
@@ -162,7 +162,7 @@ To uninstall use the *same command* that was used to install but with the `unins
 $ eval "sudo -E $(
     docker inspect \
     -f "{{.ContainerConfig.Labels.uninstall}}" \
-    jdeathe/centos-ssh-apache-php:centos-6-1.7.0
+    jdeathe/centos-ssh-apache-php:centos-6-1.7.2
   ) --name=apache-php.pool-1.2.1"
 ```
 
@@ -175,7 +175,7 @@ To see detailed information about the image run `scmi` with the `--info` option.
 ```
 $ sudo -E atomic install \
   -n apache-php.pool-1.3.1 \
-  jdeathe/centos-ssh-apache-php:centos-6-1.7.0 \
+  jdeathe/centos-ssh-apache-php:centos-6-1.7.2 \
   --info
 ```
 
@@ -184,14 +184,14 @@ To perform an installation using the docker name `apache-php.pool-1.3.1` simply 
 ```
 $ sudo -E atomic install \
   -n apache-php.pool-1.3.1 \
-  jdeathe/centos-ssh-apache-php:centos-6-1.7.0
+  jdeathe/centos-ssh-apache-php:centos-6-1.7.2
 ```
 
 Alternatively, you could use the `scmi` options `--name` or `-n` for naming the container.
 
 ```
 $ sudo -E atomic install \
-  jdeathe/centos-ssh-apache-php:centos-6-1.7.0 \
+  jdeathe/centos-ssh-apache-php:centos-6-1.7.2 \
   --name apache-php.pool-1.3.1
 ```
 
@@ -200,7 +200,7 @@ To uninstall use the *same command* that was used to install but with the `unins
 ```
 $ sudo -E atomic uninstall \
   -n apache-php.pool-1.3.1 \
-  jdeathe/centos-ssh-apache-php:centos-6-1.7.0
+  jdeathe/centos-ssh-apache-php:centos-6-1.7.2
 ```
 
 #### Environment Variables
@@ -335,6 +335,58 @@ The public directory is relative to the `APACHE_CONTENT_ROOT` and together they 
 ```
 ...
   --env "APACHE_PUBLIC_DIRECTORY=web" \
+...
+```
+
+##### APACHE_SSL_CERTIFICATE
+
+The `APACHE_SSL_CERTIFICATE` environment variable is used to define a PEM, (and optionally base64), encoded certificate bundle. Base64 encoding of the PEM file contents is recommended. To make a compatible certificate bundle use the `cat` command to combine the certificate files together.
+
+```
+$ cat /usr/share/private/server-key.pem \
+    /usr/share/certs/server-certificate.pem \
+    /usr/share/certs/intermediate-certificate.pem \
+  > /usr/share/certs/server-bundle.pem
+```
+
+*Note:* The `base64` command on Mac OSX will encode a file without line breaks by default but if using the command on Linux you need to include use the `-w` option to prevent wrapping lines at 80 characters. i.e. `base64 -w 0 -i {certificate-path}`.
+
+```
+...
+  --env "APACHE_SSL_CERTIFICATE=$(
+    base64 -i "/usr/share/certs/server-bundle.pem"
+  )" \
+...
+```
+
+##### APACHE_SSL_CIPHER_SUITE
+
+Use the `APACHE_SSL_CIPHER_SUITE` environment variable to define an appropriate Cipher Suite. The default "intermediate" selection should be suitable for most use-cases where support for a wide range browsers is necessary. 
+
+References:
+- [OpenSSL ciphers documentation](https://www.openssl.org/docs/manmaster/apps/ciphers.html).
+- [Mozilla Security/Server Side TLS guidance](https://wiki.mozilla.org/Security/Server_Side_TLS).
+
+*Note:* The value show is using space separated values to allow for readablity in the documentation; this is valid syntax however using the colon separator is the recommended form.
+
+```
+...
+  --env "APACHE_SSL_CIPHER_SUITE=ECDHE-ECDSA-AES256-GCM-SHA384 \
+ECDHE-RSA-AES256-GCM-SHA384 ECDHE-ECDSA-CHACHA20-POLY1305 \
+ECDHE-RSA-CHACHA20-POLY1305 ECDHE-ECDSA-AES128-GCM-SHA256 \
+ECDHE-RSA-AES128-GCM-SHA256 ECDHE-ECDSA-AES256-SHA384 \
+ECDHE-RSA-AES256-SHA384 ECDHE-ECDSA-AES128-SHA256 \
+ECDHE-RSA-AES128-SHA256" \
+...
+```
+
+##### APACHE_SSL_PROTOCOL
+
+Use the `APACHE_SSL_PROTOCOL` environment variable to define the supported protocols. The default protocols are suitable for most "intermediate" use-cases however you might want to restrict the TLS version support for example.
+
+```
+...
+  --env "APACHE_SSL_PROTOCOL=All -SSLv2 -SSLv3 -TLSv1 -TLSv1.1" \
 ...
 ```
 

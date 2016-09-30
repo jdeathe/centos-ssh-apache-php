@@ -35,20 +35,6 @@
         <h1><?php print 'Hello, world!'; ?></h1>
         <p>This CentOS / Apache / PHP <?php print PHP_SAPI === 'cgi-fcgi' ? '(FastCGI)' : '(Standard)'; ?> service is running in a Docker container.</p>
 <?php
-  // Display the connection details for the docker linked MySQL database if defined.
-  if (getenv('DB_MYSQL_PORT_3306_TCP_ADDR') && getenv('DB_MYSQL_PORT_3306_TCP_PORT')) {
-?>
-        <p>The MySQL database is accessible from the host <?php print htmlentities(getenv('DB_MYSQL_PORT_3306_TCP_ADDR')) ?> or DB_MYSQL on port <?php print htmlentities(getenv('DB_MYSQL_PORT_3306_TCP_PORT')); ?></p>
-<?php
-    if ( ! extension_loaded('mysqli')) {
-?>
-        <div class="alert alert-warning" role="alert">
-          This container is linked to a MySQL container but the "mysqli" php module is not loaded.</br>
-          To install it run: <code>yum -y install php-mysql</code>
-        </div>
-<?php
-    }
-  }
   // Example method to detect SSL Offloaded requests
   if (array_key_exists('SERVER_PORT', $_SERVER) && $_SERVER['SERVER_PORT'] === '8443' && 
       array_key_exists('HTTP_X_FORWARDED_PROTO', $_SERVER) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {

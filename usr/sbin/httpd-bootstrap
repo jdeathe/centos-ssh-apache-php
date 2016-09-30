@@ -147,118 +147,6 @@ function enable_apache_modules ()
 	fi
 }
 
-function is_valid_apache_content_root ()
-{
-	local DIRECTORY_PATH="${1:-}"
-	local DIRECTORY_PATH_ABSOLUTE="$(
-		absolute_path \
-			"${DIRECTORY_PATH}"
-	)"
-	local VALID_DIRECTORY='^\/(?!\/|bin|dev|etc|lib|lib64|lost+found|media|proc|root|sbin|sys|tmp|usr).+$'
-
-	if grep -qoP "${VALID_DIRECTORY}" <<< "${DIRECTORY_PATH_ABSOLUTE}"; then
-		return 0
-	fi
-
-	return 1
-}
-
-function is_valid_apache_public_directory ()
-{
-	local DIRECTORY="${1:-}"
-	local DIRECTORY_ABSOLUTE="$(
-		absolute_path "$(
-			get_apache_content_root
-		)/${DIRECTORY}"
-	)"
-	local VALID_DIRECTORY='^\/(?!\/|bin|dev|etc|lib|lib64|lost+found|media|proc|root|sbin|sys|tmp|usr).+$'
-	local VALID_SUBDIRECTORY='^[^\/\\].+$'
-
-	if grep -qoP "${VALID_DIRECTORY}" <<< "${DIRECTORY_ABSOLUTE}"; then
-		return 0
-	fi
-
-	if grep -qoP "${VALID_SUBDIRECTORY}" <<< "${DIRECTORY}"; then
-		return 0
-	fi
-
-	return 1
-}
-
-function is_valid_user_login ()
-{
-	local LOGIN="${1}"
-	local SAFE_LOGIN='^[a-z_][a-z0-9_-]{0,29}[$a-z0-9_]?$'
-
-	if [[ ${LOGIN} != root ]] && [[ ${LOGIN} =~ ${SAFE_LOGIN} ]]; then
-		return 0
-	fi
-
-	return 1
-}
-
-function set_apache_enable_sendfile ()
-{
-	local ENABLED=${1:-true}
-	local PATTERN_FROM
-	local PATTERN_TO
-
-	if [[ ${ENABLED} == true ]]; then
-		PATTERN_FROM="^[#]?EnableSendfile (Off|off)$"
-		PATTERN_TO="#EnableSendfile on"
-	else
-		echo "Disabling EnableSendfile."
-		PATTERN_FROM="^[#]?EnableSendfile (On|on|Off|off)$"
-		PATTERN_TO="EnableSendfile off"
-	fi
-
-	sed -i \
-		-re "s~${PATTERN_FROM}~${PATTERN_TO}~g" \
-		/etc/httpd/conf/httpd.conf
-}
-
-function set_apache_extended_status ()
-{
-	local ENABLED=${1:-false}
-	local PATTERN_FROM
-	local PATTERN_TO
-
-	if [[ ${ENABLED} == true ]]; then
-		echo "Enabling ExtendedStatus."
-		PATTERN_FROM="^[#]?ExtendedStatus (On|on|Off|off)$"
-		PATTERN_TO="ExtendedStatus On"
-	else
-		PATTERN_FROM="^ExtendedStatus (On|on)$"
-		PATTERN_TO="#ExtendedStatus On"
-	fi
-
-	sed -i \
-		-re "s~${PATTERN_FROM}~${PATTERN_TO}~g" \
-		/etc/httpd/conf/httpd.conf
-}
-
-function set_apache_header_x_service_uid ()
-{
-	local HEADER="${1:-}"
-
-	# Disable setting the X-Service-UID header if an empty value.
-	if [[ -z ${HEADER} ]]; then
-		sed -i \
-			-e 's~^\([ \t]*\)\(Header set X-Service-UID .*\)$~\1#\2~g' \
-			/etc/services-config/httpd/conf.d/00-headers.conf
-	fi
-}
-
-function set_apache_server_name ()
-{
-	local HOST_NAME="${1:-${APACHE_SERVER_NAME:-$(hostname)}}"
-	local PORT="${2:-80}"
-
-	sed -i \
-		-e "s~^#ServerName \(.*\):80$~ServerName ${HOST_NAME}:${PORT}~g" \
-		/etc/httpd/conf/httpd.conf
-}
-
 function get_apache_content_root ()
 {
 	local DEFAULT_VALUE="${1:-/var/www/app}"
@@ -336,6 +224,78 @@ function get_ssl_certificate_fingerprint ()
 	printf -- "%s" "${VALUE}"
 }
 
+
+function is_valid_apache_content_root ()
+{
+	local DIRECTORY_PATH="${1:-}"
+	local DIRECTORY_PATH_ABSOLUTE="$(
+		absolute_path \
+			"${DIRECTORY_PATH}"
+	)"
+	local VALID_DIRECTORY='^\/(?!\/|bin|dev|etc|lib|lib64|lost+found|media|proc|root|sbin|sys|tmp|usr).+$'
+
+	if grep -qoP "${VALID_DIRECTORY}" <<< "${DIRECTORY_PATH_ABSOLUTE}"; then
+		return 0
+	fi
+
+	return 1
+}
+
+function is_valid_apache_public_directory ()
+{
+	local DIRECTORY="${1:-}"
+	local DIRECTORY_ABSOLUTE="$(
+		absolute_path "$(
+			get_apache_content_root
+		)/${DIRECTORY}"
+	)"
+	local VALID_DIRECTORY='^\/(?!\/|bin|dev|etc|lib|lib64|lost+found|media|proc|root|sbin|sys|tmp|usr).+$'
+	local VALID_SUBDIRECTORY='^[^\/\\].+$'
+
+	if grep -qoP "${VALID_DIRECTORY}" <<< "${DIRECTORY_ABSOLUTE}"; then
+		return 0
+	fi
+
+	if grep -qoP "${VALID_SUBDIRECTORY}" <<< "${DIRECTORY}"; then
+		return 0
+	fi
+
+	return 1
+}
+
+function is_valid_apache_ssl_certificate ()
+{
+	local VALID_PATTERN='^SHA1 Fingerprint='
+	local SHA1_FINGERPRINT
+
+	SHA1_FINGERPRINT="$(
+		openssl \
+			x509 \
+			-sha1 \
+			-in /etc/services-config/ssl/certs/localhost.crt \
+			-noout \
+			-fingerprint
+	)"
+
+	if [[ ${SHA1_FINGERPRINT} =~ ${VALID_PATTERN} ]]; then
+		return 0
+	fi
+
+	return 1
+}
+
+function is_valid_user_login ()
+{
+	local LOGIN="${1}"
+	local SAFE_LOGIN='^[a-z_][a-z0-9_-]{0,29}[$a-z0-9_]?$'
+
+	if [[ ${LOGIN} != root ]] && [[ ${LOGIN} =~ ${SAFE_LOGIN} ]]; then
+		return 0
+	fi
+
+	return 1
+}
+
 function load_httpd_conf_scan_files ()
 {
 	local FILE_PATH
@@ -368,6 +328,126 @@ function load_php_ini_scan_files ()
 				)" \
 			> "/etc/php.d/${FILE_PATH##*/}"
 		done
+	fi
+}
+
+function make_self_signed_certificate ()
+{
+	local C="${1:-'--'}"
+	local ST="${2:-STATE}"
+	local L="${3:-LOCALITY}"
+	local O="${4:-ORGANIZATION}"
+	local CN="${5:-localhost.localdomain}"
+
+	openssl req \
+		-x509 \
+		-sha256 \
+		-nodes \
+		-newkey rsa:2048 \
+		-days 365 \
+		-subj "/C=${C}/ST=${ST}/L=${L}/O=${O}/CN=${CN}" \
+		-keyout /etc/services-config/ssl/certs/localhost.crt \
+		-out /etc/services-config/ssl/certs/localhost.crt
+
+}
+
+function set_apache_enable_sendfile ()
+{
+	local ENABLED=${1:-true}
+	local PATTERN_FROM
+	local PATTERN_TO
+
+	if [[ ${ENABLED} == true ]]; then
+		PATTERN_FROM="^[#]?EnableSendfile (Off|off)$"
+		PATTERN_TO="#EnableSendfile on"
+	else
+		echo "Disabling EnableSendfile."
+		PATTERN_FROM="^[#]?EnableSendfile (On|on|Off|off)$"
+		PATTERN_TO="EnableSendfile off"
+	fi
+
+	sed -i \
+		-re "s~${PATTERN_FROM}~${PATTERN_TO}~g" \
+		/etc/httpd/conf/httpd.conf
+}
+
+function set_apache_extended_status ()
+{
+	local ENABLED=${1:-false}
+	local PATTERN_FROM
+	local PATTERN_TO
+
+	if [[ ${ENABLED} == true ]]; then
+		echo "Enabling ExtendedStatus."
+		PATTERN_FROM="^[#]?ExtendedStatus (On|on|Off|off)$"
+		PATTERN_TO="ExtendedStatus On"
+	else
+		PATTERN_FROM="^ExtendedStatus (On|on)$"
+		PATTERN_TO="#ExtendedStatus On"
+	fi
+
+	sed -i \
+		-re "s~${PATTERN_FROM}~${PATTERN_TO}~g" \
+		/etc/httpd/conf/httpd.conf
+}
+
+function set_apache_header_x_service_uid ()
+{
+	local HEADER="${1:-}"
+
+	# Disable setting the X-Service-UID header if an empty value.
+	if [[ -z ${HEADER} ]]; then
+		sed -i \
+			-e 's~^\([ \t]*\)\(Header set X-Service-UID .*\)$~\1#\2~g' \
+			/etc/services-config/httpd/conf.d/00-headers.conf
+	fi
+}
+
+function set_apache_server_name ()
+{
+	local HOST_NAME="${1:-${APACHE_SERVER_NAME:-$(hostname)}}"
+	local PORT="${2:-80}"
+
+	sed -i \
+		-e "s~^#ServerName \(.*\):80$~ServerName ${HOST_NAME}:${PORT}~g" \
+		/etc/httpd/conf/httpd.conf
+}
+
+function set_apache_ssl_certificate ()
+{
+	local SSL_CERTIFICATE="${1:-}"
+	local PLAIN_TEXT_PATTERN='^-----BEGIN '
+	local BASE64_PATTERN='^[A-Za-z0-9/+=]*$'
+
+	if [[ -n ${SSL_CERTIFICATE} ]]; then
+		# Decode base64 encoded values
+		if [[ ${SSL_CERTIFICATE} =~ ${BASE64_PATTERN} ]]; then
+			SSL_CERTIFICATE="$(
+				base64 -d -i <<< "${SSL_CERTIFICATE}"
+			)"
+		fi
+
+		if [[ ! ${SSL_CERTIFICATE} =~ ${PLAIN_TEXT_PATTERN} ]]; then
+			printf -- \
+				'ERROR: Invalid APACHE_SSL_CERTIFICATE\n' \
+				>&2
+			sleep 0.1
+			exit 1
+		fi
+
+		printf \
+			-- '%s' \
+			"${SSL_CERTIFICATE}" \
+		> /etc/services-config/ssl/certs/localhost.crt
+
+		if [[ -s /etc/services-config/ssl/certs/localhost.crt ]] \
+			&& ! is_valid_apache_ssl_certificate; then
+			printf -- \
+				'ERROR: Invalid APACHE_SSL_CERTIFICATE\n' \
+				>&2
+			sleep 0.1
+			exit 1
+		fi
 	fi
 }
 
@@ -422,6 +502,9 @@ OPTS_APACHE_DOCUMENT_ROOT="${OPTS_APACHE_CONTENT_ROOT}/$(
 	get_apache_public_directory
 )"
 OPTS_APACHE_EXTENDED_STATUS_ENABLED="${APACHE_EXTENDED_STATUS_ENABLED:-false}"
+OPTS_APACHE_HEADER_X_SERVICE_UID="$(
+	get_apache_header_x_service_uid
+)"
 OPTS_APACHE_LOAD_MODULES="${APACHE_LOAD_MODULES:-${DEFAULT_APACHE_LOAD_MODULES}}"
 OPTS_APACHE_MOD_SSL_ENABLED="${APACHE_MOD_SSL_ENABLED:-false}"
 OPTS_APACHE_MPM="${APACHE_MPM:-prefork}"
@@ -429,10 +512,8 @@ OPTS_APACHE_RUN_GROUP="${APACHE_RUN_GROUP:-${DEFAULT_APACHE_USER}}"
 OPTS_APACHE_RUN_USER="${APACHE_RUN_USER:-${DEFAULT_APACHE_USER}}"
 OPTS_APACHE_SERVER_ALIAS="${APACHE_SERVER_ALIAS:-}"
 OPTS_APACHE_SERVER_NAME="${APACHE_SERVER_NAME:-$(hostname)}"
+OPTS_APACHE_SSL_CERTIFICATE="${APACHE_SSL_CERTIFICATE:-}"
 OPTS_APACHE_SYSTEM_USER="${APACHE_SYSTEM_USER:-${DEFAULT_SYSTEM_USER}}"
-OPTS_APACHE_HEADER_X_SERVICE_UID="$(
-	get_apache_header_x_service_uid
-)"
 
 # Load app package Apache configuration files.
 load_httpd_conf_scan_files "${PACKAGE_PATH}"
@@ -440,21 +521,23 @@ load_httpd_conf_scan_files "${PACKAGE_PATH}"
 # Load app package PHP configuration files.
 load_php_ini_scan_files "${PACKAGE_PATH}"
 
+# Populate SSL certificate file.
+if [[ ${OPTS_APACHE_MOD_SSL_ENABLED} == true ]] \
+	&& [[ -n ${OPTS_APACHE_SSL_CERTIFICATE} ]]; then
+	set_apache_ssl_certificate "${OPTS_APACHE_SSL_CERTIFICATE}"
+fi
+
 # Generate SSL certificate.
 if [[ ${OPTS_APACHE_MOD_SSL_ENABLED} == true ]] \
- 	&& [[ ! -f /etc/services-config/ssl/private/localhost.key \
-	|| ! -f /etc/services-config/ssl/certs/localhost.crt ]]; then
+	&& [[ ! -f /etc/services-config/ssl/certs/localhost.crt ]]; then
 
-	openssl req \
-		-x509 \
-		-sha256 \
-		-nodes \
-		-newkey rsa:2048 \
-		-days 365 \
-		-subj "/C=--/ST=STATE/L=LOCALITY/O=ORGANIZATION/CN=${OPTS_APACHE_SERVER_NAME}" \
-		-keyout /etc/services-config/ssl/private/localhost.key \
-		-out /etc/services-config/ssl/certs/localhost.crt \
-	&
+	make_self_signed_certificate \
+		'--' \
+		'STATE' \
+		'LOCALITY' \
+		'ORGANIZATION' \
+		"${OPTS_APACHE_SERVER_NAME}" \
+		&
 
 	PIDS[2]=${!}
 fi

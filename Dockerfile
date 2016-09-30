@@ -4,7 +4,7 @@
 # CentOS-6, Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1
 #
 # =============================================================================
-FROM jdeathe/centos-ssh:centos-6-1.7.0
+FROM jdeathe/centos-ssh:centos-6-1.7.2
 
 MAINTAINER James Deathe <james.deathe@gmail.com>
 
@@ -268,6 +268,9 @@ ENV APACHE_CUSTOM_LOG_FORMAT="combined" \
 	APACHE_RUN_USER="app-www" \
 	APACHE_SERVER_ALIAS="" \
 	APACHE_SERVER_NAME="app-1.local" \
+	APACHE_SSL_CERTIFICATE="" \
+	APACHE_SSL_CIPHER_SUITE="ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES256-SHA384:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA:ECDHE-RSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA:DHE-RSA-AES256-SHA256:DHE-RSA-AES256-SHA:ECDHE-ECDSA-DES-CBC3-SHA:ECDHE-RSA-DES-CBC3-SHA:EDH-RSA-DES-CBC3-SHA:AES128-GCM-SHA256:AES256-GCM-SHA384:AES128-SHA256:AES256-SHA256:AES128-SHA:AES256-SHA:DES-CBC3-SHA:!DSS" \
+	APACHE_SSL_PROTOCOL="All -SSLv2 -SSLv3" \
 	APACHE_SYSTEM_USER="app" \
 	PACKAGE_PATH="${PACKAGE_PATH}" \
 	PHP_OPTIONS_DATE_TIMEZONE="UTC" \
@@ -277,14 +280,14 @@ ENV APACHE_CUSTOM_LOG_FORMAT="combined" \
 # -----------------------------------------------------------------------------
 # Set image metadata
 # -----------------------------------------------------------------------------
-ARG RELEASE_VERSION="1.7.1"
+ARG RELEASE_VERSION="1.7.2"
 LABEL \
 	install="docker run \
 --rm \
 --privileged \
 --volume /:/media/root \
 jdeathe/centos-ssh-apache-php:centos-6-${RELEASE_VERSION} \
-/sbin/scmi install \
+/usr/sbin/scmi install \
 --chroot=/media/root \
 --name=\${NAME} \
 --tag=centos-6-${RELEASE_VERSION}" \
@@ -293,7 +296,7 @@ jdeathe/centos-ssh-apache-php:centos-6-${RELEASE_VERSION} \
 --privileged \
 --volume /:/media/root \
 jdeathe/centos-ssh-apache-php:centos-6-${RELEASE_VERSION} \
-/sbin/scmi uninstall \
+/usr/sbin/scmi uninstall \
 --chroot=/media/root \
 --name=\${NAME} \
 --tag=centos-6-${RELEASE_VERSION}" \

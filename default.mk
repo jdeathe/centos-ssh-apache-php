@@ -19,12 +19,15 @@ define DOCKER_CONTAINER_PARAMETERS
 --env "APACHE_RUN_USER=$(APACHE_RUN_USER)" \
 --env "APACHE_SERVER_ALIAS=$(APACHE_SERVER_ALIAS)" \
 --env "APACHE_SERVER_NAME=$(APACHE_SERVER_NAME)" \
+--env "APACHE_SSL_CERTIFICATE=$(APACHE_SSL_CERTIFICATE)" \
+--env "APACHE_SSL_CIPHER_SUITE=$(APACHE_SSL_CIPHER_SUITE)" \
+--env "APACHE_SSL_PROTOCOL=$(APACHE_SSL_PROTOCOL)" \
 --env "APACHE_SYSTEM_USER=$(APACHE_SYSTEM_USER)" \
 --env "PHP_OPTIONS_DATE_TIMEZONE=$(PHP_OPTIONS_DATE_TIMEZONE)"
 endef
 
 DOCKER_PUBLISH := $(shell \
-	if [[ $(DOCKER_PORT_MAP_TCP_80) != NULL ]]; then printf -- '--publish %s%s:80\n' $(DOCKER_PORT_MAP_TCP_80); fi; \
-	if [[ $(DOCKER_PORT_MAP_TCP_443) != NULL ]] && [[ $(APACHE_MOD_SSL_ENABLED) == true ]]; then printf -- '--publish %s%s:443\n' $(DOCKER_PORT_MAP_TCP_443); fi; \
-	if [[ $(DOCKER_PORT_MAP_TCP_8443) != NULL ]]; then printf -- '--publish %s%s:8443\n' $(DOCKER_PORT_MAP_TCP_8443); fi; \
+	if [[ $(DOCKER_PORT_MAP_TCP_80) != NULL ]]; then printf -- '--publish %s:80\n' $(DOCKER_PORT_MAP_TCP_80); fi; \
+	if [[ $(DOCKER_PORT_MAP_TCP_443) != NULL ]] && [[ $(APACHE_MOD_SSL_ENABLED) == true ]]; then printf -- '--publish %s:443\n' $(DOCKER_PORT_MAP_TCP_443); fi; \
+	if [[ $(DOCKER_PORT_MAP_TCP_8443) != NULL ]]; then printf -- '--publish %s:8443\n' $(DOCKER_PORT_MAP_TCP_8443); fi; \
 )
