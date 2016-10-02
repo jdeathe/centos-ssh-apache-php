@@ -49,10 +49,10 @@ Restart=on-failure
 RestartSec=30
 TimeoutStartSec=1200
 Environment="DOCKER_USER=jdeathe"
-Environment="DOCKER_CONTAINER_PARAMETERS_APPEND="
+Environment="DOCKER_CONTAINER_OPTS="
 Environment="DOCKER_IMAGE_PACKAGE_PATH=/var/opt/scmi/packages"
 Environment="DOCKER_IMAGE_NAME=centos-ssh-apache-php"
-Environment="DOCKER_IMAGE_TAG=centos-6-1.7.2"
+Environment="DOCKER_IMAGE_TAG=centos-6-1.7.3"
 Environment="DOCKER_PORT_MAP_TCP_80=8080"
 Environment="DOCKER_PORT_MAP_TCP_443=9443"
 Environment="DOCKER_PORT_MAP_TCP_8443=NULL"
@@ -163,7 +163,7 @@ ExecStart=/bin/bash -c \
         fi; \
       fi; \
     ) \
-    ${DOCKER_CONTAINER_PARAMETERS_APPEND} \
+    ${DOCKER_CONTAINER_OPTS} \
     ${DOCKER_USER}/${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}; \
   "
 
@@ -172,6 +172,3 @@ ExecStop=/usr/bin/docker stop --time 10 %p.%i
 [Install]
 DefaultInstance=1.1
 WantedBy=multi-user.target
-
-[X-Fleet]
-Conflicts=%p@*.%i.service
