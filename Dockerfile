@@ -229,7 +229,6 @@ RUN mkdir -p \
 # Create and populate the install directory
 # -----------------------------------------------------------------------------
 RUN mkdir -p -m 750 ${PACKAGE_PATH}
-# ADD var/www/app ${PACKAGE_PATH}
 RUN curl -Lso /tmp/app.tar.gz \
 		https://github.com/jdeathe/php-hello-world/archive/${PACKAGE_RELEASE_VERSION}.tar.gz \
 	&& tar -xzpf /tmp/app.tar.gz \
