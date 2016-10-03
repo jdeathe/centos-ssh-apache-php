@@ -11,6 +11,7 @@ MAINTAINER James Deathe <james.deathe@gmail.com>
 # Use the form ([{fqdn}-]{package-name}|[{fqdn}-]{provider-name})
 ARG PACKAGE_NAME="app"
 ARG PACKAGE_PATH="/opt/${PACKAGE_NAME}"
+ARG PACKAGE_RELEASE_VERSION="0.1.0"
 
 # -----------------------------------------------------------------------------
 # Base Apache, PHP
@@ -228,8 +229,14 @@ RUN mkdir -p \
 # Create and populate the install directory
 # -----------------------------------------------------------------------------
 RUN mkdir -p -m 750 ${PACKAGE_PATH}
-ADD var/www/app ${PACKAGE_PATH}
-RUN find ${PACKAGE_PATH} -name '*.gitkeep' -type f -delete \
+# ADD var/www/app ${PACKAGE_PATH}
+RUN curl -Lso /tmp/app.tar.gz \
+		https://github.com/jdeathe/php-hello-world/archive/${PACKAGE_RELEASE_VERSION}.tar.gz \
+	&& tar -xzpf /tmp/app.tar.gz \
+		--strip-components=1 \
+		--exclude="*.gitkeep" \
+		-C ${PACKAGE_PATH} \
+	&& rm -f /tmp/app.tar.gz \
 	&& $(\
 		if [[ -f /usr/share/php-pecl-apc/apc.php ]]; then \
 			cp \
