@@ -9,7 +9,7 @@ FROM jdeathe/centos-ssh:centos-6-1.7.3
 MAINTAINER James Deathe <james.deathe@gmail.com>
 
 # Use the form ([{fqdn}-]{package-name}|[{fqdn}-]{provider-name})
-ARG PACKAGE_NAME="app"
+ARG PACKAGE_NAME="php-hello-world"
 ARG PACKAGE_PATH="/opt/${PACKAGE_NAME}"
 ARG PACKAGE_RELEASE_VERSION="0.3.0"
 
@@ -229,9 +229,9 @@ RUN mkdir -p \
 # Create and populate the install directory
 # -----------------------------------------------------------------------------
 RUN mkdir -p -m 750 ${PACKAGE_PATH}
-RUN curl -Lso /tmp/app.tar.gz \
+RUN curl -Lso /tmp/${PACKAGE_NAME}.tar.gz \
 		https://github.com/jdeathe/php-hello-world/archive/${PACKAGE_RELEASE_VERSION}.tar.gz \
-	&& tar -xzpf /tmp/app.tar.gz \
+	&& tar -xzpf /tmp/${PACKAGE_NAME}.tar.gz \
 		--strip-components=1 \
 		--exclude="*.gitkeep" \
 		-C ${PACKAGE_PATH} \
