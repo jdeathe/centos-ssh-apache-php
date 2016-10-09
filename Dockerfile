@@ -9,8 +9,9 @@ FROM jdeathe/centos-ssh:centos-6-1.7.3
 MAINTAINER James Deathe <james.deathe@gmail.com>
 
 # Use the form ([{fqdn}-]{package-name}|[{fqdn}-]{provider-name})
-ARG PACKAGE_NAME="app"
+ARG PACKAGE_NAME="php-hello-world"
 ARG PACKAGE_PATH="/opt/${PACKAGE_NAME}"
+ARG PACKAGE_RELEASE_VERSION="0.3.0"
 
 # -----------------------------------------------------------------------------
 # Base Apache, PHP
@@ -228,8 +229,16 @@ RUN mkdir -p \
 # Create and populate the install directory
 # -----------------------------------------------------------------------------
 RUN mkdir -p -m 750 ${PACKAGE_PATH}
-ADD var/www/app ${PACKAGE_PATH}
-RUN find ${PACKAGE_PATH} -name '*.gitkeep' -type f -delete \
+RUN curl -Lso /tmp/${PACKAGE_NAME}.tar.gz \
+		https://github.com/jdeathe/php-hello-world/archive/${PACKAGE_RELEASE_VERSION}.tar.gz \
+	&& tar -xzpf /tmp/${PACKAGE_NAME}.tar.gz \
+		--strip-components=1 \
+		--exclude="*.gitkeep" \
+		-C ${PACKAGE_PATH} \
+	&& rm -f /tmp/app.tar.gz \
+	&& sed -i \
+		-e 's~^description =.*$~description = "This CentOS / Apache / PHP (Standard) service is running in a container."~' \
+		${PACKAGE_PATH}/etc/views/index.ini \
 	&& $(\
 		if [[ -f /usr/share/php-pecl-apc/apc.php ]]; then \
 			cp \
