@@ -11,7 +11,7 @@ MAINTAINER James Deathe <james.deathe@gmail.com>
 # Use the form ([{fqdn}-]{package-name}|[{fqdn}-]{provider-name})
 ARG PACKAGE_NAME="app"
 ARG PACKAGE_PATH="/opt/${PACKAGE_NAME}"
-ARG PACKAGE_RELEASE_VERSION="0.1.0"
+ARG PACKAGE_RELEASE_VERSION="0.3.0"
 
 # -----------------------------------------------------------------------------
 # Base Apache, PHP
@@ -236,6 +236,9 @@ RUN curl -Lso /tmp/app.tar.gz \
 		--exclude="*.gitkeep" \
 		-C ${PACKAGE_PATH} \
 	&& rm -f /tmp/app.tar.gz \
+	&& sed -i \
+		-e 's~^description =.*$~description = "This CentOS / Apache / PHP (Standard) service is running in a container."~' \
+		${PACKAGE_PATH}/etc/views/index.ini \
 	&& $(\
 		if [[ -f /usr/share/php-pecl-apc/apc.php ]]; then \
 			cp \
