@@ -219,7 +219,7 @@ RUN mkdir -p \
 		/etc/services-config/supervisor/supervisord.d/httpd-wrapper.conf \
 		/etc/supervisord.d/httpd-wrapper.conf \
 	&& chmod 700 \
-		/usr/sbin/httpd-bootstrap
+		/usr/sbin/httpd-{bootstrap,wrapper}
 
 # -----------------------------------------------------------------------------
 # Create and populate the install directory
