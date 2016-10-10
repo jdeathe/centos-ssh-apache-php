@@ -63,8 +63,8 @@ Include conf.modules.d/*.conf
 # It is usually good practice to create a dedicated user and group for
 # running httpd, as with most system services.
 #
-User ${APACHE_RUN_USER}
-Group ${APACHE_RUN_GROUP}
+User apache
+Group apache
 
 # 'Main' server configuration
 #
@@ -92,7 +92,7 @@ ServerAdmin root@localhost
 #
 # If your host doesn't have a registered DNS name, enter its IP address here.
 #
-ServerName app-1.local:80
+#ServerName www.example.com:80
 
 #
 # Deny access to the entirety of your server's filesystem. You must
@@ -116,19 +116,19 @@ ServerName app-1.local:80
 # documents. By default, all requests are taken from this directory, but
 # symbolic links and aliases may be used to point to other locations.
 #
-#DocumentRoot "/var/www/html"
+DocumentRoot "/opt/rh/httpd24/root/var/www/html"
 
 #
-# Relax access to content within /var/www.
+# Relax access to content within /opt/rh/httpd24/root/var/www.
 #
-<Directory "/var/www">
+<Directory "/opt/rh/httpd24/root/var/www">
     AllowOverride None
     # Allow open access:
     Require all granted
 </Directory>
 
 # Further relax access to the default document root:
-<Directory "/var/www/html">
+<Directory "/opt/rh/httpd24/root/var/www/html">
     #
     # Possible values for the Options directive are "None", "All",
     # or any combination of:
@@ -244,15 +244,15 @@ LogLevel warn
     # client.  The same rules about trailing "/" apply to ScriptAlias
     # directives as to Alias.
     #
-    ScriptAlias /cgi-bin/ "/var/www/cgi-bin/"
+    ScriptAlias /cgi-bin/ "/opt/rh/httpd24/root/var/www/cgi-bin/"
 
 </IfModule>
 
 #
-# "/var/www/cgi-bin" should be changed to whatever your ScriptAliased
+# "/opt/rh/httpd24/root/var/www/cgi-bin" should be changed to whatever your ScriptAliased
 # CGI directory exists, if you have that configured.
 #
-<Directory "/var/www/cgi-bin">
+<Directory "/opt/rh/httpd24/root/var/www/cgi-bin">
     AllowOverride None
     Options None
     Require all granted
@@ -351,14 +351,3 @@ EnableSendfile on
 #
 # Load config files in the "/etc/httpd/conf.d" directory, if any.
 IncludeOptional conf.d/*.conf
-
-#
-# Custom configuration
-#
-Include /etc/services-config/httpd/conf.d/*.conf
-LogFormat \
-  "%{X-Forwarded-For}i %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\"" \
-  forwarded_for_combined
-Options -Indexes
-TraceEnable Off
-UseCanonicalPhysicalPort On
