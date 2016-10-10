@@ -22,7 +22,6 @@ RUN rpm --rebuilddb \
 	&& yum --setopt=tsflags=nodocs -y install \
 		elinks-0.12-0.21.pre5.el6_3 \
 		httpd24-httpd-2.4.18-11.el6 \
-		httpd24-curl-7.47.1-1.1.el6 \
 		httpd24-httpd-tools-2.4.18-11.el6 \
 		httpd24-mod_ssl-2.4.18-11.el6 \
 		rh-php56-2.0-6.el6 \
@@ -41,17 +40,20 @@ RUN rpm --rebuilddb \
 # -----------------------------------------------------------------------------
 # Global Apache configuration changes
 # -----------------------------------------------------------------------------
-RUN sed -i \
-	-e 's~^KeepAlive .*$~KeepAlive On~g' \
-	-e 's~^MaxKeepAliveRequests .*$~MaxKeepAliveRequests 200~g' \
-	-e 's~^KeepAliveTimeout .*$~KeepAliveTimeout 2~g' \
-	-e 's~^ServerSignature On$~ServerSignature Off~g' \
-	-e 's~^ServerTokens OS$~ServerTokens Prod~g' \
-	-e 's~^NameVirtualHost \(.*\)$~#NameVirtualHost \1~g' \
-	-e 's~^User .*$~User ${APACHE_RUN_USER}~g' \
-	-e 's~^Group .*$~Group ${APACHE_RUN_GROUP}~g' \
-	-e 's~^DocumentRoot \(.*\)$~#DocumentRoot \1~g' \
-	/opt/rh/httpd24/root/etc/httpd/conf/httpd.conf
+RUN cp -pf \
+		/opt/rh/httpd24/root/etc/httpd/conf/httpd.conf \
+		/opt/rh/httpd24/root/etc/httpd/conf/httpd.conf.default \
+	&& sed -i \
+		-e 's~^KeepAlive .*$~KeepAlive On~g' \
+		-e 's~^MaxKeepAliveRequests .*$~MaxKeepAliveRequests 200~g' \
+		-e 's~^KeepAliveTimeout .*$~KeepAliveTimeout 2~g' \
+		-e 's~^ServerSignature On$~ServerSignature Off~g' \
+		-e 's~^ServerTokens OS$~ServerTokens Prod~g' \
+		-e 's~^NameVirtualHost \(.*\)$~#NameVirtualHost \1~g' \
+		-e 's~^User .*$~User ${APACHE_RUN_USER}~g' \
+		-e 's~^Group .*$~Group ${APACHE_RUN_GROUP}~g' \
+		-e 's~^DocumentRoot \(.*\)$~#DocumentRoot \1~g' \
+		/opt/rh/httpd24/root/etc/httpd/conf/httpd.conf
 
 # -----------------------------------------------------------------------------
 # Disable Apache directory indexes
