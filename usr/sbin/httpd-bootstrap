@@ -8,6 +8,7 @@ TIMER_START="$(
 )"
 
 source /etc/httpd-bootstrap.conf
+source /usr/bin/scl_source enable httpd24 rh-php56
 
 function absolute_path ()
 {
@@ -138,7 +139,7 @@ function enable_apache_modules ()
 		if [[ -n ${SED_COMMAND} ]]; then
 			eval "$(
 				printf -- \
-					'sed -i %s /etc/httpd/conf/httpd.conf' \
+					'sed -i %s /etc/services-config/httpd/conf/httpd.conf' \
 					"${SED_COMMAND}"
 			)"
 		fi
@@ -314,6 +315,11 @@ function load_php_ini_scan_files ()
 {
 	local FILE_PATH
 	local PACKAGE_PATH="${1:-}"
+	local SCAN_DIRECTORY="/etc/php.d"
+
+	if [[ -d /etc/opt/rh/rh-php56/php.d ]]; then
+		SCAN_DIRECTORY="/etc/opt/rh/rh-php56/php.d"
+	fi
 
 	if [[ -n ${PACKAGE_PATH} ]] && [[ -d ${PACKAGE_PATH}/etc/php.d ]]; then
 		# Replace environment variables to support fcgid php-wrapper
@@ -326,7 +332,7 @@ function load_php_ini_scan_files ()
 							$(<"${FILE_PATH}")
 						EOF" 2> /dev/null
 				)" \
-			> "/etc/php.d/${FILE_PATH##*/}"
+			> "${SCAN_DIRECTORY}/${FILE_PATH##*/}"
 		done
 	fi
 }
@@ -368,7 +374,7 @@ function set_apache_enable_sendfile ()
 
 	sed -i \
 		-re "s~${PATTERN_FROM}~${PATTERN_TO}~g" \
-		/etc/httpd/conf/httpd.conf
+		/etc/services-config/httpd/conf/httpd.conf
 }
 
 function set_apache_extended_status ()
@@ -388,7 +394,7 @@ function set_apache_extended_status ()
 
 	sed -i \
 		-re "s~${PATTERN_FROM}~${PATTERN_TO}~g" \
-		/etc/httpd/conf/httpd.conf
+		/etc/services-config/httpd/conf/httpd.conf
 }
 
 function set_apache_header_x_service_uid ()
@@ -410,7 +416,7 @@ function set_apache_server_name ()
 
 	sed -i \
 		-e "s~^#ServerName \(.*\):80$~ServerName ${HOST_NAME}:${PORT}~g" \
-		/etc/httpd/conf/httpd.conf
+		/etc/services-config/httpd/conf/httpd.conf
 }
 
 function set_apache_ssl_certificate ()
@@ -661,9 +667,16 @@ APACHE_MODULES_ENABLED=$(
 # Enable/Disable SSL support
 if [[ ${OPTS_APACHE_MOD_SSL_ENABLED} == true ]]; then
 	echo "Enabling SSL support."
-	cat \
-		/etc/httpd/conf.d/ssl.conf.off \
-		> /etc/httpd/conf.d/ssl.conf
+
+	if [[ -d /opt/rh/httpd24/root/etc/httpd/conf.d ]]; then
+		cat \
+			/opt/rh/httpd24/root/etc/httpd/conf.d/ssl.conf.off \
+			> /opt/rh/httpd24/root/etc/httpd/conf.d/ssl.conf
+	else
+		cat \
+			/etc/httpd/conf.d/ssl.conf.off \
+			> /etc/httpd/conf.d/ssl.conf
+	fi
 
 	if [[ -f /etc/services-config/httpd/conf.d/10-ssl-vhost.conf.off ]]; then
 		mv \
@@ -671,7 +684,11 @@ if [[ ${OPTS_APACHE_MOD_SSL_ENABLED} == true ]]; then
 			/etc/services-config/httpd/conf.d/10-ssl-vhost.conf
 	fi
 else
-	> /etc/httpd/conf.d/ssl.conf
+	if [[ -d /opt/rh/httpd24/root/etc/httpd/conf.d ]]; then
+		> /opt/rh/httpd24/root/etc/httpd/conf.d/ssl.conf
+	else
+		> /etc/httpd/conf.d/ssl.conf
+	fi
 
 	if [[ -f /etc/services-config/httpd/conf.d/10-ssl-vhost.conf ]]; then
 		mv \

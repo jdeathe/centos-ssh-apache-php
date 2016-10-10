@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
-source /etc/httpd-bootstrap.conf
-source /usr/bin/scl_source enable httpd24 rh-php56
+source /usr/bin/scl_source enable httpd24
 
 function absolute_path ()
 {
@@ -113,40 +112,6 @@ function get_apache_header_x_service_uid ()
 		"${VALUE}"
 }
 
-function get_httpd_bin ()
-{
-	local HTTPD=/usr/sbin/httpd
-	local PATTERN_SCL_HTTPD24='[ ]*httpd24[ ]*'
-
-	if [[ -n ${X_SCLS} ]] \
-		&& [[ ${X_SCLS} =~ ${PATTERN_SCL_HTTPD24} ]]; then
-		HTTPD="/opt/rh/httpd24/root/usr/sbin/httpd"
-		printf -- \
-			'%s' \
-			"${HTTPD}"
-	elif [[ -n ${APACHE_MPM} && ${APACHE_MPM,,} == worker ]] \
-		&& [[ -f ${HTTPD}.worker ]]; then
-		printf -- \
-			'%s.worker' \
-			"${HTTPD}"
-	else
-		printf -- \
-			'%s' \
-			"${HTTPD}"
-	fi
-}
-
-HTTPD="$(
-	get_httpd_bin
-)"
-NICE=/bin/nice
-NICENESS="${APACHE_NICENESS:-10}"
-
-while true; do 
-	sleep 0.1
-	[[ -e /tmp/httpd-bootstrap.lock ]] || break
-done
-
 export APACHE_CUSTOM_LOG_LOCATION="$(
 	get_absolute_apache_custom_log_location
 )"
@@ -156,10 +121,3 @@ export APACHE_ERROR_LOG_LOCATION="$(
 export APACHE_HEADER_X_SERVICE_UID="$(
 	get_apache_header_x_service_uid
 )"
-
-exec ${NICE} \
-	-n ${NICENESS} \
-	${HTTPD} \
-	-c "ErrorLog /dev/stdout" \
-	-DFOREGROUND \
-	-D ${APACHE_OPERATING_MODE:-production}

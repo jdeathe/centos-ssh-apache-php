@@ -1,7 +1,7 @@
 # =============================================================================
 # jdeathe/centos-ssh-apache-php
 #
-# CentOS-6, Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1
+# CentOS-6, Apache 2.4, PHP 5.6, PHP memcached 2.2, Zend OPcache 7.0
 #
 # =============================================================================
 FROM jdeathe/centos-ssh:centos-6-1.7.3
@@ -14,23 +14,27 @@ ARG PACKAGE_PATH="/opt/${PACKAGE_NAME}"
 ARG PACKAGE_RELEASE_VERSION="0.3.0"
 
 # -----------------------------------------------------------------------------
-# Base Apache, PHP
+# SCL Apache 2.4, PHP 5.6
 # -----------------------------------------------------------------------------
 RUN rpm --rebuilddb \
 	&& yum --setopt=tsflags=nodocs -y install \
+		https://www.softwarecollections.org/en/scls/remi/php56more/epel-6-x86_64/download/remi-php56more-epel-6-x86_64.noarch.rpm \
+	&& yum --setopt=tsflags=nodocs -y install \
 		elinks-0.12-0.21.pre5.el6_3 \
-		httpd-2.2.15-54.el6.centos \
-		mod_ssl-2.2.15-54.el6.centos \
-		php-5.3.3-48.el6_8 \
-		php-cli-5.3.3-48.el6_8 \
-		php-zts-5.3.3-48.el6_8 \
-		php-pecl-apc-3.1.9-2.el6 \
-		php-pecl-memcached-1.0.0-1.el6 \
+		httpd24-httpd-2.4.18-11.el6 \
+		httpd24-curl-7.47.1-1.1.el6 \
+		httpd24-httpd-tools-2.4.18-11.el6 \
+		httpd24-mod_ssl-2.4.18-11.el6 \
+		rh-php56-2.0-6.el6 \
+		rh-php56-php-5.6.5-9.el6 \
+		rh-php56-php-cli-5.6.5-9.el6 \
+		rh-php56-php-opcache-5.6.5-9.el6 \
+		more-php56-php-pecl-memcached-2.2.0-7.el6 \
 	&& yum versionlock add \
 		elinks \
-		httpd \
-		mod_ssl \
-		php* \
+		httpd24* \
+		rh-php56* \
+		more-php56* \
 	&& rm -rf /var/cache/yum/* \
 	&& yum clean all
 
@@ -47,7 +51,7 @@ RUN sed -i \
 	-e 's~^User .*$~User ${APACHE_RUN_USER}~g' \
 	-e 's~^Group .*$~Group ${APACHE_RUN_GROUP}~g' \
 	-e 's~^DocumentRoot \(.*\)$~#DocumentRoot \1~g' \
-	/etc/httpd/conf/httpd.conf
+	/opt/rh/httpd24/root/etc/httpd/conf/httpd.conf
 
 # -----------------------------------------------------------------------------
 # Disable Apache directory indexes
@@ -61,7 +65,7 @@ RUN sed -i \
 	-e 's~^DefaultIcon \(.*\)$~#DefaultIcon \1~g' \
 	-e 's~^ReadmeName \(.*\)$~#ReadmeName \1~g' \
 	-e 's~^HeaderName \(.*\)$~#HeaderName \1~g' \
-	/etc/httpd/conf/httpd.conf
+	/opt/rh/httpd24/root/etc/httpd/conf/httpd.conf
 
 # -----------------------------------------------------------------------------
 # Disable Apache language based content negotiation
@@ -70,7 +74,7 @@ RUN sed -i \
 	-e 's~^LanguagePriority \(.*\)$~#LanguagePriority \1~g' \
 	-e 's~^ForceLanguagePriority \(.*\)$~#ForceLanguagePriority \1~g' \
 	-e 's~^AddLanguage \(.*\)$~#AddLanguage \1~g' \
-	/etc/httpd/conf/httpd.conf
+	/opt/rh/httpd24/root/etc/httpd/conf/httpd.conf
 
 # -----------------------------------------------------------------------------
 # Disable all Apache modules and enable the minimum
@@ -89,7 +93,7 @@ RUN sed -i \
 	-e 's~^#LoadModule deflate_module ~LoadModule deflate_module ~g' \
 	-e 's~^#LoadModule headers_module ~LoadModule headers_module ~g' \
 	-e 's~^#LoadModule alias_module ~LoadModule alias_module ~g' \
-	/etc/httpd/conf/httpd.conf
+	/opt/rh/httpd24/root/etc/httpd/conf/httpd.conf
 
 # -----------------------------------------------------------------------------
 # Enable ServerStatus access via /_httpdstatus to local client
@@ -97,14 +101,14 @@ RUN sed -i \
 RUN sed -i \
 	-e '/#<Location \/server-status>/,/#<\/Location>/ s~^#~~' \
 	-e '/<Location \/server-status>/,/<\/Location>/ s~Allow from .example.com~Allow from localhost 127.0.0.1~' \
-	/etc/httpd/conf/httpd.conf
+	/opt/rh/httpd24/root/etc/httpd/conf/httpd.conf
 
 # -----------------------------------------------------------------------------
 # Disable the default SSL Virtual Host
 # -----------------------------------------------------------------------------
 RUN sed -i \
 	-e '/<VirtualHost _default_:443>/,/#<\/VirtualHost>/ s~^~#~' \
-	/etc/httpd/conf.d/ssl.conf
+	/opt/rh/httpd24/root/etc/httpd/conf.d/ssl.conf
 
 # -----------------------------------------------------------------------------
 # Custom Apache configuration
@@ -121,18 +125,18 @@ RUN { \
 		echo 'Options -Indexes'; \
 		echo 'TraceEnable Off'; \
 		echo 'UseCanonicalPhysicalPort On'; \
-	} >> /etc/httpd/conf/httpd.conf
+	} >> /opt/rh/httpd24/root/etc/httpd/conf/httpd.conf
 
 # -----------------------------------------------------------------------------
 # Disable the SSL support by default
 # -----------------------------------------------------------------------------
 RUN mv \
-		/etc/httpd/conf.d/ssl.conf \
-		/etc/httpd/conf.d/ssl.conf.off \
+		/opt/rh/httpd24/root/etc/httpd/conf.d/ssl.conf \
+		/opt/rh/httpd24/root/etc/httpd/conf.d/ssl.conf.off \
 	&& touch \
-		/etc/httpd/conf.d/ssl.conf \
+		/opt/rh/httpd24/root/etc/httpd/conf.d/ssl.conf \
 	&& chmod 444 \
-		/etc/httpd/conf.d/ssl.conf
+		/opt/rh/httpd24/root/etc/httpd/conf.d/ssl.conf
 
 # -----------------------------------------------------------------------------
 # Limit threads for the application user
@@ -151,25 +155,15 @@ RUN sed \
 		-e 's~^;*$~~' \
 		-e '/^$/d' \
 		-e 's~^\[~\n\[~g' \
-		/etc/php.ini \
-		> /etc/php.d/00-php.ini.default \
+		/etc/opt/rh/rh-php56/php.ini \
+		> /etc/opt/rh/rh-php56/php.d/00-php.ini.default \
 	&& sed \
 		-e 's~^;user_ini.filename =$~user_ini.filename =~g' \
 		-e 's~^;cgi.fix_pathinfo=1$~cgi.fix_pathinfo=1~g' \
 		-e 's~^;date.timezone =$~date.timezone = UTC~g' \
 		-e 's~^expose_php = On$~expose_php = Off~g' \
-		/etc/php.d/00-php.ini.default \
-		> /etc/php.d/00-php.ini
-
-# -----------------------------------------------------------------------------
-# APC op-code cache stats
-#	Note there will be 1 cache per process if using mod_fcgid
-# -----------------------------------------------------------------------------
-RUN sed -i \
-	-e "s~'ADMIN_PASSWORD','password'~'ADMIN_PASSWORD','apc!123'~g" \
-	-e "s~'DATE_FORMAT', 'Y/m/d H:i:s'~'DATE_FORMAT', 'Y-m-d H:i:s'~g" \
-	-e "s~php_uname('n');~gethostname();~g" \
-	/usr/share/php-pecl-apc/apc.php
+		/etc/opt/rh/rh-php56/php.d/00-php.ini.default \
+		> /etc/opt/rh/rh-php56/php.d/00-php.ini
 
 # -----------------------------------------------------------------------------
 # Add default system users
@@ -187,6 +181,8 @@ ADD usr/sbin/httpd-bootstrap \
 	/usr/sbin/
 ADD opt/scmi \
 	/opt/scmi/
+ADD etc/profile.d \
+	/etc/profile.d/
 ADD etc/systemd/system \
 	/etc/systemd/system/
 ADD etc/services-config/httpd/httpd-bootstrap.conf \
@@ -199,14 +195,14 @@ ADD etc/services-config/supervisor/supervisord.d \
 RUN mkdir -p \
 		/etc/services-config/{httpd/{conf,conf.d},ssl/{certs,private}} \
 	&& cp \
-		/etc/httpd/conf/httpd.conf \
+		/opt/rh/httpd24/root/etc/httpd/conf/httpd.conf\
 		/etc/services-config/httpd/conf/ \
 	&& ln -sf \
 		/etc/services-config/httpd/httpd-bootstrap.conf \
 		/etc/httpd-bootstrap.conf \
 	&& ln -sf \
 		/etc/services-config/httpd/conf/httpd.conf \
-		/etc/httpd/conf/httpd.conf \
+		/opt/rh/httpd24/root/etc/httpd/conf/httpd.conf \
 	&& ln -sf \
 		/etc/services-config/ssl/certs/localhost.crt \
 		/etc/pki/tls/certs/localhost.crt \
@@ -315,6 +311,6 @@ jdeathe/centos-ssh-apache-php:centos-6-${RELEASE_VERSION} \
 	org.deathe.license="MIT" \
 	org.deathe.vendor="jdeathe" \
 	org.deathe.url="https://github.com/jdeathe/centos-ssh-apache-php" \
-	org.deathe.description="CentOS-6 6.8 x86_64 - Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1."
+	org.deathe.description="CentOS-6 6.8 x86_64 - SCL Apache 2.4, SCL PHP 5.6, PHP memcached 2.2, Zend OPcache 7.0."
 
 CMD ["/usr/bin/supervisord", "--configuration=/etc/supervisord.conf"]
