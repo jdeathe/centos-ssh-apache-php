@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+
+source /etc/httpd-bootstrap.conf
+
+function setup_php_fpm_pool ()
+{
+	rm -f /etc/php-fpm.d/*.conf
+
+	sed \
+		-e "s~{{APACHE_RUN_GROUP}}~${APACHE_RUN_GROUP}~g" \
+		-e "s~{{APACHE_RUN_USER}}~${APACHE_RUN_USER}~g" \
+		/etc/php-fpm.d/www.conf.template \
+		> "/etc/php-fpm.d/${APACHE_RUN_USER}.conf"
+
+	sed -i \
+		-e "s~php-fpm/\(.*\)\.sock~php-fpm/${APACHE_RUN_USER}\.sock~" \
+		/etc/httpd/conf.d/php-fpm.conf
+}
+
+PHP_FPM=/usr/sbin/php-fpm
+NICE=/bin/nice
+NICENESS="${PHP_FPM_NICENESS:-10}"
+
+setup_php_fpm_pool
+
+while true; do 
+	sleep 0.1
+	[[ -e /tmp/httpd-bootstrap.lock ]] || break
+done
+
+exec ${NICE} \
+	-n ${NICENESS} \
+	${PHP_FPM} \
+	-g /var/run/php-fpm/php-fpm.pid \
+	-F

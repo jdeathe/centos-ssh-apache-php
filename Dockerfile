@@ -1,7 +1,7 @@
 # =============================================================================
 # jdeathe/centos-ssh-apache-php
 #
-# CentOS-6, Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1
+# CentOS-6, Apache 2.4, PHP 5.6, PHP memcached 2.2, Zend Opcache 7.0
 #
 # =============================================================================
 FROM jdeathe/centos-ssh:centos-6-1.7.3
@@ -14,40 +14,43 @@ ARG PACKAGE_PATH="/opt/${PACKAGE_NAME}"
 ARG PACKAGE_RELEASE_VERSION="0.3.0"
 
 # -----------------------------------------------------------------------------
-# Base Apache, PHP
+# IUS Apache 2.4, PHP 5.6
 # -----------------------------------------------------------------------------
 RUN rpm --rebuilddb \
 	&& yum --setopt=tsflags=nodocs -y install \
 		elinks-0.12-0.21.pre5.el6_3 \
-		httpd-2.2.15-54.el6.centos \
-		mod_ssl-2.2.15-54.el6.centos \
-		php-5.3.3-48.el6_8 \
-		php-cli-5.3.3-48.el6_8 \
-		php-zts-5.3.3-48.el6_8 \
-		php-pecl-apc-3.1.9-2.el6 \
-		php-pecl-memcached-1.0.0-1.el6 \
+		httpd24u-httpd \
+		httpd24u-httpd-tools \
+		httpd24u-mod_ssl \
+		php56u-fpm \
+		php56u-fpm-httpd \
+		php56u-php-cli \
+		php56u-opcache \
+		php56u-pecl-memcached \
 	&& yum versionlock add \
 		elinks \
-		httpd \
-		mod_ssl \
-		php* \
+		httpd24u* \
+		php56u* \
 	&& rm -rf /var/cache/yum/* \
 	&& yum clean all
 
 # -----------------------------------------------------------------------------
 # Global Apache configuration changes
 # -----------------------------------------------------------------------------
-RUN sed -i \
-	-e 's~^KeepAlive .*$~KeepAlive On~g' \
-	-e 's~^MaxKeepAliveRequests .*$~MaxKeepAliveRequests 200~g' \
-	-e 's~^KeepAliveTimeout .*$~KeepAliveTimeout 2~g' \
-	-e 's~^ServerSignature On$~ServerSignature Off~g' \
-	-e 's~^ServerTokens OS$~ServerTokens Prod~g' \
-	-e 's~^NameVirtualHost \(.*\)$~#NameVirtualHost \1~g' \
-	-e 's~^User .*$~User ${APACHE_RUN_USER}~g' \
-	-e 's~^Group .*$~Group ${APACHE_RUN_GROUP}~g' \
-	-e 's~^DocumentRoot \(.*\)$~#DocumentRoot \1~g' \
-	/etc/httpd/conf/httpd.conf
+RUN cp -pf \
+		/etc/httpd/conf/httpd.conf \
+		/etc/httpd/conf/httpd.conf.default \
+	&& sed -i \
+		-e 's~^KeepAlive .*$~KeepAlive On~g' \
+		-e 's~^MaxKeepAliveRequests .*$~MaxKeepAliveRequests 200~g' \
+		-e 's~^KeepAliveTimeout .*$~KeepAliveTimeout 2~g' \
+		-e 's~^ServerSignature On$~ServerSignature Off~g' \
+		-e 's~^ServerTokens OS$~ServerTokens Prod~g' \
+		-e 's~^NameVirtualHost \(.*\)$~#NameVirtualHost \1~g' \
+		-e 's~^User .*$~User ${APACHE_RUN_USER}~g' \
+		-e 's~^Group .*$~Group ${APACHE_RUN_GROUP}~g' \
+		-e 's~^DocumentRoot \(.*\)$~#DocumentRoot \1~g' \
+		/etc/httpd/conf/httpd.conf
 
 # -----------------------------------------------------------------------------
 # Disable Apache directory indexes
@@ -146,7 +149,16 @@ RUN { \
 # -----------------------------------------------------------------------------
 # Global PHP configuration changes
 # -----------------------------------------------------------------------------
-RUN sed \
+RUN cp -pf \
+		/etc/php-fpm.conf \
+		/etc/php-fpm.conf.default \
+	&& cp -pf \
+		/etc/php-fpm.d/www.conf \
+		/etc/php-fpm.d/www.conf.default \
+	&& cp -pf \
+		/etc/httpd/conf.d/php-fpm.conf \
+		/etc/httpd/conf.d/php-fpm.conf.default \
+	&& sed \
 		-e 's~^; .*$~~' \
 		-e 's~^;*$~~' \
 		-e '/^$/d' \
@@ -159,17 +171,28 @@ RUN sed \
 		-e 's~^;date.timezone =$~date.timezone = UTC~g' \
 		-e 's~^expose_php = On$~expose_php = Off~g' \
 		/etc/php.d/00-php.ini.default \
-		> /etc/php.d/00-php.ini
-
-# -----------------------------------------------------------------------------
-# APC op-code cache stats
-#	Note there will be 1 cache per process if using mod_fcgid
-# -----------------------------------------------------------------------------
-RUN sed -i \
-	-e "s~'ADMIN_PASSWORD','password'~'ADMIN_PASSWORD','apc!123'~g" \
-	-e "s~'DATE_FORMAT', 'Y/m/d H:i:s'~'DATE_FORMAT', 'Y-m-d H:i:s'~g" \
-	-e "s~php_uname('n');~gethostname();~g" \
-	/usr/share/php-pecl-apc/apc.php
+		> /etc/php.d/00-php.ini \
+	&& sed -i \
+		-e 's~^\[www\]$~[{{APACHE_RUN_USER}}]~' \
+		-e 's~^user = php-fpm$~user = {{APACHE_RUN_USER}}~' \
+		-e 's~^group = php-fpm$~group = {{APACHE_RUN_GROUP}}~' \
+		-e 's~^listen = 127.0.0.1:9000$~;listen = 127.0.0.1:9000~' \
+		-e 's~^;listen = /var/run/php-fpm/www.sock$~listen = /var/run/php-fpm/{{APACHE_RUN_USER}}.sock~' \
+		-e 's~^;listen.owner = root$~listen.owner = {{APACHE_RUN_USER}}~' \
+		-e 's~^;listen.group = root$~listen.group = {{APACHE_RUN_GROUP}}~' \
+		-e 's~^\(php_admin_value\[error_log\].*\)$~;\1~' \
+		-e 's~^\(php_admin_flag\[log_errors\].*\)$~;\1~' \
+		-e 's~^\(php_value\[session.save_handler\].*\)$~;\1~' \
+		-e 's~^\(php_value\[session.save_path\].*\)$~;\1~' \
+		-e 's~^\(php_value\[soap.wsdl_cache_dir\].*\)$~;\1~' \
+		/etc/php-fpm.d/www.conf \
+	&& mv \
+		/etc/php-fpm.d/www.conf \
+		/etc/php-fpm.d/www.conf.template \
+	&& sed -i \
+		-e 's~^\([ \t]*\)\(SetHandler "proxy:fcgi:.*\)$~\1#\2~' \
+		-e 's~^\([ \t]*\)#\(SetHandler "proxy:unix:.*\)$~\1\2~' \
+		/etc/httpd/conf.d/php-fpm.conf
 
 # -----------------------------------------------------------------------------
 # Add default system users
@@ -183,10 +206,14 @@ RUN useradd -r -M -d /var/www/app -s /sbin/nologin app \
 # Copy files into place
 # -----------------------------------------------------------------------------
 ADD usr/sbin/httpd-bootstrap \
+	usr/sbin/httpd-startup \
 	usr/sbin/httpd-wrapper \
+	usr/sbin/php-fpm-wrapper \
 	/usr/sbin/
 ADD opt/scmi \
 	/opt/scmi/
+ADD etc/profile.d \
+	/etc/profile.d/
 ADD etc/systemd/system \
 	/etc/systemd/system/
 ADD etc/services-config/httpd/httpd-bootstrap.conf \
@@ -222,8 +249,11 @@ RUN mkdir -p \
 	&& ln -sf \
 		/etc/services-config/supervisor/supervisord.d/httpd-wrapper.conf \
 		/etc/supervisord.d/httpd-wrapper.conf \
+	&& ln -sf \
+		/etc/services-config/supervisor/supervisord.d/php-fpm-wrapper.conf \
+		/etc/supervisord.d/php-fpm-wrapper.conf \
 	&& chmod 700 \
-		/usr/sbin/httpd-bootstrap
+		/usr/sbin/{httpd-{bootstrap,startup,wrapper},php-fpm-wrapper}
 
 # -----------------------------------------------------------------------------
 # Create and populate the install directory
@@ -237,7 +267,7 @@ RUN curl -Lso /tmp/${PACKAGE_NAME}.tar.gz \
 		-C ${PACKAGE_PATH} \
 	&& rm -f /tmp/app.tar.gz \
 	&& sed -i \
-		-e 's~^description =.*$~description = "This CentOS / Apache / PHP (Standard) service is running in a container."~' \
+		-e 's~^description =.*$~description = "This CentOS / Apache / PHP (php-fpm) service is running in a container."~' \
 		${PACKAGE_PATH}/etc/views/index.ini \
 	&& $(\
 		if [[ -f /usr/share/php-pecl-apc/apc.php ]]; then \
@@ -261,14 +291,16 @@ EXPOSE 80 8443 443
 # -----------------------------------------------------------------------------
 # Set default environment variables used to configure the service container
 # -----------------------------------------------------------------------------
-ENV APACHE_CONTENT_ROOT="/var/www/${PACKAGE_NAME}"
+ENV APACHE_CONTENT_ROOT="/var/www/${PACKAGE_NAME}" \
+	BASH_ENV="/usr/sbin/httpd-startup" \
+	ENV="/usr/sbin/httpd-startup"
 ENV APACHE_CUSTOM_LOG_FORMAT="combined" \
 	APACHE_CUSTOM_LOG_LOCATION="var/log/apache_access_log" \
 	APACHE_ERROR_LOG_LOCATION="var/log/apache_error_log" \
 	APACHE_ERROR_LOG_LEVEL="warn" \
 	APACHE_EXTENDED_STATUS_ENABLED="false" \
 	APACHE_HEADER_X_SERVICE_UID="{{HOSTNAME}}" \
-	APACHE_LOAD_MODULES="authz_user_module log_config_module expires_module deflate_module headers_module setenvif_module mime_module status_module dir_module alias_module" \
+	APACHE_LOAD_MODULES="authz_user_module log_config_module expires_module deflate_module headers_module setenvif_module mime_module status_module dir_module alias_module version_module" \
 	APACHE_MOD_SSL_ENABLED="false" \
 	APACHE_MPM="prefork" \
 	APACHE_OPERATING_MODE="production" \
@@ -315,6 +347,6 @@ jdeathe/centos-ssh-apache-php:centos-6-${RELEASE_VERSION} \
 	org.deathe.license="MIT" \
 	org.deathe.vendor="jdeathe" \
 	org.deathe.url="https://github.com/jdeathe/centos-ssh-apache-php" \
-	org.deathe.description="CentOS-6 6.8 x86_64 - Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1."
+	org.deathe.description="CentOS-6 6.8 x86_64 - IUS Apache 2.4, IUS PHP 5.6, PHP memcached 2.2, Zend Opcache 7.0."
 
-CMD ["/usr/bin/supervisord", "--configuration=/etc/supervisord.conf"]
+CMD ["/usr/sbin/httpd-startup", "/usr/bin/supervisord", "--configuration=/etc/supervisord.conf"]

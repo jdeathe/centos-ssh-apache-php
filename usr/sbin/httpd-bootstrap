@@ -138,7 +138,7 @@ function enable_apache_modules ()
 		if [[ -n ${SED_COMMAND} ]]; then
 			eval "$(
 				printf -- \
-					'sed -i %s /etc/httpd/conf/httpd.conf' \
+					'sed -i %s /etc/services-config/httpd/conf/httpd.conf' \
 					"${SED_COMMAND}"
 			)"
 		fi
@@ -314,6 +314,7 @@ function load_php_ini_scan_files ()
 {
 	local FILE_PATH
 	local PACKAGE_PATH="${1:-}"
+	local SCAN_DIRECTORY="/etc/php.d"
 
 	if [[ -n ${PACKAGE_PATH} ]] && [[ -d ${PACKAGE_PATH}/etc/php.d ]]; then
 		# Replace environment variables to support fcgid php-wrapper
@@ -326,7 +327,7 @@ function load_php_ini_scan_files ()
 							$(<"${FILE_PATH}")
 						EOF" 2> /dev/null
 				)" \
-			> "/etc/php.d/${FILE_PATH##*/}"
+			> "${SCAN_DIRECTORY}/${FILE_PATH##*/}"
 		done
 	fi
 }
@@ -368,7 +369,7 @@ function set_apache_enable_sendfile ()
 
 	sed -i \
 		-re "s~${PATTERN_FROM}~${PATTERN_TO}~g" \
-		/etc/httpd/conf/httpd.conf
+		/etc/services-config/httpd/conf/httpd.conf
 }
 
 function set_apache_extended_status ()
@@ -388,7 +389,7 @@ function set_apache_extended_status ()
 
 	sed -i \
 		-re "s~${PATTERN_FROM}~${PATTERN_TO}~g" \
-		/etc/httpd/conf/httpd.conf
+		/etc/services-config/httpd/conf/httpd.conf
 }
 
 function set_apache_header_x_service_uid ()
@@ -403,6 +404,62 @@ function set_apache_header_x_service_uid ()
 	fi
 }
 
+function set_apache_mpm ()
+{
+	local MPM="${1:-APACHE_MPM}"
+
+	case "${MPM,,}" in
+		event)
+			if [[ -f /etc/httpd/conf.modules.d/00-mpm.conf ]]; then
+				sed -i \
+					-e 's~^\(LoadModule.*\)$~#\1~g' \
+					-e 's~^#\(LoadModule mpm_event_module.*\)$~\1~' \
+					/etc/httpd/conf.modules.d/00-mpm.conf
+			else
+				printf -- \
+					'ERROR: Invalid Apache Server MPM: %s\n' \
+					"${OPTS_APACHE_MPM}" >&2
+				exit 1
+			fi
+			;;
+		worker)
+			if [[ -f /etc/httpd/conf.modules.d/00-mpm.conf ]]; then
+				sed -i \
+					-e 's~^\(LoadModule.*\)$~#\1~g' \
+					-e 's~^#\(LoadModule mpm_worker_module.*\)$~\1~' \
+					/etc/httpd/conf.modules.d/00-mpm.conf
+			elif [[ -f /usr/sbin/httpd.worker ]]; then
+				sed -i \
+					-e "s~^#HTTPD=/usr/sbin/httpd.worker~HTTPD=/usr/sbin/httpd.worker~g" \
+					/etc/sysconfig/httpd
+			else
+				printf -- \
+					'ERROR: Invalid Apache Server MPM: %s\n' \
+					"${OPTS_APACHE_MPM}" >&2
+				exit 1
+			fi
+			;;
+		prefork)
+			if [[ -f /etc/httpd/conf.modules.d/00-mpm.conf ]]; then
+				sed -i \
+					-e 's~^\(LoadModule.*\)$~#\1~g' \
+					-e 's~^#\(LoadModule mpm_prefork_module.*\)$~\1~' \
+					/etc/httpd/conf.modules.d/00-mpm.conf
+			else
+				sed -i \
+					-e "s~^HTTPD=/usr/sbin/httpd.worker~#HTTPD=/usr/sbin/httpd.worker~g" \
+					/etc/sysconfig/httpd
+			fi
+			;;
+		*)
+			printf -- \
+				'ERROR: Invalid Apache Server MPM: %s\n' \
+				"${OPTS_APACHE_MPM}" >&2
+			exit 1
+			;;
+	esac
+}
+
 function set_apache_server_name ()
 {
 	local HOST_NAME="${1:-${APACHE_SERVER_NAME:-$(hostname)}}"
@@ -410,7 +467,7 @@ function set_apache_server_name ()
 
 	sed -i \
 		-e "s~^#ServerName \(.*\):80$~ServerName ${HOST_NAME}:${PORT}~g" \
-		/etc/httpd/conf/httpd.conf
+		/etc/services-config/httpd/conf/httpd.conf
 }
 
 function set_apache_ssl_certificate ()
@@ -600,30 +657,10 @@ APACHE_DOCUMENT_ROOT_FILE_SYSTEM=$(
 )
 
 # Server MPM
-if [[ -f /usr/sbin/httpd.worker ]]; then
-	case "${OPTS_APACHE_MPM,,}" in
-		worker)
-			sed -i \
-				-e "s~^#HTTPD=/usr/sbin/httpd.worker~HTTPD=/usr/sbin/httpd.worker~g" \
-				/etc/sysconfig/httpd
-			;;
-		prefork)
-			sed -i \
-				-e "s~^HTTPD=/usr/sbin/httpd.worker~#HTTPD=/usr/sbin/httpd.worker~g" \
-				/etc/sysconfig/httpd
-			;;
-		*)
-			printf -- \
-				'ERROR: Invalid Apache Server MPM: %s\n' \
-				"${OPTS_APACHE_MPM}" >&2
-			exit 1
-			;;
-	esac
-
-	printf -- \
-		'Apache Server MPM: %s\n' \
-		"${OPTS_APACHE_MPM^}"
-fi
+set_apache_mpm "${OPTS_APACHE_MPM}"
+printf -- \
+	'Apache Server MPM: %s\n' \
+	"${OPTS_APACHE_MPM^}"
 
 # Add local hosts entries
 add_hosts_entry \
