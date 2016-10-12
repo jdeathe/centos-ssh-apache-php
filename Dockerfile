@@ -105,15 +105,6 @@ RUN sed -i \
 	/etc/httpd/conf.modules.d/00-dav.conf \
 	/etc/httpd/conf.modules.d/00-lua.conf \
 	/etc/httpd/conf.modules.d/00-proxy.conf
-	
-
-# -----------------------------------------------------------------------------
-# Enable ServerStatus access via /_httpdstatus to local client
-# -----------------------------------------------------------------------------
-RUN sed -i \
-	-e '/#<Location \/server-status>/,/#<\/Location>/ s~^#~~' \
-	-e '/<Location \/server-status>/,/<\/Location>/ s~Allow from .example.com~Allow from localhost 127.0.0.1~' \
-	/etc/httpd/conf/httpd.conf
 
 # -----------------------------------------------------------------------------
 # Disable the default SSL Virtual Host
