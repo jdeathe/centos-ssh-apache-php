@@ -190,6 +190,7 @@ RUN cp -pf \
 		-e 's~^\(php_value\[session.save_handler\].*\)$~;\1~' \
 		-e 's~^\(php_value\[session.save_path\].*\)$~;\1~' \
 		-e 's~^\(php_value\[soap.wsdl_cache_dir\].*\)$~;\1~' \
+		-e 's~^;\(pm.status_path = \).*$~\1/status~' \
 		/etc/php-fpm.d/www.conf \
 	&& mv \
 		/etc/php-fpm.d/www.conf \
