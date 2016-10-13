@@ -184,6 +184,7 @@ RUN cp -pf \
 		-e 's~^;listen = /var/run/php-fpm/www.sock$~listen = /var/run/php-fpm/{{APACHE_RUN_USER}}.sock~' \
 		-e 's~^;listen.owner = root$~listen.owner = {{APACHE_RUN_USER}}~' \
 		-e 's~^;listen.group = root$~listen.group = {{APACHE_RUN_GROUP}}~' \
+		-e 's~^slowlog = /var/log/php-fpm/www-slow.log$~slowlog = /var/log/php-fpm/{{APACHE_RUN_USER}}-slow.log~' \
 		-e 's~^\(php_admin_value\[error_log\].*\)$~;\1~' \
 		-e 's~^\(php_admin_flag\[log_errors\].*\)$~;\1~' \
 		-e 's~^\(php_value\[session.save_handler\].*\)$~;\1~' \
