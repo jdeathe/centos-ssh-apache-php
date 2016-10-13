@@ -126,6 +126,8 @@ RUN { \
 		echo '  "%{X-Forwarded-For}i %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\"" \'; \
 		echo '  forwarded_for_combined'; \
 		echo 'Options -Indexes'; \
+		echo 'ServerSignature Off'; \
+		echo 'ServerTokens Prod'; \
 		echo 'TraceEnable Off'; \
 		echo 'UseCanonicalPhysicalPort On'; \
 	} >> /etc/httpd/conf/httpd.conf
