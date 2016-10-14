@@ -53,7 +53,7 @@ RUN cp -pf \
 		/etc/httpd/conf/httpd.conf
 
 # -----------------------------------------------------------------------------
-# Disable Apache directory indexes
+# Disable Apache directory indexes and welcome page.
 # -----------------------------------------------------------------------------
 RUN sed -i \
 		-e 's~^IndexOptions \(.*\)$~#IndexOptions \1~g' \
@@ -67,13 +67,14 @@ RUN sed -i \
 		-e 's~^\(Alias /icons/ ".*"\)$~#\1~' \
 		-e '/<Directory "\/var\/www\/icons">/,/#<\/Directory>/ s~^~#~' \
 		/etc/httpd/conf/httpd.conf \
-	&& mv \
-		/etc/httpd/conf.d/autoindex.conf \
-		/etc/httpd/conf.d/autoindex.conf.off \
-	&& touch \
+	&& truncate -s 0 \
 		/etc/httpd/conf.d/autoindex.conf \
 	&& chmod 444 \
-		/etc/httpd/conf.d/autoindex.conf
+		/etc/httpd/conf.d/autoindex.conf \
+	&& truncate -s 0 \
+		/etc/httpd/conf.d/welcome.conf \
+	&& chmod 444 \
+		/etc/httpd/conf.d/welcome.conf
 
 # -----------------------------------------------------------------------------
 # Disable Apache language based content negotiation
