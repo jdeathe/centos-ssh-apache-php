@@ -121,10 +121,13 @@ RUN { \
 		echo '#'; \
 		echo '# Custom configuration'; \
 		echo '#'; \
-		echo 'Include /etc/services-config/httpd/conf.d/*.conf'; \
+		echo 'KeepAlive On'; \
+		echo 'MaxKeepAliveRequests 200'; \
+		echo 'KeepAliveTimeout 2'; \
 		echo 'LogFormat \'; \
 		echo '  "%{X-Forwarded-For}i %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\"" \'; \
 		echo '  forwarded_for_combined'; \
+		echo 'Include /etc/services-config/httpd/conf.d/*.conf'; \
 		echo 'Options -Indexes'; \
 		echo 'ServerSignature Off'; \
 		echo 'ServerTokens Prod'; \
@@ -186,6 +189,7 @@ RUN cp -pf \
 		-e 's~^;listen = /var/run/php-fpm/www.sock$~listen = /var/run/php-fpm/{{APACHE_RUN_USER}}.sock~' \
 		-e 's~^;listen.owner = root$~listen.owner = {{APACHE_RUN_USER}}~' \
 		-e 's~^;listen.group = root$~listen.group = {{APACHE_RUN_GROUP}}~' \
+		-e 's~^pm.max_children = 50$~pm.max_children = 64~' \
 		-e 's~^slowlog = /var/log/php-fpm/www-slow.log$~slowlog = /var/log/php-fpm/{{APACHE_RUN_USER}}-slow.log~' \
 		-e 's~^\(php_admin_value\[error_log\].*\)$~;\1~' \
 		-e 's~^\(php_admin_flag\[log_errors\].*\)$~;\1~' \
