@@ -120,6 +120,7 @@ RUN { \
 		echo '  forwarded_for_combined'; \
 		echo 'Options -Indexes'; \
 		echo 'TraceEnable Off'; \
+		echo 'UseCanonicalName On'; \
 		echo 'UseCanonicalPhysicalPort On'; \
 	} >> /etc/httpd/conf/httpd.conf
 
