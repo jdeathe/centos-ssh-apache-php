@@ -133,6 +133,7 @@ RUN { \
 		echo 'ServerSignature Off'; \
 		echo 'ServerTokens Prod'; \
 		echo 'TraceEnable Off'; \
+		echo 'UseCanonicalName On'; \
 		echo 'UseCanonicalPhysicalPort On'; \
 	} >> /etc/httpd/conf/httpd.conf
 
