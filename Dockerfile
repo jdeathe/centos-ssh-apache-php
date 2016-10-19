@@ -1,7 +1,7 @@
 # =============================================================================
 # jdeathe/centos-ssh-apache-php
 #
-# CentOS-6, Apache 2.4, PHP 5.6, PHP memcached 2.2, Zend Opcache 7.0
+# CentOS-6, Apache 2.4, PHP-FPM 5.6, PHP memcached 2.2, Zend Opcache 7.0
 #
 # =============================================================================
 FROM jdeathe/centos-ssh:centos-6-1.7.3
@@ -14,7 +14,7 @@ ARG PACKAGE_PATH="/opt/${PACKAGE_NAME}"
 ARG PACKAGE_RELEASE_VERSION="0.3.0"
 
 # -----------------------------------------------------------------------------
-# IUS Apache 2.4, PHP 5.6
+# IUS Apache 2.4, PHP-FPM 5.6
 # -----------------------------------------------------------------------------
 RUN rpm --rebuilddb \
 	&& yum --setopt=tsflags=nodocs -y install \
@@ -360,6 +360,6 @@ jdeathe/centos-ssh-apache-php:centos-6-${RELEASE_VERSION} \
 	org.deathe.license="MIT" \
 	org.deathe.vendor="jdeathe" \
 	org.deathe.url="https://github.com/jdeathe/centos-ssh-apache-php" \
-	org.deathe.description="CentOS-6 6.8 x86_64 - IUS Apache 2.4, IUS PHP 5.6, PHP memcached 2.2, Zend Opcache 7.0."
+	org.deathe.description="CentOS-6 6.8 x86_64 - IUS Apache 2.4, IUS PHP-FPM 5.6, PHP memcached 2.2, Zend Opcache 7.0."
 
 CMD ["/usr/sbin/httpd-startup", "/usr/bin/supervisord", "--configuration=/etc/supervisord.conf"]
