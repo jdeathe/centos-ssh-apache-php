@@ -9,7 +9,7 @@ FROM jdeathe/centos-ssh:centos-6-1.7.3
 MAINTAINER James Deathe <james.deathe@gmail.com>
 
 # Use the form ([{fqdn}-]{package-name}|[{fqdn}-]{provider-name})
-ARG PACKAGE_NAME="php-hello-world"
+ARG PACKAGE_NAME="app"
 ARG PACKAGE_PATH="/opt/${PACKAGE_NAME}"
 ARG PACKAGE_RELEASE_VERSION="0.3.0"
 
@@ -270,10 +270,10 @@ RUN mkdir -p \
 		/usr/sbin/{httpd-{bootstrap,startup,wrapper},php-fpm-wrapper}
 
 # -----------------------------------------------------------------------------
-# Create and populate the install directory
+# Package installation
 # -----------------------------------------------------------------------------
-RUN mkdir -p -m 750 ${PACKAGE_PATH}
-RUN curl -Lso /tmp/${PACKAGE_NAME}.tar.gz \
+RUN mkdir -p -m 750 ${PACKAGE_PATH} \
+	&& curl -Lso /tmp/${PACKAGE_NAME}.tar.gz \
 		https://github.com/jdeathe/php-hello-world/archive/${PACKAGE_RELEASE_VERSION}.tar.gz \
 	&& tar -xzpf /tmp/${PACKAGE_NAME}.tar.gz \
 		--strip-components=1 \
@@ -289,12 +289,8 @@ RUN curl -Lso /tmp/${PACKAGE_NAME}.tar.gz \
 				/usr/share/php-pecl-apc/apc.php \
 				${PACKAGE_PATH}/public_html/_apc.php; \
 		fi \
-	)
-
-# -----------------------------------------------------------------------------
-# Set install directory/file permissions
-# -----------------------------------------------------------------------------
-RUN chown -R app:app-www ${PACKAGE_PATH} \
+	) \
+	&& chown -R app:app-www ${PACKAGE_PATH} \
 	&& find ${PACKAGE_PATH} -type d -exec chmod 750 {} + \
 	&& find ${PACKAGE_PATH}/var -type d -exec chmod 770 {} + \
 	&& find ${PACKAGE_PATH} -type f -exec chmod 640 {} + \
