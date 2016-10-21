@@ -189,6 +189,8 @@ ADD usr/sbin/httpd-bootstrap \
 	/usr/sbin/
 ADD opt/scmi \
 	/opt/scmi/
+ADD etc/profile.d \
+	/etc/profile.d/
 ADD etc/systemd/system \
 	/etc/systemd/system/
 ADD etc/services-config/httpd/httpd-bootstrap.conf \
