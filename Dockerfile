@@ -9,7 +9,7 @@ FROM jdeathe/centos-ssh:centos-6-1.7.3
 MAINTAINER James Deathe <james.deathe@gmail.com>
 
 # Use the form ([{fqdn}-]{package-name}|[{fqdn}-]{provider-name})
-ARG PACKAGE_NAME="php-hello-world"
+ARG PACKAGE_NAME="app"
 ARG PACKAGE_PATH="/opt/${PACKAGE_NAME}"
 ARG PACKAGE_RELEASE_VERSION="0.3.0"
 
