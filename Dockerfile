@@ -41,11 +41,11 @@ RUN cp -pf \
 		/etc/httpd/conf/httpd.conf \
 		/etc/httpd/conf/httpd.conf.default \
 	&& sed -i \
-		-e 's~^KeepAlive .*$~KeepAlive On~g' \
-		-e 's~^MaxKeepAliveRequests .*$~MaxKeepAliveRequests 200~g' \
-		-e 's~^KeepAliveTimeout .*$~KeepAliveTimeout 2~g' \
-		-e 's~^ServerSignature On$~ServerSignature Off~g' \
-		-e 's~^ServerTokens OS$~ServerTokens Prod~g' \
+		-e '/^KeepAlive .*$/d' \
+		-e '/^MaxKeepAliveRequests .*$/d' \
+		-e '/^KeepAliveTimeout .*$/d' \
+		-e '/^ServerSignature On$/d' \
+		-e '/^ServerTokens OS$/d' \
 		-e 's~^NameVirtualHost \(.*\)$~#NameVirtualHost \1~g' \
 		-e 's~^User .*$~User ${APACHE_RUN_USER}~g' \
 		-e 's~^Group .*$~Group ${APACHE_RUN_GROUP}~g' \
