@@ -236,7 +236,7 @@ RUN curl -Lso /tmp/${PACKAGE_NAME}.tar.gz \
 		--strip-components=1 \
 		--exclude="*.gitkeep" \
 		-C ${PACKAGE_PATH} \
-	&& rm -f /tmp/app.tar.gz \
+	&& rm -f /tmp/${PACKAGE_NAME}.tar.gz \
 	&& sed -i \
 		-e 's~^description =.*$~description = "This CentOS / Apache / PHP (Standard) service is running in a container."~' \
 		${PACKAGE_PATH}/etc/views/index.ini \
