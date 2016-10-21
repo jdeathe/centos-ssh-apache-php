@@ -184,10 +184,13 @@ RUN useradd -r -M -d /var/www/app -s /sbin/nologin app \
 # Copy files into place
 # -----------------------------------------------------------------------------
 ADD usr/sbin/httpd-bootstrap \
+	usr/sbin/httpd-startup \
 	usr/sbin/httpd-wrapper \
 	/usr/sbin/
 ADD opt/scmi \
 	/opt/scmi/
+ADD etc/profile.d \
+	/etc/profile.d/
 ADD etc/systemd/system \
 	/etc/systemd/system/
 ADD etc/services-config/httpd/httpd-bootstrap.conf \
@@ -224,7 +227,7 @@ RUN mkdir -p \
 		/etc/services-config/supervisor/supervisord.d/httpd-wrapper.conf \
 		/etc/supervisord.d/httpd-wrapper.conf \
 	&& chmod 700 \
-		/usr/sbin/httpd-bootstrap
+		/usr/sbin/httpd-{bootstrap,startup,wrapper}
 
 # -----------------------------------------------------------------------------
 # Package installation
@@ -258,7 +261,9 @@ EXPOSE 80 8443 443
 # -----------------------------------------------------------------------------
 # Set default environment variables used to configure the service container
 # -----------------------------------------------------------------------------
-ENV APACHE_CONTENT_ROOT="/var/www/${PACKAGE_NAME}"
+ENV APACHE_CONTENT_ROOT="/var/www/${PACKAGE_NAME}" \
+	BASH_ENV="/usr/sbin/httpd-startup" \
+	ENV="/usr/sbin/httpd-startup"
 ENV APACHE_CUSTOM_LOG_FORMAT="combined" \
 	APACHE_CUSTOM_LOG_LOCATION="var/log/apache_access_log" \
 	APACHE_ERROR_LOG_LOCATION="var/log/apache_error_log" \
@@ -314,4 +319,4 @@ jdeathe/centos-ssh-apache-php:centos-6-${RELEASE_VERSION} \
 	org.deathe.url="https://github.com/jdeathe/centos-ssh-apache-php" \
 	org.deathe.description="CentOS-6 6.8 x86_64 - Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1."
 
-CMD ["/usr/bin/supervisord", "--configuration=/etc/supervisord.conf"]
+CMD ["/usr/sbin/httpd-startup", "/usr/bin/supervisord", "--configuration=/etc/supervisord.conf"]
