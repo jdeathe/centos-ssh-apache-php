@@ -43,7 +43,7 @@ $ docker run -d \
 
 Now point your browser to `http://{docker-host}:8080` where `{docker-host}` is the host name of your docker server and, if all went well, you should see the "Hello, world!" page.
 
-![Hello World Screen Shot - Chrome](https://raw.github.com/jdeathe/centos-ssh-apache-php/centos-6/images/hello-world-chrome.png)
+![PHP "Hello, world!" - Chrome screenshot](https://raw.github.com/jdeathe/centos-ssh-apache-php/centos-6/images/php-hello-world-chrome.png)
 
 To be able to access the server using the "app-1.local" domain name you need to add a hosts file entry locally; such that the IP address of the Docker host resolves to the name "app-1.local". Alternatively, you can use the elinks browser installed in the container. Note that because you are using the browser from the container you access the site over port 80.
 
@@ -52,7 +52,7 @@ $ docker exec -it apache-php.pool-1.1.1 \
   elinks http://app-1.local
 ```
 
-![Hello World Screen Shot - eLinks](https://raw.github.com/jdeathe/centos-ssh-apache-php/centos-6/images/hello-world-elinks.png)
+![PHP "Hello, world!" - eLinks screenshot](https://raw.github.com/jdeathe/centos-ssh-apache-php/centos-6/images/php-hello-world-elinks.png)
 
 To verify the container is initialised and running successfully by inspecting the container's logs.
 
