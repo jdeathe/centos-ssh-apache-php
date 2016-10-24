@@ -11,7 +11,7 @@ MAINTAINER James Deathe <james.deathe@gmail.com>
 # Use the form ([{fqdn}-]{package-name}|[{fqdn}-]{provider-name})
 ARG PACKAGE_NAME="app"
 ARG PACKAGE_PATH="/opt/${PACKAGE_NAME}"
-ARG PACKAGE_RELEASE_VERSION="0.3.0"
+ARG PACKAGE_RELEASE_VERSION="0.4.0"
 
 # -----------------------------------------------------------------------------
 # Base Apache, PHP
