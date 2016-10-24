@@ -11,6 +11,7 @@ MAINTAINER James Deathe <james.deathe@gmail.com>
 # Use the form ([{fqdn}-]{package-name}|[{fqdn}-]{provider-name})
 ARG PACKAGE_NAME="app"
 ARG PACKAGE_PATH="/opt/${PACKAGE_NAME}"
+ARG PACKAGE_RELEASE_VERSION="0.4.0"
 
 # -----------------------------------------------------------------------------
 # Base Apache, PHP
@@ -113,12 +114,13 @@ RUN { \
 		echo '#'; \
 		echo '# Custom configuration'; \
 		echo '#'; \
-		echo 'Include /etc/services-config/httpd/conf.d/*.conf'; \
 		echo 'LogFormat \'; \
 		echo '  "%{X-Forwarded-For}i %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\"" \'; \
 		echo '  forwarded_for_combined'; \
+		echo 'Include /etc/services-config/httpd/conf.d/*.conf'; \
 		echo 'Options -Indexes'; \
 		echo 'TraceEnable Off'; \
+		echo 'UseCanonicalName On'; \
 		echo 'UseCanonicalPhysicalPort On'; \
 	} >> /etc/httpd/conf/httpd.conf
 
@@ -182,10 +184,13 @@ RUN useradd -r -M -d /var/www/app -s /sbin/nologin app \
 # Copy files into place
 # -----------------------------------------------------------------------------
 ADD usr/sbin/httpd-bootstrap \
+	usr/sbin/httpd-startup \
 	usr/sbin/httpd-wrapper \
 	/usr/sbin/
 ADD opt/scmi \
 	/opt/scmi/
+ADD etc/profile.d \
+	/etc/profile.d/
 ADD etc/systemd/system \
 	/etc/systemd/system/
 ADD etc/services-config/httpd/httpd-bootstrap.conf \
@@ -222,26 +227,30 @@ RUN mkdir -p \
 		/etc/services-config/supervisor/supervisord.d/httpd-wrapper.conf \
 		/etc/supervisord.d/httpd-wrapper.conf \
 	&& chmod 700 \
-		/usr/sbin/httpd-bootstrap
+		/usr/sbin/httpd-{bootstrap,startup,wrapper}
 
 # -----------------------------------------------------------------------------
-# Create and populate the install directory
+# Package installation
 # -----------------------------------------------------------------------------
-RUN mkdir -p -m 750 ${PACKAGE_PATH}
-ADD var/www/app ${PACKAGE_PATH}
-RUN find ${PACKAGE_PATH} -name '*.gitkeep' -type f -delete \
+RUN mkdir -p -m 750 ${PACKAGE_PATH} \
+	&& curl -Lso /tmp/${PACKAGE_NAME}.tar.gz \
+		https://github.com/jdeathe/php-hello-world/archive/${PACKAGE_RELEASE_VERSION}.tar.gz \
+	&& tar -xzpf /tmp/${PACKAGE_NAME}.tar.gz \
+		--strip-components=1 \
+		--exclude="*.gitkeep" \
+		-C ${PACKAGE_PATH} \
+	&& rm -f /tmp/${PACKAGE_NAME}.tar.gz \
+	&& sed -i \
+		-e 's~^description =.*$~description = "This CentOS / Apache / PHP (Standard) service is running in a container."~' \
+		${PACKAGE_PATH}/etc/views/index.ini \
 	&& $(\
 		if [[ -f /usr/share/php-pecl-apc/apc.php ]]; then \
 			cp \
 				/usr/share/php-pecl-apc/apc.php \
 				${PACKAGE_PATH}/public_html/_apc.php; \
 		fi \
-	)
-
-# -----------------------------------------------------------------------------
-# Set install directory/file permissions
-# -----------------------------------------------------------------------------
-RUN chown -R app:app-www ${PACKAGE_PATH} \
+	) \
+	&& chown -R app:app-www ${PACKAGE_PATH} \
 	&& find ${PACKAGE_PATH} -type d -exec chmod 750 {} + \
 	&& find ${PACKAGE_PATH}/var -type d -exec chmod 770 {} + \
 	&& find ${PACKAGE_PATH} -type f -exec chmod 640 {} + \
@@ -252,7 +261,9 @@ EXPOSE 80 8443 443
 # -----------------------------------------------------------------------------
 # Set default environment variables used to configure the service container
 # -----------------------------------------------------------------------------
-ENV APACHE_CONTENT_ROOT="/var/www/${PACKAGE_NAME}"
+ENV APACHE_CONTENT_ROOT="/var/www/${PACKAGE_NAME}" \
+	BASH_ENV="/usr/sbin/httpd-startup" \
+	ENV="/usr/sbin/httpd-startup"
 ENV APACHE_CUSTOM_LOG_FORMAT="combined" \
 	APACHE_CUSTOM_LOG_LOCATION="var/log/apache_access_log" \
 	APACHE_ERROR_LOG_LOCATION="var/log/apache_error_log" \
@@ -280,7 +291,7 @@ ENV APACHE_CUSTOM_LOG_FORMAT="combined" \
 # -----------------------------------------------------------------------------
 # Set image metadata
 # -----------------------------------------------------------------------------
-ARG RELEASE_VERSION="1.7.3"
+ARG RELEASE_VERSION="1.8.0"
 LABEL \
 	install="docker run \
 --rm \
@@ -308,4 +319,4 @@ jdeathe/centos-ssh-apache-php:centos-6-${RELEASE_VERSION} \
 	org.deathe.url="https://github.com/jdeathe/centos-ssh-apache-php" \
 	org.deathe.description="CentOS-6 6.8 x86_64 - Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1."
 
-CMD ["/usr/bin/supervisord", "--configuration=/etc/supervisord.conf"]
+CMD ["/usr/sbin/httpd-startup", "/usr/bin/supervisord", "--configuration=/etc/supervisord.conf"]
