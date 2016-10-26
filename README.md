@@ -147,6 +147,7 @@ Since release `centos-6-1.7.2` the install template has been added to the image 
 To see detailed information about the image run `scmi` with the `--info` option. To see all available `scmi` options run with the `--help` option.
 
 ```
+$ docker pull jdeathe/centos-ssh-apache-php:centos-6-1.8.0
 $ eval "sudo -E $(
     docker inspect \
     -f "{{.ContainerConfig.Labels.install}}" \
