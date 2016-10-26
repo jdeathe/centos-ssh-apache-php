@@ -1,7 +1,7 @@
 # =============================================================================
 # jdeathe/centos-ssh-apache-php
 #
-# CentOS-6, Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1
+# CentOS-6, Apache 2.4, PHP-FPM 5.6, PHP memcached 2.2, Zend Opcache 7.0
 #
 # =============================================================================
 FROM jdeathe/centos-ssh:centos-6-1.7.3
@@ -14,54 +14,67 @@ ARG PACKAGE_PATH="/opt/${PACKAGE_NAME}"
 ARG PACKAGE_RELEASE_VERSION="0.4.0"
 
 # -----------------------------------------------------------------------------
-# Base Apache, PHP
+# IUS Apache 2.4, PHP-FPM 5.6
 # -----------------------------------------------------------------------------
 RUN rpm --rebuilddb \
 	&& yum --setopt=tsflags=nodocs -y install \
 		elinks-0.12-0.21.pre5.el6_3 \
-		httpd-2.2.15-54.el6.centos \
-		mod_ssl-2.2.15-54.el6.centos \
-		php-5.3.3-48.el6_8 \
-		php-cli-5.3.3-48.el6_8 \
-		php-zts-5.3.3-48.el6_8 \
-		php-pecl-apc-3.1.9-2.el6 \
-		php-pecl-memcached-1.0.0-1.el6 \
+		httpd24u-httpd \
+		httpd24u-httpd-tools \
+		httpd24u-mod_ssl \
+		php56u-fpm \
+		php56u-fpm-httpd \
+		php56u-php-cli \
+		php56u-opcache \
+		php56u-pecl-memcached \
 	&& yum versionlock add \
 		elinks \
-		httpd \
-		mod_ssl \
-		php* \
+		httpd24u* \
+		php56u* \
 	&& rm -rf /var/cache/yum/* \
 	&& yum clean all
 
 # -----------------------------------------------------------------------------
 # Global Apache configuration changes
 # -----------------------------------------------------------------------------
-RUN sed -i \
-	-e 's~^KeepAlive .*$~KeepAlive On~g' \
-	-e 's~^MaxKeepAliveRequests .*$~MaxKeepAliveRequests 200~g' \
-	-e 's~^KeepAliveTimeout .*$~KeepAliveTimeout 2~g' \
-	-e 's~^ServerSignature On$~ServerSignature Off~g' \
-	-e 's~^ServerTokens OS$~ServerTokens Prod~g' \
-	-e 's~^NameVirtualHost \(.*\)$~#NameVirtualHost \1~g' \
-	-e 's~^User .*$~User ${APACHE_RUN_USER}~g' \
-	-e 's~^Group .*$~Group ${APACHE_RUN_GROUP}~g' \
-	-e 's~^DocumentRoot \(.*\)$~#DocumentRoot \1~g' \
-	/etc/httpd/conf/httpd.conf
+RUN cp -pf \
+		/etc/httpd/conf/httpd.conf \
+		/etc/httpd/conf/httpd.conf.default \
+	&& sed -i \
+		-e '/^KeepAlive .*$/d' \
+		-e '/^MaxKeepAliveRequests .*$/d' \
+		-e '/^KeepAliveTimeout .*$/d' \
+		-e '/^ServerSignature On$/d' \
+		-e '/^ServerTokens OS$/d' \
+		-e 's~^NameVirtualHost \(.*\)$~#NameVirtualHost \1~g' \
+		-e 's~^User .*$~User ${APACHE_RUN_USER}~g' \
+		-e 's~^Group .*$~Group ${APACHE_RUN_GROUP}~g' \
+		-e 's~^DocumentRoot \(.*\)$~#DocumentRoot \1~g' \
+		/etc/httpd/conf/httpd.conf
 
 # -----------------------------------------------------------------------------
-# Disable Apache directory indexes
+# Disable Apache directory indexes and welcome page.
 # -----------------------------------------------------------------------------
 RUN sed -i \
-	-e 's~^IndexOptions \(.*\)$~#IndexOptions \1~g' \
-	-e 's~^IndexIgnore \(.*\)$~#IndexIgnore \1~g' \
-	-e 's~^AddIconByEncoding \(.*\)$~#AddIconByEncoding \1~g' \
-	-e 's~^AddIconByType \(.*\)$~#AddIconByType \1~g' \
-	-e 's~^AddIcon \(.*\)$~#AddIcon \1~g' \
-	-e 's~^DefaultIcon \(.*\)$~#DefaultIcon \1~g' \
-	-e 's~^ReadmeName \(.*\)$~#ReadmeName \1~g' \
-	-e 's~^HeaderName \(.*\)$~#HeaderName \1~g' \
-	/etc/httpd/conf/httpd.conf
+		-e 's~^IndexOptions \(.*\)$~#IndexOptions \1~g' \
+		-e 's~^IndexIgnore \(.*\)$~#IndexIgnore \1~g' \
+		-e 's~^AddIconByEncoding \(.*\)$~#AddIconByEncoding \1~g' \
+		-e 's~^AddIconByType \(.*\)$~#AddIconByType \1~g' \
+		-e 's~^AddIcon \(.*\)$~#AddIcon \1~g' \
+		-e 's~^DefaultIcon \(.*\)$~#DefaultIcon \1~g' \
+		-e 's~^ReadmeName \(.*\)$~#ReadmeName \1~g' \
+		-e 's~^HeaderName \(.*\)$~#HeaderName \1~g' \
+		-e 's~^\(Alias /icons/ ".*"\)$~#\1~' \
+		-e '/<Directory "\/var\/www\/icons">/,/#<\/Directory>/ s~^~#~' \
+		/etc/httpd/conf/httpd.conf \
+	&& truncate -s 0 \
+		/etc/httpd/conf.d/autoindex.conf \
+	&& chmod 444 \
+		/etc/httpd/conf.d/autoindex.conf \
+	&& truncate -s 0 \
+		/etc/httpd/conf.d/welcome.conf \
+	&& chmod 444 \
+		/etc/httpd/conf.d/welcome.conf
 
 # -----------------------------------------------------------------------------
 # Disable Apache language based content negotiation
@@ -77,7 +90,6 @@ RUN sed -i \
 # -----------------------------------------------------------------------------
 RUN sed -i \
 	-e 's~^\(LoadModule .*\)$~#\1~g' \
-	-e 's~^\(#LoadModule version_module modules/mod_version.so\)$~\1\n#LoadModule reqtimeout_module modules/mod_reqtimeout.so~g' \
 	-e 's~^#LoadModule mime_module ~LoadModule mime_module ~g' \
 	-e 's~^#LoadModule log_config_module ~LoadModule log_config_module ~g' \
 	-e 's~^#LoadModule setenvif_module ~LoadModule setenvif_module ~g' \
@@ -89,15 +101,11 @@ RUN sed -i \
 	-e 's~^#LoadModule deflate_module ~LoadModule deflate_module ~g' \
 	-e 's~^#LoadModule headers_module ~LoadModule headers_module ~g' \
 	-e 's~^#LoadModule alias_module ~LoadModule alias_module ~g' \
-	/etc/httpd/conf/httpd.conf
-
-# -----------------------------------------------------------------------------
-# Enable ServerStatus access via /_httpdstatus to local client
-# -----------------------------------------------------------------------------
-RUN sed -i \
-	-e '/#<Location \/server-status>/,/#<\/Location>/ s~^#~~' \
-	-e '/<Location \/server-status>/,/<\/Location>/ s~Allow from .example.com~Allow from localhost 127.0.0.1~' \
-	/etc/httpd/conf/httpd.conf
+	-e 's~^#LoadModule version_module ~LoadModule version_module ~g' \
+	/etc/httpd/conf.modules.d/00-base.conf \
+	/etc/httpd/conf.modules.d/00-dav.conf \
+	/etc/httpd/conf.modules.d/00-lua.conf \
+	/etc/httpd/conf.modules.d/00-proxy.conf
 
 # -----------------------------------------------------------------------------
 # Disable the default SSL Virtual Host
@@ -114,11 +122,16 @@ RUN { \
 		echo '#'; \
 		echo '# Custom configuration'; \
 		echo '#'; \
+		echo 'KeepAlive On'; \
+		echo 'MaxKeepAliveRequests 200'; \
+		echo 'KeepAliveTimeout 2'; \
 		echo 'LogFormat \'; \
 		echo '  "%{X-Forwarded-For}i %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\"" \'; \
 		echo '  forwarded_for_combined'; \
 		echo 'Include /etc/services-config/httpd/conf.d/*.conf'; \
 		echo 'Options -Indexes'; \
+		echo 'ServerSignature Off'; \
+		echo 'ServerTokens Prod'; \
 		echo 'TraceEnable Off'; \
 		echo 'UseCanonicalName On'; \
 		echo 'UseCanonicalPhysicalPort On'; \
@@ -147,7 +160,16 @@ RUN { \
 # -----------------------------------------------------------------------------
 # Global PHP configuration changes
 # -----------------------------------------------------------------------------
-RUN sed \
+RUN cp -pf \
+		/etc/php-fpm.conf \
+		/etc/php-fpm.conf.default \
+	&& cp -pf \
+		/etc/php-fpm.d/www.conf \
+		/etc/php-fpm.d/www.conf.default \
+	&& cp -pf \
+		/etc/httpd/conf.d/php-fpm.conf \
+		/etc/httpd/conf.d/php-fpm.conf.default \
+	&& sed \
 		-e 's~^; .*$~~' \
 		-e 's~^;*$~~' \
 		-e '/^$/d' \
@@ -160,17 +182,31 @@ RUN sed \
 		-e 's~^;date.timezone =$~date.timezone = UTC~g' \
 		-e 's~^expose_php = On$~expose_php = Off~g' \
 		/etc/php.d/00-php.ini.default \
-		> /etc/php.d/00-php.ini
-
-# -----------------------------------------------------------------------------
-# APC op-code cache stats
-#	Note there will be 1 cache per process if using mod_fcgid
-# -----------------------------------------------------------------------------
-RUN sed -i \
-	-e "s~'ADMIN_PASSWORD','password'~'ADMIN_PASSWORD','apc!123'~g" \
-	-e "s~'DATE_FORMAT', 'Y/m/d H:i:s'~'DATE_FORMAT', 'Y-m-d H:i:s'~g" \
-	-e "s~php_uname('n');~gethostname();~g" \
-	/usr/share/php-pecl-apc/apc.php
+		> /etc/php.d/00-php.ini \
+	&& sed -i \
+		-e 's~^\[www\]$~[{{APACHE_RUN_USER}}]~' \
+		-e 's~^user = php-fpm$~user = {{APACHE_RUN_USER}}~' \
+		-e 's~^group = php-fpm$~group = {{APACHE_RUN_GROUP}}~' \
+		-e 's~^listen = 127.0.0.1:9000$~;listen = 127.0.0.1:9000~' \
+		-e 's~^;listen = /var/run/php-fpm/www.sock$~listen = /var/run/php-fpm/{{APACHE_RUN_USER}}.sock~' \
+		-e 's~^;listen.owner = root$~listen.owner = {{APACHE_RUN_USER}}~' \
+		-e 's~^;listen.group = root$~listen.group = {{APACHE_RUN_GROUP}}~' \
+		-e 's~^pm.max_children = 50$~pm.max_children = 64~' \
+		-e 's~^slowlog = /var/log/php-fpm/www-slow.log$~slowlog = /var/log/php-fpm/{{APACHE_RUN_USER}}-slow.log~' \
+		-e 's~^\(php_admin_value\[error_log\].*\)$~;\1~' \
+		-e 's~^\(php_admin_flag\[log_errors\].*\)$~;\1~' \
+		-e 's~^\(php_value\[session.save_handler\].*\)$~;\1~' \
+		-e 's~^\(php_value\[session.save_path\].*\)$~;\1~' \
+		-e 's~^\(php_value\[soap.wsdl_cache_dir\].*\)$~;\1~' \
+		-e 's~^;\(pm.status_path = \).*$~\1/status~' \
+		/etc/php-fpm.d/www.conf \
+	&& mv \
+		/etc/php-fpm.d/www.conf \
+		/etc/php-fpm.d/www.conf.template \
+	&& sed -i \
+		-e 's~^\([ \t]*\)\(SetHandler "proxy:fcgi:.*\)$~\1#\2~' \
+		-e 's~^\([ \t]*\)#\(SetHandler "proxy:unix:.*\)$~\1\2~' \
+		/etc/httpd/conf.d/php-fpm.conf
 
 # -----------------------------------------------------------------------------
 # Add default system users
@@ -186,6 +222,7 @@ RUN useradd -r -M -d /var/www/app -s /sbin/nologin app \
 ADD usr/sbin/httpd-bootstrap \
 	usr/sbin/httpd-startup \
 	usr/sbin/httpd-wrapper \
+	usr/sbin/php-fpm-wrapper \
 	/usr/sbin/
 ADD opt/scmi \
 	/opt/scmi/
@@ -226,8 +263,11 @@ RUN mkdir -p \
 	&& ln -sf \
 		/etc/services-config/supervisor/supervisord.d/httpd-wrapper.conf \
 		/etc/supervisord.d/httpd-wrapper.conf \
+	&& ln -sf \
+		/etc/services-config/supervisor/supervisord.d/php-fpm-wrapper.conf \
+		/etc/supervisord.d/php-fpm-wrapper.conf \
 	&& chmod 700 \
-		/usr/sbin/httpd-{bootstrap,startup,wrapper}
+		/usr/sbin/{httpd-{bootstrap,startup,wrapper},php-fpm-wrapper}
 
 # -----------------------------------------------------------------------------
 # Package installation
@@ -241,7 +281,7 @@ RUN mkdir -p -m 750 ${PACKAGE_PATH} \
 		-C ${PACKAGE_PATH} \
 	&& rm -f /tmp/${PACKAGE_NAME}.tar.gz \
 	&& sed -i \
-		-e 's~^description =.*$~description = "This CentOS / Apache / PHP (Standard) service is running in a container."~' \
+		-e 's~^description =.*$~description = "This CentOS / Apache / PHP (PHP-FPM) service is running in a container."~' \
 		${PACKAGE_PATH}/etc/views/index.ini \
 	&& $(\
 		if [[ -f /usr/share/php-pecl-apc/apc.php ]]; then \
@@ -270,7 +310,7 @@ ENV APACHE_CUSTOM_LOG_FORMAT="combined" \
 	APACHE_ERROR_LOG_LEVEL="warn" \
 	APACHE_EXTENDED_STATUS_ENABLED="false" \
 	APACHE_HEADER_X_SERVICE_UID="{{HOSTNAME}}" \
-	APACHE_LOAD_MODULES="authz_user_module log_config_module expires_module deflate_module headers_module setenvif_module mime_module status_module dir_module alias_module" \
+	APACHE_LOAD_MODULES="authz_core_module authz_user_module log_config_module expires_module deflate_module filter_module headers_module setenvif_module socache_shmcb_module mime_module status_module dir_module alias_module unixd_module version_module proxy_module proxy_fcgi_module" \
 	APACHE_MOD_SSL_ENABLED="false" \
 	APACHE_MPM="prefork" \
 	APACHE_OPERATING_MODE="production" \
@@ -291,7 +331,7 @@ ENV APACHE_CUSTOM_LOG_FORMAT="combined" \
 # -----------------------------------------------------------------------------
 # Set image metadata
 # -----------------------------------------------------------------------------
-ARG RELEASE_VERSION="1.8.0"
+ARG RELEASE_VERSION="2.0.0"
 LABEL \
 	install="docker run \
 --rm \
@@ -317,6 +357,6 @@ jdeathe/centos-ssh-apache-php:centos-6-${RELEASE_VERSION} \
 	org.deathe.license="MIT" \
 	org.deathe.vendor="jdeathe" \
 	org.deathe.url="https://github.com/jdeathe/centos-ssh-apache-php" \
-	org.deathe.description="CentOS-6 6.8 x86_64 - Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1."
+	org.deathe.description="CentOS-6 6.8 x86_64 - IUS Apache 2.4, IUS PHP-FPM 5.6, PHP memcached 2.2, Zend Opcache 7.0."
 
 CMD ["/usr/sbin/httpd-startup", "/usr/bin/supervisord", "--configuration=/etc/supervisord.conf"]

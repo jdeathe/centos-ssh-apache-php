@@ -1,1 +1,1 @@
-CentOS-6 6.8 x86_64 / Apache / PHP / PHP memcached / PHP APC.
+CentOS-6 6.8 x86_64 - Apache / PHP-FPM / PHP memcached / Zend OPcache.
