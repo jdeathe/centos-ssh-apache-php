@@ -93,10 +93,10 @@ $ docker run \
   --rm \
   --privileged \
   --volume /:/media/root \
-  jdeathe/centos-ssh-apache-php:centos-6-1.8.0 \
+  jdeathe/centos-ssh-apache-php:centos-6-1.8.1 \
   /usr/sbin/scmi install \
     --chroot=/media/root \
-    --tag=centos-6-1.8.0 \
+    --tag=centos-6-1.8.1 \
     --name=apache-php.pool-1.1.1
 ```
 
@@ -109,10 +109,10 @@ $ docker run \
   --rm \
   --privileged \
   --volume /:/media/root \
-  jdeathe/centos-ssh-apache-php:centos-6-1.8.0 \
+  jdeathe/centos-ssh-apache-php:centos-6-1.8.1 \
   /usr/sbin/scmi uninstall \
     --chroot=/media/root \
-    --tag=centos-6-1.8.0 \
+    --tag=centos-6-1.8.1 \
     --name=apache-php.pool-1.1.1
 ```
 
@@ -125,10 +125,10 @@ $ docker run \
   --rm \
   --privileged \
   --volume /:/media/root \
-  jdeathe/centos-ssh-apache-php:centos-6-1.8.0 \
+  jdeathe/centos-ssh-apache-php:centos-6-1.8.1 \
   /usr/sbin/scmi install \
     --chroot=/media/root \
-    --tag=centos-6-1.8.0 \
+    --tag=centos-6-1.8.1 \
     --name=apache-php.pool-1.1.1 \
     --manager=systemd \
     --register \
@@ -147,11 +147,11 @@ Since release `centos-6-1.7.2` the install template has been added to the image 
 To see detailed information about the image run `scmi` with the `--info` option. To see all available `scmi` options run with the `--help` option.
 
 ```
-$ docker pull jdeathe/centos-ssh-apache-php:centos-6-1.8.0
+$ docker pull jdeathe/centos-ssh-apache-php:centos-6-1.8.1
 $ eval "sudo -E $(
     docker inspect \
     -f "{{.ContainerConfig.Labels.install}}" \
-    jdeathe/centos-ssh-apache-php:centos-6-1.8.0
+    jdeathe/centos-ssh-apache-php:centos-6-1.8.1
   ) --info"
 ```
 
@@ -161,7 +161,7 @@ To perform an installation using the docker name `apache-php.pool-1.2.1` simply 
 $ eval "sudo -E $(
     docker inspect \
     -f "{{.ContainerConfig.Labels.install}}" \
-    jdeathe/centos-ssh-apache-php:centos-6-1.8.0
+    jdeathe/centos-ssh-apache-php:centos-6-1.8.1
   ) --name=apache-php.pool-1.2.1"
 ```
 
@@ -171,7 +171,7 @@ To uninstall use the *same command* that was used to install but with the `unins
 $ eval "sudo -E $(
     docker inspect \
     -f "{{.ContainerConfig.Labels.uninstall}}" \
-    jdeathe/centos-ssh-apache-php:centos-6-1.8.0
+    jdeathe/centos-ssh-apache-php:centos-6-1.8.1
   ) --name=apache-php.pool-1.2.1"
 ```
 
@@ -184,7 +184,7 @@ To see detailed information about the image run `scmi` with the `--info` option.
 ```
 $ sudo -E atomic install \
   -n apache-php.pool-1.3.1 \
-  jdeathe/centos-ssh-apache-php:centos-6-1.8.0 \
+  jdeathe/centos-ssh-apache-php:centos-6-1.8.1 \
   --info
 ```
 
@@ -193,14 +193,14 @@ To perform an installation using the docker name `apache-php.pool-1.3.1` simply 
 ```
 $ sudo -E atomic install \
   -n apache-php.pool-1.3.1 \
-  jdeathe/centos-ssh-apache-php:centos-6-1.8.0
+  jdeathe/centos-ssh-apache-php:centos-6-1.8.1
 ```
 
 Alternatively, you could use the `scmi` options `--name` or `-n` for naming the container.
 
 ```
 $ sudo -E atomic install \
-  jdeathe/centos-ssh-apache-php:centos-6-1.8.0 \
+  jdeathe/centos-ssh-apache-php:centos-6-1.8.1 \
   --name apache-php.pool-1.3.1
 ```
 
@@ -209,7 +209,7 @@ To uninstall use the *same command* that was used to install but with the `unins
 ```
 $ sudo -E atomic uninstall \
   -n apache-php.pool-1.3.1 \
-  jdeathe/centos-ssh-apache-php:centos-6-1.8.0
+  jdeathe/centos-ssh-apache-php:centos-6-1.8.1
 ```
 
 #### Environment Variables
