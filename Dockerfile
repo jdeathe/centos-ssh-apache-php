@@ -140,9 +140,9 @@ RUN { \
 # -----------------------------------------------------------------------------
 # Disable the SSL support by default
 # -----------------------------------------------------------------------------
-RUN mv \
+RUN cat \
 		/etc/httpd/conf.d/ssl.conf \
-		/etc/httpd/conf.d/ssl.conf.off \
+		> /etc/httpd/conf.d/ssl.conf.off \
 	&& touch \
 		/etc/httpd/conf.d/ssl.conf \
 	&& chmod 444 \
@@ -200,9 +200,9 @@ RUN cp -pf \
 		-e 's~^\(php_value\[soap.wsdl_cache_dir\].*\)$~;\1~' \
 		-e 's~^;\(pm.status_path = \).*$~\1/status~' \
 		/etc/php-fpm.d/www.conf \
-	&& mv \
+	&& cat \
 		/etc/php-fpm.d/www.conf \
-		/etc/php-fpm.d/www.conf.template \
+		> /etc/php-fpm.d/www.conf.template \
 	&& sed -i \
 		-e 's~^\([ \t]*\)\(SetHandler "proxy:fcgi:.*\)$~\1#\2~' \
 		-e 's~^\([ \t]*\)#\(SetHandler "proxy:unix:.*\)$~\1\2~' \
