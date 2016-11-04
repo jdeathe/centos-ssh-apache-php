@@ -127,9 +127,9 @@ RUN { \
 # -----------------------------------------------------------------------------
 # Disable the SSL support by default
 # -----------------------------------------------------------------------------
-RUN mv \
+RUN cat \
 		/etc/httpd/conf.d/ssl.conf \
-		/etc/httpd/conf.d/ssl.conf.off \
+		> /etc/httpd/conf.d/ssl.conf.off \
 	&& touch \
 		/etc/httpd/conf.d/ssl.conf \
 	&& chmod 444 \
