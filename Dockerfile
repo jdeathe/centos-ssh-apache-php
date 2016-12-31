@@ -36,6 +36,9 @@ RUN rpm --rebuilddb \
 
 # -----------------------------------------------------------------------------
 # Global Apache configuration changes
+# - Disable Apache directory indexes and welcome page.
+# - Disable Apache language based content negotiation.
+# - Custom Apache configuration.
 # -----------------------------------------------------------------------------
 RUN cp -pf \
 		/etc/httpd/conf/httpd.conf \
@@ -50,12 +53,6 @@ RUN cp -pf \
 		-e 's~^User .*$~User ${APACHE_RUN_USER}~g' \
 		-e 's~^Group .*$~Group ${APACHE_RUN_GROUP}~g' \
 		-e 's~^DocumentRoot \(.*\)$~#DocumentRoot \1~g' \
-		/etc/httpd/conf/httpd.conf
-
-# -----------------------------------------------------------------------------
-# Disable Apache directory indexes and welcome page.
-# -----------------------------------------------------------------------------
-RUN sed -i \
 		-e 's~^IndexOptions \(.*\)$~#IndexOptions \1~g' \
 		-e 's~^IndexIgnore \(.*\)$~#IndexIgnore \1~g' \
 		-e 's~^AddIconByEncoding \(.*\)$~#AddIconByEncoding \1~g' \
@@ -66,6 +63,9 @@ RUN sed -i \
 		-e 's~^HeaderName \(.*\)$~#HeaderName \1~g' \
 		-e 's~^\(Alias /icons/ ".*"\)$~#\1~' \
 		-e '/<Directory "\/var\/www\/icons">/,/#<\/Directory>/ s~^~#~' \
+		-e 's~^LanguagePriority \(.*\)$~#LanguagePriority \1~g' \
+		-e 's~^ForceLanguagePriority \(.*\)$~#ForceLanguagePriority \1~g' \
+		-e 's~^AddLanguage \(.*\)$~#AddLanguage \1~g' \
 		/etc/httpd/conf/httpd.conf \
 	&& truncate -s 0 \
 		/etc/httpd/conf.d/autoindex.conf \
@@ -74,16 +74,26 @@ RUN sed -i \
 	&& truncate -s 0 \
 		/etc/httpd/conf.d/welcome.conf \
 	&& chmod 444 \
-		/etc/httpd/conf.d/welcome.conf
-
-# -----------------------------------------------------------------------------
-# Disable Apache language based content negotiation
-# -----------------------------------------------------------------------------
-RUN sed -i \
-	-e 's~^LanguagePriority \(.*\)$~#LanguagePriority \1~g' \
-	-e 's~^ForceLanguagePriority \(.*\)$~#ForceLanguagePriority \1~g' \
-	-e 's~^AddLanguage \(.*\)$~#AddLanguage \1~g' \
-	/etc/httpd/conf/httpd.conf
+		/etc/httpd/conf.d/welcome.conf \
+	&& { \
+		echo ''; \
+		echo '#'; \
+		echo '# Custom configuration'; \
+		echo '#'; \
+		echo 'KeepAlive On'; \
+		echo 'MaxKeepAliveRequests 200'; \
+		echo 'KeepAliveTimeout 2'; \
+		echo 'LogFormat \'; \
+		echo '  "%{X-Forwarded-For}i %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\"" \'; \
+		echo '  forwarded_for_combined'; \
+		echo 'Include /etc/services-config/httpd/conf.d/*.conf'; \
+		echo 'Options -Indexes'; \
+		echo 'ServerSignature Off'; \
+		echo 'ServerTokens Prod'; \
+		echo 'TraceEnable Off'; \
+		echo 'UseCanonicalName On'; \
+		echo 'UseCanonicalPhysicalPort On'; \
+	} >> /etc/httpd/conf/httpd.conf
 
 # -----------------------------------------------------------------------------
 # Disable all Apache modules and enable the minimum
@@ -106,29 +116,6 @@ RUN sed -i \
 	/etc/httpd/conf.modules.d/00-dav.conf \
 	/etc/httpd/conf.modules.d/00-lua.conf \
 	/etc/httpd/conf.modules.d/00-proxy.conf
-
-# -----------------------------------------------------------------------------
-# Custom Apache configuration
-# -----------------------------------------------------------------------------
-RUN { \
-		echo ''; \
-		echo '#'; \
-		echo '# Custom configuration'; \
-		echo '#'; \
-		echo 'KeepAlive On'; \
-		echo 'MaxKeepAliveRequests 200'; \
-		echo 'KeepAliveTimeout 2'; \
-		echo 'LogFormat \'; \
-		echo '  "%{X-Forwarded-For}i %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\"" \'; \
-		echo '  forwarded_for_combined'; \
-		echo 'Include /etc/services-config/httpd/conf.d/*.conf'; \
-		echo 'Options -Indexes'; \
-		echo 'ServerSignature Off'; \
-		echo 'ServerTokens Prod'; \
-		echo 'TraceEnable Off'; \
-		echo 'UseCanonicalName On'; \
-		echo 'UseCanonicalPhysicalPort On'; \
-	} >> /etc/httpd/conf/httpd.conf
 
 # -----------------------------------------------------------------------------
 # Disable SSL + the default SSL Virtual Host
