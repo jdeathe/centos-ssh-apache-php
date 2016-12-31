@@ -108,13 +108,6 @@ RUN sed -i \
 	/etc/httpd/conf.modules.d/00-proxy.conf
 
 # -----------------------------------------------------------------------------
-# Disable the default SSL Virtual Host
-# -----------------------------------------------------------------------------
-RUN sed -i \
-	-e '/<VirtualHost _default_:443>/,/#<\/VirtualHost>/ s~^~#~' \
-	/etc/httpd/conf.d/ssl.conf
-
-# -----------------------------------------------------------------------------
 # Custom Apache configuration
 # -----------------------------------------------------------------------------
 RUN { \
@@ -138,9 +131,12 @@ RUN { \
 	} >> /etc/httpd/conf/httpd.conf
 
 # -----------------------------------------------------------------------------
-# Disable the SSL support by default
+# Disable SSL + the default SSL Virtual Host
 # -----------------------------------------------------------------------------
-RUN cat \
+RUN sed -i \
+		-e '/<VirtualHost _default_:443>/,/#<\/VirtualHost>/ s~^~#~' \
+		/etc/httpd/conf.d/ssl.conf \
+	&& cat \
 		/etc/httpd/conf.d/ssl.conf \
 		> /etc/httpd/conf.d/ssl.conf.off \
 	&& touch \
