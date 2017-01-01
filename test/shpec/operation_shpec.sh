@@ -53,18 +53,26 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 		docker_terminate_container apache-php.pool-1.1.1 &> /dev/null
 
 		it "Runs an Apache PHP container named apache-php.pool-1.1.1 on port ${DOCKER_PORT_MAP_TCP_80}."
+			local container_hostname=""
 			local container_port_80=""
 			local header_server=""
+			local header_x_service_uid=""
 
 			docker run -d \
 				--name apache-php.pool-1.1.1 \
 				--publish ${DOCKER_PORT_MAP_TCP_80}:80 \
 				jdeathe/centos-ssh-apache-php:latest &> /dev/null
 
+			container_hostname="$(
+				docker exec \
+					apache-php.pool-1.1.1 \
+					hostname
+			)"
+
 			container_port_80="$(
 				docker port \
-				apache-php.pool-1.1.1 \
-				80/tcp
+					apache-php.pool-1.1.1 \
+					80/tcp
 			)"
 			container_port_80=${container_port_80##*:}
 
@@ -88,6 +96,19 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 				)"
 
 				assert equal "${header_server}" "Apache"
+			end
+
+			it "Retuns a X-Service-UID header with the value of the container hostname."
+				header_x_service_uid="$(
+					curl -sI \
+						--header 'Host: app-1.local' \
+						http://127.0.0.1:${container_port_80} \
+					| grep '^X-Service-UID: ' \
+					| cut -c 16- \
+					| tr -d '\r'
+				)"
+
+				assert equal "${header_x_service_uid}" "${container_hostname}"
 			end
 		end
 
