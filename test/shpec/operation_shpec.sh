@@ -85,7 +85,7 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 
 			sleep ${BOOTSTRAP_BACKOFF_TIME}
 
-			it "Retuns a Server header of 'Apache' only."
+			it "Responds with a Server header of 'Apache' only."
 				header_server="$(
 					curl -sI \
 						--header 'Host: app-1.local' \
@@ -98,7 +98,7 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 				assert equal "${header_server}" "Apache"
 			end
 
-			it "Retuns a X-Service-UID header with the value of the container hostname."
+			it "Responds with a X-Service-UID header of the container hostname."
 				header_x_service_uid="$(
 					curl -sI \
 						--header 'Host: app-1.local' \
