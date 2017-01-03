@@ -110,6 +110,166 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 
 				assert equal "${header_x_service_uid}" "${container_hostname}"
 			end
+
+			it "Outputs Apache Details in the docker logs."
+				local apache_details_title=""
+
+				apache_details_title="$(
+					docker logs \
+						apache-php.pool-1.1.1 \
+					| grep '^Apache Details' \
+					| tr -d '\r'
+				)"
+
+				assert equal "${apache_details_title}" "Apache Details"
+
+				it "Includes the system user default (app)."
+					local apache_system_user=""
+
+					apache_system_user="$(
+						docker logs \
+							apache-php.pool-1.1.1 \
+						| grep '^system user : ' \
+						| cut -c 15- \
+						| tr -d '\r'
+					)"
+
+					assert equal "${apache_system_user}" "app"
+				end
+
+				it "Includes the run user default (app-www)."
+					local apache_run_user=""
+
+					apache_run_user="$(
+						docker logs \
+							apache-php.pool-1.1.1 \
+						| grep '^run user : ' \
+						| cut -c 12- \
+						| tr -d '\r'
+					)"
+
+					assert equal "${apache_run_user}" "app-www"
+				end
+
+				it "Includes the run group default (app-www)."
+					local apache_run_group=""
+
+					apache_run_group="$(
+						docker logs \
+							apache-php.pool-1.1.1 \
+						| grep '^run group : ' \
+						| cut -c 13- \
+						| tr -d '\r'
+					)"
+
+					assert equal "${apache_run_group}" "app-www"
+				end
+
+				it "Includes the server name default (app-1.local)."
+					local apache_server_name=""
+
+					apache_server_name="$(
+						docker logs \
+							apache-php.pool-1.1.1 \
+						| grep '^server name : ' \
+						| cut -c 15- \
+						| tr -d '\r'
+					)"
+
+					assert equal "${apache_server_name}" "app-1.local"
+				end
+
+				it "Includes the server alias default (EMPTY)."
+					local apache_server_alias=""
+
+					apache_server_alias="$(
+						docker logs \
+							apache-php.pool-1.1.1 \
+						| grep '^server alias : ' \
+						| cut -c 16- \
+						| tr -d '\r'
+					)"
+
+					assert equal "${apache_server_alias}" ""
+				end
+
+				it "Includes the header x-service-uid default ({{HOSTNAME}} replacement)."
+					local apache_header_x_service_uid=""
+
+					apache_header_x_service_uid="$(
+						docker logs \
+							apache-php.pool-1.1.1 \
+						| grep '^header x-service-uid : ' \
+						| cut -c 24- \
+						| tr -d '\r'
+					)"
+
+					assert equal "${apache_header_x_service_uid}" "${container_hostname}"
+				end
+
+				it "Includes the default document root APACHE_CONTENT_ROOT/APACHE_PUBLIC_DIRECTORY (/var/www/app/public_html)."
+					local apache_document_root=""
+
+					apache_document_root="$(
+						docker logs \
+							apache-php.pool-1.1.1 \
+						| grep '^document root : ' \
+						| cut -c 17- \
+						| tr -d '\r' \
+						| awk '{ print $1 }'
+					)"
+
+					assert equal "${apache_document_root}" "/var/www/app/public_html"
+				end
+
+				# TODO This is included in the logs but not included in the Apache Details.
+				it "Includes the server mpm default (prefork)."
+					local apache_server_mpm=""
+
+					apache_server_mpm="$(
+						docker logs \
+							apache-php.pool-1.1.1 \
+						| grep -o 'Apache Server MPM: .*$' \
+						| cut -c 20- \
+						| awk '{ print tolower($0) }' \
+						| tr -d '\r'
+					)"
+
+					assert equal "${apache_server_mpm}" "prefork"
+				end
+
+				it "Includes the default modules enabled."
+					local apache_load_modules=""
+					local apache_load_modules_details=" - alias_module
+ - authz_core_module
+ - authz_user_module
+ - deflate_module
+ - dir_module
+ - expires_module
+ - filter_module
+ - headers_module
+ - log_config_module
+ - mime_module
+ - proxy_fcgi_module
+ - proxy_module
+ - setenvif_module
+ - socache_shmcb_module
+ - status_module
+ - unixd_module
+ - version_module"
+
+					apache_load_modules="$(
+						docker logs \
+							apache-php.pool-1.1.1 \
+						| sed -ne \
+							'/^modules enabled :/,/^--+$/ p' \
+							| awk '/^ - /'
+					)"
+
+					assert equal "${apache_load_modules}" "${apache_load_modules_details}"
+
+				end
+			end
 		end
 
 		docker_terminate_container apache-php.pool-1.1.1 &> /dev/null
