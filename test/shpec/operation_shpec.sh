@@ -267,8 +267,62 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 					)"
 
 					assert equal "${apache_load_modules}" "${apache_load_modules_details}"
-
 				end
+			end
+
+			it "Logs to the default Apache access log path (/var/www/app/var/log/apache_access_log)."
+				local apache_access_log_entry=""
+				local curl_request_head=""
+
+				curl_get_request="$(
+					curl -s \
+						--header 'Host: app-1.local' \
+						http://127.0.0.1:${container_port_80}
+				)"
+
+				apache_access_log_entry="$(
+					docker exec \
+						apache-php.pool-1.1.1 \
+						tail -n 1 \
+						/var/www/app/var/log/apache_access_log
+				)"
+
+				assert match "${apache_access_log_entry}" ""GET / HTTP/1.1" 200"
+
+				it "Logs using the default LogFormat (combined)."
+					local status_apache_access_log_pattern=""
+
+					docker exec \
+						apache-php.pool-1.1.1 \
+						tail -n 1 \
+						/var/www/app/var/log/apache_access_log \
+					| grep -qE \
+						'^.+ .+ .+ \[.+\] "GET / HTTP/1\.1" 200 .+ ".+" ".*"$'
+
+					status_apache_access_log_pattern=${?}
+
+					assert equal "${status_apache_access_log_pattern}" 0
+				end
+			end
+
+			it "Logs to the default Apache error log path (/var/www/app/var/log/apache_error_log)."
+				local apache_error_log_entry=""
+				local curl_request_head=""
+
+				curl_get_request="$(
+					curl -s \
+						--header 'Host: app-1.local' \
+						http://127.0.0.1:${container_port_80}
+				)"
+
+				apache_error_log_entry="$(
+					docker exec \
+						apache-php.pool-1.1.1 \
+						tail -n 1 \
+						/var/www/app/var/log/apache_error_log
+				)"
+
+				assert equal "${apache_error_log_entry}" ""
 			end
 		end
 
