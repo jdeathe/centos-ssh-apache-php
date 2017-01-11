@@ -337,11 +337,11 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 		trap "docker_terminate_container apache-php.pool-1.1.1 &> /dev/null" \
 			INT TERM EXIT
 
-		docker_terminate_container apache-php.pool-1.1.1 &> /dev/null
-
 		it "Allows configuration with Apache common LogFormat."
 			local curl_get_request=""
 			local status_apache_access_log_pattern=""
+
+			docker_terminate_container apache-php.pool-1.1.1 &> /dev/null
 
 			docker run -d \
 				--name apache-php.pool-1.1.1 \
@@ -369,6 +369,68 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 			status_apache_access_log_pattern=${?}
 
 			assert equal "${status_apache_access_log_pattern}" 0
+		end
+
+		it "Allows configuration with an alternative, relative, access log path."
+			local apache_access_log_entry=""
+			local curl_request_head=""
+
+			docker_terminate_container apache-php.pool-1.1.1 &> /dev/null
+
+			docker run -d \
+				--name apache-php.pool-1.1.1 \
+				--publish ${DOCKER_PORT_MAP_TCP_80}:80 \
+				--env APACHE_CUSTOM_LOG_LOCATION="var/log/access.log" \
+				jdeathe/centos-ssh-apache-php:latest \
+			&> /dev/null
+
+			sleep ${BOOTSTRAP_BACKOFF_TIME}
+
+			curl_get_request="$(
+				curl -s \
+					--header 'Host: app-1.local' \
+					http://127.0.0.1:${container_port_80}
+			)"
+
+			apache_access_log_entry="$(
+				docker exec \
+					apache-php.pool-1.1.1 \
+					tail -n 1 \
+					/var/www/app/var/log/access.log
+			)"
+
+			assert match "${apache_access_log_entry}" ""GET / HTTP/1.1" 200"
+		end
+
+		it "Allows configuration with an alternative, absolute, access log path."
+			local apache_access_log_entry=""
+			local curl_request_head=""
+
+			docker_terminate_container apache-php.pool-1.1.1 &> /dev/null
+
+			docker run -d \
+				--name apache-php.pool-1.1.1 \
+				--publish ${DOCKER_PORT_MAP_TCP_80}:80 \
+				--env APACHE_CUSTOM_LOG_LOCATION="/var/log/httpd/access.log" \
+				jdeathe/centos-ssh-apache-php:latest \
+			&> /dev/null
+
+			sleep ${BOOTSTRAP_BACKOFF_TIME}
+
+			curl_get_request="$(
+				curl -s \
+					--header 'Host: app-1.local' \
+					http://127.0.0.1:${container_port_80}
+			)"
+
+			apache_access_log_entry="$(
+				docker exec \
+					apache-php.pool-1.1.1 \
+					tail -n 1 \
+					/var/log/httpd/access.log
+			)"
+
+			assert match "${apache_access_log_entry}" ""GET / HTTP/1.1" 200"
 		end
 
 		docker_terminate_container apache-php.pool-1.1.1 &> /dev/null
