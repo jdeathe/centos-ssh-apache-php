@@ -61,7 +61,8 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 			docker run -d \
 				--name apache-php.pool-1.1.1 \
 				--publish ${DOCKER_PORT_MAP_TCP_80}:80 \
-				jdeathe/centos-ssh-apache-php:latest &> /dev/null
+				jdeathe/centos-ssh-apache-php:latest \
+			&> /dev/null
 
 			container_hostname="$(
 				docker exec \
@@ -298,7 +299,7 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 						/var/www/app/var/log/apache_access_log \
 					| grep -qE \
 						'^.+ .+ .+ \[.+\] "GET / HTTP/1\.1" 200 .+ ".+" ".*"$' \
-					| &> /dev/null
+					&> /dev/null
 
 					status_apache_access_log_pattern=${?}
 
@@ -346,7 +347,8 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 				--name apache-php.pool-1.1.1 \
 				--publish ${DOCKER_PORT_MAP_TCP_80}:80 \
 				--env APACHE_CUSTOM_LOG_FORMAT="common" \
-				jdeathe/centos-ssh-apache-php:latest &> /dev/null
+				jdeathe/centos-ssh-apache-php:latest \
+			&> /dev/null
 
 			sleep ${BOOTSTRAP_BACKOFF_TIME}
 
@@ -362,7 +364,7 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 				/var/www/app/var/log/apache_access_log \
 			| grep -qE \
 				'^.+ .+ .+ \[.+\] "GET / HTTP/1\.1" 200 .+$' \
-			| &> /dev/null
+			&> /dev/null
 
 			status_apache_access_log_pattern=${?}
 
