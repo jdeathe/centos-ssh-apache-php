@@ -297,7 +297,8 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 						tail -n 1 \
 						/var/www/app/var/log/apache_access_log \
 					| grep -qE \
-						'^.+ .+ .+ \[.+\] "GET / HTTP/1\.1" 200 .+ ".+" ".*"$'
+						'^.+ .+ .+ \[.+\] "GET / HTTP/1\.1" 200 .+ ".+" ".*"$' \
+					| &> /dev/null
 
 					status_apache_access_log_pattern=${?}
 
@@ -307,7 +308,7 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 
 			it "Logs to the default Apache error log path (/var/www/app/var/log/apache_error_log)."
 				local apache_error_log_entry=""
-				local curl_request_head=""
+				local curl_get_request=""
 
 				curl_get_request="$(
 					curl -s \
@@ -324,6 +325,48 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 
 				assert equal "${apache_error_log_entry}" ""
 			end
+		end
+
+		docker_terminate_container apache-php.pool-1.1.1 &> /dev/null
+		trap - \
+			INT TERM EXIT
+	end
+
+	describe "Customised Apache PHP configuration"
+		trap "docker_terminate_container apache-php.pool-1.1.1 &> /dev/null" \
+			INT TERM EXIT
+
+		docker_terminate_container apache-php.pool-1.1.1 &> /dev/null
+
+		it "Allows configuration with Apache common LogFormat."
+			local curl_get_request=""
+			local status_apache_access_log_pattern=""
+
+			docker run -d \
+				--name apache-php.pool-1.1.1 \
+				--publish ${DOCKER_PORT_MAP_TCP_80}:80 \
+				--env APACHE_CUSTOM_LOG_FORMAT="common" \
+				jdeathe/centos-ssh-apache-php:latest &> /dev/null
+
+			sleep ${BOOTSTRAP_BACKOFF_TIME}
+
+			curl_get_request="$(
+				curl -s \
+					--header 'Host: app-1.local' \
+					http://127.0.0.1:${container_port_80}
+			)"
+
+			docker exec \
+				apache-php.pool-1.1.1 \
+				tail -n 1 \
+				/var/www/app/var/log/apache_access_log \
+			| grep -qE \
+				'^.+ .+ .+ \[.+\] "GET / HTTP/1\.1" 200 .+$' \
+			| &> /dev/null
+
+			status_apache_access_log_pattern=${?}
+
+			assert equal "${status_apache_access_log_pattern}" 0
 		end
 
 		docker_terminate_container apache-php.pool-1.1.1 &> /dev/null
