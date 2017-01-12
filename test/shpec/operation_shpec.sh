@@ -273,7 +273,7 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 
 			it "Logs to the default Apache access log path (/var/www/app/var/log/apache_access_log)."
 				local apache_access_log_entry=""
-				local curl_request_head=""
+				local curl_get_request=""
 
 				curl_get_request="$(
 					curl -s \
@@ -310,7 +310,7 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 			end
 
 			it "Logs to the default Apache error log path (/var/www/app/var/log/apache_error_log)."
-				local apache_error_log_entry=""
+				local status_apache_error_log_path=""
 				local curl_get_request=""
 
 				curl_get_request="$(
@@ -319,14 +319,15 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 						http://127.0.0.1:${container_port_80}
 				)"
 
-				apache_error_log_entry="$(
-					docker exec \
-						apache-php.pool-1.1.1 \
-						tail -n 1 \
-						/var/www/app/var/log/apache_error_log
-				)"
+				docker exec \
+					apache-php.pool-1.1.1 \
+					tail -n 1 \
+					/var/www/app/var/log/apache_error_log \
+				&> /dev/null
 
-				assert equal "${apache_error_log_entry}" ""
+				status_apache_error_log_path=${?}
+
+				assert equal "${status_apache_error_log_path}" 0
 			end
 		end
 
@@ -375,7 +376,7 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 
 		it "Allows configuration with an alternative, relative, access log path."
 			local apache_access_log_entry=""
-			local curl_request_head=""
+			local curl_get_request=""
 
 			docker_terminate_container apache-php.pool-1.1.1 &> /dev/null
 
@@ -408,7 +409,7 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 
 		it "Allows configuration with an alternative, absolute, access log path."
 			local apache_access_log_entry=""
-			local curl_request_head=""
+			local curl_get_request=""
 
 			docker_terminate_container apache-php.pool-1.1.1 &> /dev/null
 
@@ -440,8 +441,8 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 		end
 
 		it "Allows configuration with an alternative, relative, error log path."
-			local apache_error_log_entry=""
-			local curl_request_head=""
+			local curl_get_request=""
+			local status_apache_error_log_path=""
 
 			docker_terminate_container apache-php.pool-1.1.1 &> /dev/null
 
@@ -460,19 +461,20 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 					http://127.0.0.1:${container_port_80}
 			)"
 
-			apache_error_log_entry="$(
-				docker exec \
-					apache-php.pool-1.1.1 \
-					tail -n 1 \
-					/var/www/app/var/log/error.log
-			)"
+			docker exec \
+				apache-php.pool-1.1.1 \
+				tail -n 1 \
+				/var/www/app/var/log/error.log \
+			&> /dev/null
 
-			assert equal "${apache_error_log_entry}" ""
+			status_apache_error_log_path=${?}
+
+			assert equal "${status_apache_error_log_path}" 0
 		end
 
 		it "Allows configuration with an alternative, absolute, error log path."
-			local apache_error_log_entry=""
-			local curl_request_head=""
+			local curl_get_request=""
+			local status_apache_error_log_path=""
 
 			docker_terminate_container apache-php.pool-1.1.1 &> /dev/null
 
@@ -491,14 +493,49 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 					http://127.0.0.1:${container_port_80}
 			)"
 
-			apache_error_log_entry="$(
-				docker exec \
-					apache-php.pool-1.1.1 \
-					tail -n 1 \
-					/var/log/httpd/error.log
+			docker exec \
+				apache-php.pool-1.1.1 \
+				tail -n 1 \
+				/var/log/httpd/error.log \
+			&> /dev/null
+
+			status_apache_error_log_path=${?}
+
+			assert equal "${status_apache_error_log_path}" 0
+		end
+
+		it "Allows configuration with an alternative log level."
+			local curl_get_request=""
+			local status_apache_error_log_pattern=""
+
+			docker_terminate_container apache-php.pool-1.1.1 &> /dev/null
+
+			docker run -d \
+				--name apache-php.pool-1.1.1 \
+				--publish ${DOCKER_PORT_MAP_TCP_80}:80 \
+				--env APACHE_ERROR_LOG_LEVEL="debug" \
+				jdeathe/centos-ssh-apache-php:latest \
+			&> /dev/null
+
+			sleep ${BOOTSTRAP_BACKOFF_TIME}
+
+			curl_get_request="$(
+				curl -s \
+					--header 'Host: app-1.local' \
+					http://127.0.0.1:${container_port_80}
 			)"
 
-			assert equal "${apache_error_log_entry}" ""
+			docker exec \
+				apache-php.pool-1.1.1 \
+				tail -n 1 \
+				/var/www/app/var/log/apache_error_log \
+			| grep -qE \
+				' \[.+:debug\] ' \
+			&> /dev/null
+
+			status_apache_error_log_pattern=${?}
+
+			assert equal "${status_apache_error_log_pattern}" 0
 		end
 
 		docker_terminate_container apache-php.pool-1.1.1 &> /dev/null
