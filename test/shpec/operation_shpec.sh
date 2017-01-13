@@ -329,6 +329,69 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 
 				assert equal "${status_apache_error_log_path}" 0
 			end
+
+			it "Apache server-status can be accessed from localhost."
+				local status_apache_server_status_pattern=""
+
+				docker exec \
+					apache-php.pool-1.1.1 \
+					curl -s \
+						http://app-1.local/server-status\?auto \
+				| grep -qE \
+					'^ServerVersion: Apache/2\.[3-4]\.[0-9]+ \(CentOS\)' \
+				&> /dev/null
+
+				status_apache_server_status_pattern=${?}
+
+				assert equal "${status_apache_server_status_pattern}" 0
+
+				it "Excludes information available with ExtendedStatus enabled."
+					local status_apache_server_status_pattern=""
+
+					docker exec \
+						apache-php.pool-1.1.1 \
+						curl -s \
+							http://app-1.local/server-status\?auto \
+					| grep -qE \
+						'^Total Accesses: [0-9]+' \
+					&> /dev/null
+
+					status_apache_server_status_pattern=${?}
+
+					# TODO - ISSUE 291: ExtendedStatus should be off by default.
+					# assert equal "${status_apache_server_status_pattern}" 1
+				end
+
+				it "Prevents remote access to server-status."
+					local status_apache_server_status_pattern=""
+					local curl_get_request=""
+
+					curl -s \
+						--header 'Host: app-1.local' \
+						http://127.0.0.1:${container_port_80}/server-status\?auto \
+					| grep -qE \
+						'^ServerVersion: Apache/2\.[3-4]\.[0-9]+ \(CentOS\)' \
+					&> /dev/null
+
+					status_apache_server_status_pattern=${?}
+
+					assert equal "${status_apache_server_status_pattern}" 1
+
+					it "Responds with a 403 status code."
+						local curl_response_code=""
+
+						curl_response_code="$(
+							curl -s \
+								-o /dev/null \
+								-w "%{http_code}" \
+								--header 'Host: app-1.local' \
+								http://127.0.0.1:${container_port_80}/server-status\?auto
+						)"
+
+						assert equal "${curl_response_code}" "403"
+					end
+				end
+			end
 		end
 
 		docker_terminate_container apache-php.pool-1.1.1 &> /dev/null
@@ -536,6 +599,63 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 			status_apache_error_log_pattern=${?}
 
 			assert equal "${status_apache_error_log_pattern}" 0
+		end
+
+		it "Allows extended server-status to be enabled and accessed from localhost."
+			local status_apache_server_status_pattern=""
+
+			docker_terminate_container apache-php.pool-1.1.1 &> /dev/null
+
+			docker run -d \
+				--name apache-php.pool-1.1.1 \
+				--publish ${DOCKER_PORT_MAP_TCP_80}:80 \
+				--env APACHE_EXTENDED_STATUS_ENABLED="true" \
+				jdeathe/centos-ssh-apache-php:latest \
+			&> /dev/null
+
+			sleep ${BOOTSTRAP_BACKOFF_TIME}
+
+			docker exec \
+				apache-php.pool-1.1.1 \
+				curl -s \
+					http://app-1.local/server-status\?auto \
+			| grep -qE \
+				'^Total Accesses: [0-9]+' \
+			&> /dev/null
+
+			status_apache_server_status_pattern=${?}
+
+			assert equal "${status_apache_server_status_pattern}" 0
+
+			it "Prevents remote access to server-status."
+				local status_apache_server_status_pattern=""
+				local curl_get_request=""
+
+				curl -s \
+					--header 'Host: app-1.local' \
+					http://127.0.0.1:${container_port_80}/server-status\?auto \
+				| grep -qE \
+					'^Total Accesses: [0-9]+' \
+				&> /dev/null
+
+				status_apache_server_status_pattern=${?}
+
+				assert equal "${status_apache_server_status_pattern}" 1
+
+				it "Responds with a 403 status code."
+					local curl_response_code=""
+
+					curl_response_code="$(
+						curl -s \
+							-o /dev/null \
+							-w "%{http_code}" \
+							--header 'Host: app-1.local' \
+							http://127.0.0.1:${container_port_80}/server-status\?auto
+					)"
+
+					assert equal "${curl_response_code}" "403"
+				end
+			end
 		end
 
 		docker_terminate_container apache-php.pool-1.1.1 &> /dev/null
