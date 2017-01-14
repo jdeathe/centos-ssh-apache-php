@@ -682,6 +682,33 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 			)"
 
 			assert equal "${header_x_service_uid}" "host-name@1.2"
+
+			it "Allows the {{HOSTNAME}} placeholder to be included in the value."
+				local header_x_service_uid=""
+
+				docker_terminate_container apache-php.pool-1.1.1 &> /dev/null
+
+				docker run -d \
+					--name apache-php.pool-1.1.1 \
+					--publish ${DOCKER_PORT_MAP_TCP_80}:80 \
+					--env APACHE_HEADER_X_SERVICE_UID="{{HOSTNAME}}:${DOCKER_PORT_MAP_TCP_80}" \
+					--hostname app-1.local \
+					jdeathe/centos-ssh-apache-php:latest \
+				&> /dev/null
+
+				sleep ${BOOTSTRAP_BACKOFF_TIME}
+
+				header_x_service_uid="$(
+					curl -sI \
+						--header 'Host: app-1.local' \
+						http://127.0.0.1:${container_port_80} \
+					| grep '^X-Service-UID: ' \
+					| cut -c 16- \
+					| tr -d '\r'
+				)"
+
+				assert equal "${header_x_service_uid}" "app-1.local:${DOCKER_PORT_MAP_TCP_80}"
+			end
 		end
 
 		docker_terminate_container apache-php.pool-1.1.1 &> /dev/null
