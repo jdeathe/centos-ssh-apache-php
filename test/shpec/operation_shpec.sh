@@ -773,6 +773,40 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 			assert equal "${status_apache_module_loaded}" 0
 		end
 
+		it "Allows mod_ssl to be enabled."
+			local container_port_443=""
+			local curl_response_code=""
+
+			docker_terminate_container apache-php.pool-1.1.1 &> /dev/null
+
+			docker run -d \
+				--name apache-php.pool-1.1.1 \
+				--publish ${DOCKER_PORT_MAP_TCP_443}:443 \
+				--env APACHE_MOD_SSL_ENABLED="true" \
+				--hostname app-1.local \
+				jdeathe/centos-ssh-apache-php:latest \
+			&> /dev/null
+
+			container_port_443="$(
+				docker port \
+					apache-php.pool-1.1.1 \
+					443/tcp
+			)"
+			container_port_443=${container_port_443##*:}
+
+			sleep ${BOOTSTRAP_BACKOFF_TIME}
+
+			curl_response_code="$(
+				curl -ks \
+					-o /dev/null \
+					-w "%{http_code}" \
+					--header 'Host: app-1.local' \
+					https://127.0.0.1:${container_port_443}
+			)"
+
+			assert equal "${curl_response_code}" "200"
+		end
+
 		docker_terminate_container apache-php.pool-1.1.1 &> /dev/null
 		trap - \
 			INT TERM EXIT
