@@ -807,6 +807,29 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 			assert equal "${curl_response_code}" "200"
 		end
 
+		it "Allows configuration of an alternative Apache MPM (event)."
+			local status_apache_mpm_changed=""
+
+			docker_terminate_container apache-php.pool-1.1.1 &> /dev/null
+
+			docker run -d \
+				--name apache-php.pool-1.1.1 \
+				--env APACHE_MPM="event" \
+				--hostname app-1.local \
+				jdeathe/centos-ssh-apache-php:latest \
+			&> /dev/null
+
+			sleep ${BOOTSTRAP_BACKOFF_TIME}
+
+			docker exec \
+				apache-php.pool-1.1.1 \
+				bash -c "apachectl -V | grep -qE '^Server MPM:[ ]+event$'"
+
+			status_apache_mpm_changed=${?}
+
+			assert equal "${status_apache_mpm_changed}" 0
+		end
+
 		docker_terminate_container apache-php.pool-1.1.1 &> /dev/null
 		trap - \
 			INT TERM EXIT
