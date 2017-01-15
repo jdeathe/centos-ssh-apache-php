@@ -392,6 +392,45 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 					end
 				end
 			end
+
+			it "Loads all the required Apache modules."
+				readonly required_apache_modules="authz_core_module authz_user_module log_config_module expires_module deflate_module filter_module headers_module setenvif_module socache_shmcb_module mime_module status_module dir_module alias_module unixd_module version_module proxy_module proxy_fcgi_module"
+				readonly other_required_apache_modules="core_module so_module http_module authz_host_module mpm_prefork_module ssl_module cgi_module"
+				local status_apache_modules_loaded=0
+
+				for module in ${required_apache_modules}; do
+					docker exec \
+						apache-php.pool-1.1.1 \
+						bash -c "apachectl -M | grep -q ${module}"
+
+					status_apache_modules_loaded=$((
+						status_apache_modules_loaded + ${?}
+					))
+				done
+
+				assert equal "${status_apache_modules_loaded}" 0
+
+				it "Loads only the required Apache modules."
+					local all_required_apache_modules="${required_apache_modules} ${other_required_apache_modules}"
+					local all_loaded_apache_modules=""
+					local status_minimal_apache_modules_loaded=""
+
+					all_loaded_apache_modules="$(
+						docker exec \
+							apache-php.pool-1.1.1 \
+							bash -c "apachectl -M | sed -e '/Loaded Modules:/d' -e 's~^ *\([a-z_]*\).*~\1~g'"
+					)"
+
+					for module in ${all_loaded_apache_modules}; do
+						if [[ ! "${all_required_apache_modules}" =~ "${module}" ]]; then
+							status_minimal_apache_modules_loaded=1
+							break
+						fi
+					done
+
+					assert unequal "${status_minimal_apache_modules_loaded}" 1
+				end
+			end
 		end
 
 		docker_terminate_container apache-php.pool-1.1.1 &> /dev/null
@@ -709,6 +748,29 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 
 				assert equal "${header_x_service_uid}" "app-1.local:${DOCKER_PORT_MAP_TCP_80}"
 			end
+		end
+
+		it "Allows loading of additional Apache modules (e.g. rewrite_module)."
+			local status_apache_module_loaded=""
+
+			docker_terminate_container apache-php.pool-1.1.1 &> /dev/null
+
+			docker run -d \
+				--name apache-php.pool-1.1.1 \
+				--publish ${DOCKER_PORT_MAP_TCP_80}:80 \
+				--env APACHE_LOAD_MODULES="authz_core_module authz_user_module log_config_module expires_module deflate_module filter_module headers_module setenvif_module socache_shmcb_module mime_module status_module dir_module alias_module unixd_module version_module proxy_module proxy_fcgi_module rewrite_module" \
+				jdeathe/centos-ssh-apache-php:latest \
+			&> /dev/null
+
+			sleep ${BOOTSTRAP_BACKOFF_TIME}
+
+			docker exec \
+				apache-php.pool-1.1.1 \
+				bash -c "apachectl -M | grep -q rewrite_module"
+
+			status_apache_module_loaded=${?}
+
+			assert equal "${status_apache_module_loaded}" 0
 		end
 
 		docker_terminate_container apache-php.pool-1.1.1 &> /dev/null
