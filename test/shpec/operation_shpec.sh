@@ -830,6 +830,33 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 			assert equal "${status_apache_mpm_changed}" 0
 		end
 
+		it "Allows configuration of the Apache internal variable for operating mode."
+			local header_x_service_operating_mode=""
+
+			docker_terminate_container apache-php.pool-1.1.1 &> /dev/null
+
+			docker run -d \
+				--name apache-php.pool-1.1.1 \
+				--publish ${DOCKER_PORT_MAP_TCP_80}:80 \
+				--env APACHE_OPERATING_MODE="development" \
+				--hostname app-1.local \
+				jdeathe/centos-ssh-apache-php:latest \
+			&> /dev/null
+
+			sleep ${BOOTSTRAP_BACKOFF_TIME}
+
+			header_x_service_operating_mode="$(
+				curl -sI \
+					--header 'Host: app-1.local' \
+					http://127.0.0.1:${container_port_80} \
+				| grep '^X-Service-Operating-Mode: ' \
+				| cut -c 27- \
+				| tr -d '\r'
+			)"
+
+			assert equal "${header_x_service_operating_mode}" "development"
+		end
+
 		docker_terminate_container apache-php.pool-1.1.1 &> /dev/null
 		trap - \
 			INT TERM EXIT
