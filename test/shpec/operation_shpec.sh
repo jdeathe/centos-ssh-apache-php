@@ -431,6 +431,21 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 					assert unequal "${status_minimal_apache_modules_loaded}" 1
 				end
 			end
+
+			it "Runs Apache using the default user:group (app-www:app-www)."
+				local apache_run_user_group=""
+
+				apache_run_user_group="$(
+					docker exec \
+						apache-php.pool-1.1.1 \
+						ps axo user,group,comm \
+					| grep httpd \
+					| tail -n 1 \
+					| awk '{ print $1":"$2 }'
+				)"
+
+				assert equal "${apache_run_user_group}" "app-www:app-www"
+			end
 		end
 
 		docker_terminate_container apache-php.pool-1.1.1 &> /dev/null
@@ -890,6 +905,57 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 			status_header_x_service_uid=${?}
 
 			assert equal "${status_header_x_service_uid}" 0
+		end
+
+		it "Allows configuration of the user used to run Apache."
+			local apache_run_user=""
+
+			docker_terminate_container apache-php.pool-1.1.1 &> /dev/null
+
+			docker run -d \
+				--name apache-php.pool-1.1.1 \
+				--env APACHE_RUN_USER="ausr" \
+				jdeathe/centos-ssh-apache-php:latest \
+			&> /dev/null
+
+			sleep ${BOOTSTRAP_BACKOFF_TIME}
+
+			apache_run_user="$(
+				docker exec \
+					apache-php.pool-1.1.1 \
+					ps axo user,group,comm \
+				| grep httpd \
+				| tail -n 1 \
+				| awk '{ print $1 }'
+			)"
+
+			assert equal "${apache_run_user}" "ausr"
+		end
+
+		it "Allows configuration of the group used to run Apache."
+			local apache_run_group=""
+
+			docker_terminate_container apache-php.pool-1.1.1 &> /dev/null
+
+			docker run -d \
+				--name apache-php.pool-1.1.1 \
+				--env APACHE_RUN_GROUP="agrp" \
+				jdeathe/centos-ssh-apache-php:latest \
+			&> /dev/null
+
+			sleep ${BOOTSTRAP_BACKOFF_TIME}
+
+			apache_run_group="$(
+				docker exec \
+					apache-php.pool-1.1.1 \
+					ps axo user,group,comm \
+				| grep httpd \
+				| tail -n 1 \
+				| awk '{ print $2 }'
+			)"
+
+			# TODO - ISSUE 293: Setting APACHE_RUN_GROUP ineffective.
+			# assert equal "${apache_run_group}" "agrp"
 		end
 
 		docker_terminate_container apache-php.pool-1.1.1 &> /dev/null
