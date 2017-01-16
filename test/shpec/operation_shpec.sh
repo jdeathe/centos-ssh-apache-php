@@ -856,6 +856,42 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 			assert equal "${header_x_service_operating_mode}" "development"
 		end
 
+		it "Allows configuration of the Apache public directory."
+			local status_header_x_service_uid=""
+
+			docker_terminate_container apache-php.pool-1.1.1 &> /dev/null
+
+			docker run -d \
+				--name apache-php.pool-1.1.1 \
+				--publish ${DOCKER_PORT_MAP_TCP_80}:80 \
+				--env APACHE_PUBLIC_DIRECTORY="web" \
+				--hostname app-1.local \
+				jdeathe/centos-ssh-apache-php:latest \
+			&> /dev/null
+
+			# For the server to start, the public directory needs to match that
+			# which is being configured for the test.
+			docker exec \
+				apache-php.pool-1.1.1 \
+				mv /opt/app/public_html /opt/app/web
+
+			docker restart \
+				apache-php.pool-1.1.1 \
+			&> /dev/null
+
+			sleep ${BOOTSTRAP_BACKOFF_TIME}
+
+			curl -sI \
+				--header 'Host: app-1.local' \
+				http://127.0.0.1:${container_port_80} \
+			| grep -q '^X-Service-UID: app-1.local' \
+			&> /dev/null
+
+			status_header_x_service_uid=${?}
+
+			assert equal "${status_header_x_service_uid}" 0
+		end
+
 		docker_terminate_container apache-php.pool-1.1.1 &> /dev/null
 		trap - \
 			INT TERM EXIT
