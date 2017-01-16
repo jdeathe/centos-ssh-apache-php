@@ -757,7 +757,6 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 
 			docker run -d \
 				--name apache-php.pool-1.1.1 \
-				--publish ${DOCKER_PORT_MAP_TCP_80}:80 \
 				--env APACHE_LOAD_MODULES="authz_core_module authz_user_module log_config_module expires_module deflate_module filter_module headers_module setenvif_module socache_shmcb_module mime_module status_module dir_module alias_module unixd_module version_module proxy_module proxy_fcgi_module rewrite_module" \
 				jdeathe/centos-ssh-apache-php:latest \
 			&> /dev/null
