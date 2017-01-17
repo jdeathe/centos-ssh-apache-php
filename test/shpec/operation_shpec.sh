@@ -271,7 +271,7 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 				end
 			end
 
-			it "Logs to the default Apache access log path (/var/www/app/var/log/apache_access_log)."
+			it "Logs to the default access log path (/var/www/app/var/log/apache_access_log)."
 				local apache_access_log_entry=""
 				local curl_get_request=""
 
@@ -309,7 +309,7 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 				end
 			end
 
-			it "Logs to the default Apache error log path (/var/www/app/var/log/apache_error_log)."
+			it "Logs to the default error log path (/var/www/app/var/log/apache_error_log)."
 				local status_apache_error_log_path=""
 				local curl_get_request=""
 
@@ -432,7 +432,7 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 				end
 			end
 
-			it "Runs Apache using the default user:group (app-www:app-www)."
+			it "Runs the using the default user:group (app-www:app-www)."
 				local apache_run_user_group=""
 
 				apache_run_user_group="$(
@@ -457,7 +457,7 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 		trap "docker_terminate_container apache-php.pool-1.1.1 &> /dev/null" \
 			INT TERM EXIT
 
-		it "Allows configuration with Apache common LogFormat."
+		it "Allows configuration of access logs written in common LogFormat."
 			local curl_get_request=""
 			local status_apache_access_log_pattern=""
 
@@ -491,7 +491,7 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 			assert equal "${status_apache_access_log_pattern}" 0
 		end
 
-		it "Allows configuration with an alternative, relative, access log path."
+		it "Allows configuration of an alternative, relative, access log path."
 			local apache_access_log_entry=""
 			local curl_get_request=""
 
@@ -524,7 +524,7 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 			assert equal "${apache_access_log_entry}" "\"GET / HTTP/1.1\" 200"
 		end
 
-		it "Allows configuration with an alternative, absolute, access log path."
+		it "Allows configuration of an alternative, absolute, access log path."
 			local apache_access_log_entry=""
 			local curl_get_request=""
 
@@ -557,7 +557,7 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 			assert equal "${apache_access_log_entry}" "\"GET / HTTP/1.1\" 200"
 		end
 
-		it "Allows configuration with an alternative, relative, error log path."
+		it "Allows configuration of an alternative, relative, error log path."
 			local curl_get_request=""
 			local status_apache_error_log_path=""
 
@@ -589,7 +589,7 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 			assert equal "${status_apache_error_log_path}" 0
 		end
 
-		it "Allows configuration with an alternative, absolute, error log path."
+		it "Allows configuration of an alternative, absolute, error log path."
 			local curl_get_request=""
 			local status_apache_error_log_path=""
 
@@ -621,7 +621,7 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 			assert equal "${status_apache_error_log_path}" 0
 		end
 
-		it "Allows configuration with an alternative log level."
+		it "Allows configuration with an alternative log level (e.g debug)."
 			local curl_get_request=""
 			local status_apache_error_log_pattern=""
 
@@ -712,7 +712,7 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 			end
 		end
 
-		it "Allows the header X-Service-UID to be set to a string value."
+		it "Allows configuration of the X-Service-UID header."
 			local header_x_service_uid=""
 
 			docker_terminate_container apache-php.pool-1.1.1 &> /dev/null
@@ -765,7 +765,7 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 			end
 		end
 
-		it "Allows loading of additional Apache modules (e.g. rewrite_module)."
+		it "Allows for loading of additional modules (e.g. rewrite_module)."
 			local status_apache_module_loaded=""
 
 			docker_terminate_container apache-php.pool-1.1.1 &> /dev/null
@@ -787,7 +787,7 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 			assert equal "${status_apache_module_loaded}" 0
 		end
 
-		it "Allows ssl_module to be enabled to accept encrypted requests (https)."
+		it "Allows ssl_module to be enabled to accept encrypted requests (i.e https)."
 			local container_port_443=""
 			local curl_response_code=""
 
@@ -821,7 +821,7 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 			assert equal "${curl_response_code}" "200"
 		end
 
-		it "Allows configuration of an alternative Apache MPM (event)."
+		it "Allows configuration of an alternative MPM (e.g. event)."
 			local status_apache_mpm_changed=""
 
 			docker_terminate_container apache-php.pool-1.1.1 &> /dev/null
@@ -844,7 +844,7 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 			assert equal "${status_apache_mpm_changed}" 0
 		end
 
-		it "Allows configuration of the Apache internal variable for operating mode."
+		it "Allows configuration of the operating mode internal variable (i.e -D development)."
 			local header_x_service_operating_mode=""
 
 			docker_terminate_container apache-php.pool-1.1.1 &> /dev/null
@@ -871,7 +871,81 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 			assert equal "${header_x_service_operating_mode}" "development"
 		end
 
-		it "Allows configuration of the ServerName."
+		it "Allows configuration of the system user (i.e. application owner)."
+			local apache_system_user=""
+
+			docker_terminate_container apache-php.pool-1.1.1 &> /dev/null
+
+			docker run -d \
+				--name apache-php.pool-1.1.1 \
+				--env APACHE_SYSTEM_USER="app-user" \
+				jdeathe/centos-ssh-apache-php:latest \
+			&> /dev/null
+
+			sleep ${BOOTSTRAP_BACKOFF_TIME}
+
+			apache_system_user="$(
+				docker exec \
+					apache-php.pool-1.1.1 \
+					stat -c '%U' /var/www/app/public_html
+			)"
+
+			assert equal "${apache_system_user}" "app-user"
+		end
+
+		it "Allows configuration of the run user (i.e. process runner user)."
+			local apache_run_user=""
+
+			docker_terminate_container apache-php.pool-1.1.1 &> /dev/null
+
+			docker run -d \
+				--name apache-php.pool-1.1.1 \
+				--env APACHE_RUN_USER="runner" \
+				jdeathe/centos-ssh-apache-php:latest \
+			&> /dev/null
+
+			sleep ${BOOTSTRAP_BACKOFF_TIME}
+
+			apache_run_user="$(
+				docker exec \
+					apache-php.pool-1.1.1 \
+					ps axo user,group,comm \
+				| grep httpd \
+				| tail -n 1 \
+				| awk '{ print $1 }'
+			)"
+
+			# TODO - ISSUE 293: Setting APACHE_RUN_GROUP ineffective.
+			# assert equal "${apache_run_user}" "runner"
+		end
+
+		it "Allows configuration of the run group (i.e. process runner's group)."
+			local apache_run_group=""
+
+			docker_terminate_container apache-php.pool-1.1.1 &> /dev/null
+
+			docker run -d \
+				--name apache-php.pool-1.1.1 \
+				--env APACHE_RUN_GROUP="runners" \
+				jdeathe/centos-ssh-apache-php:latest \
+			&> /dev/null
+
+			sleep ${BOOTSTRAP_BACKOFF_TIME}
+
+			apache_run_group="$(
+				docker exec \
+					apache-php.pool-1.1.1 \
+					ps axo user,group,comm \
+				| grep httpd \
+				| tail -n 1 \
+				| awk '{ print $2 }'
+			)"
+
+			# TODO - ISSUE 293: Setting APACHE_RUN_GROUP ineffective.
+			# assert equal "${apache_run_group}" "runners"
+		end
+
+		it "Allows configuration of the ServerName (e.g test.local)."
 			local curl_response_code_default=""
 			local curl_response_code_server_named=""
 
@@ -935,7 +1009,7 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 
 			assert equal "${curl_response_code_default}:${curl_response_code_server_named}" "403:200"
 
-			it "Allows configuration of a ServerAlias."
+			it "Allows configuration of a ServerAlias (e.g www.test.local)."
 				local curl_response_code_server_alias=""
 
 				curl_response_code_server_alias="$(
@@ -950,7 +1024,7 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 			end
 		end
 
-		it "Allows configuration of the Apache public directory."
+		it "Allows configuration of the public directory (e.g web)."
 			local status_header_x_service_uid=""
 
 			docker_terminate_container apache-php.pool-1.1.1 &> /dev/null
@@ -984,80 +1058,6 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 			status_header_x_service_uid=${?}
 
 			assert equal "${status_header_x_service_uid}" 0
-		end
-
-		it "Allows configuration of the system user."
-			local apache_system_user=""
-
-			docker_terminate_container apache-php.pool-1.1.1 &> /dev/null
-
-			docker run -d \
-				--name apache-php.pool-1.1.1 \
-				--env APACHE_SYSTEM_USER="app-user" \
-				jdeathe/centos-ssh-apache-php:latest \
-			&> /dev/null
-
-			sleep ${BOOTSTRAP_BACKOFF_TIME}
-
-			apache_system_user="$(
-				docker exec \
-					apache-php.pool-1.1.1 \
-					stat -c '%U' /var/www/app/public_html
-			)"
-
-			assert equal "${apache_system_user}" "app-user"
-		end
-
-		it "Allows configuration of the user used to run Apache."
-			local apache_run_user=""
-
-			docker_terminate_container apache-php.pool-1.1.1 &> /dev/null
-
-			docker run -d \
-				--name apache-php.pool-1.1.1 \
-				--env APACHE_RUN_USER="runner" \
-				jdeathe/centos-ssh-apache-php:latest \
-			&> /dev/null
-
-			sleep ${BOOTSTRAP_BACKOFF_TIME}
-
-			apache_run_user="$(
-				docker exec \
-					apache-php.pool-1.1.1 \
-					ps axo user,group,comm \
-				| grep httpd \
-				| tail -n 1 \
-				| awk '{ print $1 }'
-			)"
-
-			# TODO - ISSUE 293: Setting APACHE_RUN_GROUP ineffective.
-			# assert equal "${apache_run_user}" "runner"
-		end
-
-		it "Allows configuration of the group used to run Apache."
-			local apache_run_group=""
-
-			docker_terminate_container apache-php.pool-1.1.1 &> /dev/null
-
-			docker run -d \
-				--name apache-php.pool-1.1.1 \
-				--env APACHE_RUN_GROUP="runners" \
-				jdeathe/centos-ssh-apache-php:latest \
-			&> /dev/null
-
-			sleep ${BOOTSTRAP_BACKOFF_TIME}
-
-			apache_run_group="$(
-				docker exec \
-					apache-php.pool-1.1.1 \
-					ps axo user,group,comm \
-				| grep httpd \
-				| tail -n 1 \
-				| awk '{ print $2 }'
-			)"
-
-			# TODO - ISSUE 293: Setting APACHE_RUN_GROUP ineffective.
-			# assert equal "${apache_run_group}" "runners"
 		end
 
 		docker_terminate_container apache-php.pool-1.1.1 &> /dev/null
