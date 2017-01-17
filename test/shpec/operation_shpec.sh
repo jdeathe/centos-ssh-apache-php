@@ -787,7 +787,7 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 			assert equal "${status_apache_module_loaded}" 0
 		end
 
-		it "Allows mod_ssl to be enabled."
+		it "Allows ssl_module to be enabled to accept encrypted requests (https)."
 			local container_port_443=""
 			local curl_response_code=""
 
