@@ -986,6 +986,28 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 			assert equal "${status_header_x_service_uid}" 0
 		end
 
+		it "Allows configuration of the system user."
+			local apache_system_user=""
+
+			docker_terminate_container apache-php.pool-1.1.1 &> /dev/null
+
+			docker run -d \
+				--name apache-php.pool-1.1.1 \
+				--env APACHE_SYSTEM_USER="app-user" \
+				jdeathe/centos-ssh-apache-php:latest \
+			&> /dev/null
+
+			sleep ${BOOTSTRAP_BACKOFF_TIME}
+
+			apache_system_user="$(
+				docker exec \
+					apache-php.pool-1.1.1 \
+					stat -c '%U' /var/www/app/public_html
+			)"
+
+			assert equal "${apache_system_user}" "app-user"
+		end
+
 		it "Allows configuration of the user used to run Apache."
 			local apache_run_user=""
 
@@ -993,7 +1015,7 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 
 			docker run -d \
 				--name apache-php.pool-1.1.1 \
-				--env APACHE_RUN_USER="ausr" \
+				--env APACHE_RUN_USER="runner" \
 				jdeathe/centos-ssh-apache-php:latest \
 			&> /dev/null
 
@@ -1009,7 +1031,7 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 			)"
 
 			# TODO - ISSUE 293: Setting APACHE_RUN_GROUP ineffective.
-			# assert equal "${apache_run_user}" "ausr"
+			# assert equal "${apache_run_user}" "runner"
 		end
 
 		it "Allows configuration of the group used to run Apache."
@@ -1019,7 +1041,7 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 
 			docker run -d \
 				--name apache-php.pool-1.1.1 \
-				--env APACHE_RUN_GROUP="agrp" \
+				--env APACHE_RUN_GROUP="runners" \
 				jdeathe/centos-ssh-apache-php:latest \
 			&> /dev/null
 
@@ -1035,7 +1057,7 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 			)"
 
 			# TODO - ISSUE 293: Setting APACHE_RUN_GROUP ineffective.
-			# assert equal "${apache_run_group}" "agrp"
+			# assert equal "${apache_run_group}" "runners"
 		end
 
 		docker_terminate_container apache-php.pool-1.1.1 &> /dev/null
