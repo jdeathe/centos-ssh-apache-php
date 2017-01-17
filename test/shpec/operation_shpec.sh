@@ -968,6 +968,7 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 				--name apache-php.pool-1.1.1 \
 				--publish ${DOCKER_PORT_MAP_TCP_80}:80 \
 				--env APACHE_SERVER_NAME="test.local" \
+				--env APACHE_SERVER_ALIAS="www.test.local" \
 				jdeathe/centos-ssh-apache-php:latest \
 			&> /dev/null
 
@@ -1020,6 +1021,20 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 			)"
 
 			assert equal "${curl_response_code_default}:${curl_response_code_server_named}" "403:200"
+
+			it "Allows configuration of a ServerAlias."
+				local curl_response_code_server_alias=""
+
+				curl_response_code_server_alias="$(
+					curl -s \
+						-o /dev/null \
+						-w "%{http_code}" \
+						--header 'Host: www.test.local' \
+						http://127.0.0.1:${container_port_80}
+				)"
+
+				assert equal "${curl_response_code_server_alias}" "200"
+			end
 		end
 
 		docker_terminate_container apache-php.pool-1.1.1 &> /dev/null
