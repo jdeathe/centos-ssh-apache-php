@@ -50,7 +50,9 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 		trap "docker_terminate_container apache-php.pool-1.1.1 &> /dev/null" \
 			INT TERM EXIT
 
-		docker_terminate_container apache-php.pool-1.1.1 &> /dev/null
+		docker_terminate_container \
+			apache-php.pool-1.1.1 \
+		&> /dev/null
 
 		it "Runs an Apache PHP container named apache-php.pool-1.1.1 on port ${DOCKER_PORT_MAP_TCP_80}."
 			local container_hostname=""
@@ -79,9 +81,13 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 
 			if [[ ${DOCKER_PORT_MAP_TCP_80} == 0 ]] \
 				|| [[ -z ${DOCKER_PORT_MAP_TCP_80} ]]; then
-				assert gt "${container_port_80}" "30000"
+				assert gt \
+					"${container_port_80}" \
+					"30000"
 			else
-				assert equal "${container_port_80}" "${DOCKER_PORT_MAP_TCP_80}"
+				assert equal \
+					"${container_port_80}" \
+					"${DOCKER_PORT_MAP_TCP_80}"
 			fi
 
 			sleep ${BOOTSTRAP_BACKOFF_TIME}
@@ -96,7 +102,9 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 					| tr -d '\r'
 				)"
 
-				assert equal "${header_server}" "Apache"
+				assert equal \
+					"${header_server}" \
+					"Apache"
 			end
 
 			it "Responds with a X-Service-UID header of the container hostname."
@@ -109,7 +117,9 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 					| tr -d '\r'
 				)"
 
-				assert equal "${header_x_service_uid}" "${container_hostname}"
+				assert equal \
+					"${header_x_service_uid}" \
+					"${container_hostname}"
 			end
 
 			it "Outputs Apache Details in the docker logs."
@@ -122,7 +132,9 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 					| tr -d '\r'
 				)"
 
-				assert equal "${apache_details_title}" "Apache Details"
+				assert equal \
+					"${apache_details_title}" \
+					"Apache Details"
 
 				it "Includes the system user default (app)."
 					local apache_system_user=""
@@ -135,7 +147,9 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 						| tr -d '\r'
 					)"
 
-					assert equal "${apache_system_user}" "app"
+					assert equal \
+						"${apache_system_user}" \
+						"app"
 				end
 
 				it "Includes the run user default (app-www)."
@@ -149,7 +163,9 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 						| tr -d '\r'
 					)"
 
-					assert equal "${apache_run_user}" "app-www"
+					assert equal \
+						"${apache_run_user}" \
+						"app-www"
 				end
 
 				it "Includes the run group default (app-www)."
@@ -163,7 +179,9 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 						| tr -d '\r'
 					)"
 
-					assert equal "${apache_run_group}" "app-www"
+					assert equal \
+						"${apache_run_group}" \
+						"app-www"
 				end
 
 				it "Includes the server name default (app-1.local)."
@@ -177,7 +195,9 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 						| tr -d '\r'
 					)"
 
-					assert equal "${apache_server_name}" "app-1.local"
+					assert equal \
+						"${apache_server_name}" \
+						"app-1.local"
 				end
 
 				it "Includes the server alias default (EMPTY)."
@@ -191,7 +211,9 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 						| tr -d '\r'
 					)"
 
-					assert equal "${apache_server_alias}" ""
+					assert equal \
+						"${apache_server_alias}" \
+						""
 				end
 
 				it "Includes the header X-Service-UID default ({{HOSTNAME}} replacement)."
@@ -205,7 +227,9 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 						| tr -d '\r'
 					)"
 
-					assert equal "${apache_header_x_service_uid}" "${container_hostname}"
+					assert equal \
+						"${apache_header_x_service_uid}" \
+						"${container_hostname}"
 				end
 
 				it "Includes the default document root APACHE_CONTENT_ROOT/APACHE_PUBLIC_DIRECTORY (/var/www/app/public_html)."
@@ -220,7 +244,9 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 						| awk '{ print $1 }'
 					)"
 
-					assert equal "${apache_document_root}" "/var/www/app/public_html"
+					assert equal \
+						"${apache_document_root}" \
+						"/var/www/app/public_html"
 				end
 
 				# TODO This is included in the logs but not included in the Apache Details.
@@ -236,7 +262,9 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 						| tr -d '\r'
 					)"
 
-					assert equal "${apache_server_mpm}" "prefork"
+					assert equal \
+						"${apache_server_mpm}" \
+						"prefork"
 				end
 
 				it "Includes the default modules enabled."
@@ -267,7 +295,9 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 							| awk '/^ - /'
 					)"
 
-					assert equal "${apache_load_modules}" "${apache_load_modules_details}"
+					assert equal \
+						"${apache_load_modules}" \
+						"${apache_load_modules_details}"
 				end
 			end
 
@@ -290,7 +320,9 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 						'"GET / HTTP/1\.1" 200' \
 				)"
 
-				assert equal "${apache_access_log_entry}" "\"GET / HTTP/1.1\" 200"
+				assert equal \
+					"${apache_access_log_entry}" \
+					"\"GET / HTTP/1.1\" 200"
 
 				it "Logs using the default LogFormat (combined)."
 					local status_apache_access_log_pattern=""
@@ -305,7 +337,9 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 
 					status_apache_access_log_pattern=${?}
 
-					assert equal "${status_apache_access_log_pattern}" 0
+					assert equal \
+						"${status_apache_access_log_pattern}" \
+						0
 				end
 			end
 
@@ -327,7 +361,9 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 
 				status_apache_error_log_path=${?}
 
-				assert equal "${status_apache_error_log_path}" 0
+				assert equal \
+					"${status_apache_error_log_path}" \
+					0
 			end
 
 			it "Apache server-status can be accessed from localhost."
@@ -343,7 +379,9 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 
 				status_apache_server_status_pattern=${?}
 
-				assert equal "${status_apache_server_status_pattern}" 0
+				assert equal \
+					"${status_apache_server_status_pattern}" \
+					0
 
 				it "Excludes information available with ExtendedStatus enabled."
 					local status_apache_server_status_pattern=""
@@ -375,7 +413,9 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 
 					status_apache_server_status_pattern=${?}
 
-					assert equal "${status_apache_server_status_pattern}" 1
+					assert equal \
+						"${status_apache_server_status_pattern}" \
+						1
 
 					it "Responds with a 403 status code."
 						local curl_response_code=""
@@ -388,7 +428,9 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 								http://127.0.0.1:${container_port_80}/server-status\?auto
 						)"
 
-						assert equal "${curl_response_code}" "403"
+						assert equal \
+							"${curl_response_code}" \
+							"403"
 					end
 				end
 			end
@@ -408,7 +450,9 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 					))
 				done
 
-				assert equal "${status_apache_modules_loaded}" 0
+				assert equal \
+					"${status_apache_modules_loaded}" \
+					0
 
 				it "Loads only the required Apache modules."
 					local all_required_apache_modules="${required_apache_modules} ${other_required_apache_modules}"
@@ -428,7 +472,9 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 						fi
 					done
 
-					assert unequal "${status_minimal_apache_modules_loaded}" 1
+					assert unequal \
+						"${status_minimal_apache_modules_loaded}" \
+						1
 				end
 			end
 
@@ -444,11 +490,15 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 					| awk '{ print $1":"$2 }'
 				)"
 
-				assert equal "${apache_run_user_group}" "app-www:app-www"
+				assert equal \
+					"${apache_run_user_group}" \
+					"app-www:app-www"
 			end
 		end
 
-		docker_terminate_container apache-php.pool-1.1.1 &> /dev/null
+		docker_terminate_container \
+			apache-php.pool-1.1.1 \
+		&> /dev/null
 		trap - \
 			INT TERM EXIT
 	end
@@ -461,7 +511,9 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 			local curl_get_request=""
 			local status_apache_access_log_pattern=""
 
-			docker_terminate_container apache-php.pool-1.1.1 &> /dev/null
+			docker_terminate_container \
+				apache-php.pool-1.1.1 \
+			&> /dev/null
 
 			docker run -d \
 				--name apache-php.pool-1.1.1 \
@@ -488,14 +540,18 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 
 			status_apache_access_log_pattern=${?}
 
-			assert equal "${status_apache_access_log_pattern}" 0
+			assert equal \
+				"${status_apache_access_log_pattern}" \
+				0
 		end
 
 		it "Allows configuration of an alternative, relative, access log path."
 			local apache_access_log_entry=""
 			local curl_get_request=""
 
-			docker_terminate_container apache-php.pool-1.1.1 &> /dev/null
+			docker_terminate_container \
+				apache-php.pool-1.1.1 \
+			&> /dev/null
 
 			docker run -d \
 				--name apache-php.pool-1.1.1 \
@@ -521,14 +577,18 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 					'"GET / HTTP/1\.1" 200' \
 			)"
 
-			assert equal "${apache_access_log_entry}" "\"GET / HTTP/1.1\" 200"
+			assert equal \
+				"${apache_access_log_entry}" \
+				"\"GET / HTTP/1.1\" 200"
 		end
 
 		it "Allows configuration of an alternative, absolute, access log path."
 			local apache_access_log_entry=""
 			local curl_get_request=""
 
-			docker_terminate_container apache-php.pool-1.1.1 &> /dev/null
+			docker_terminate_container \
+				apache-php.pool-1.1.1 \
+			&> /dev/null
 
 			docker run -d \
 				--name apache-php.pool-1.1.1 \
@@ -554,14 +614,18 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 					'"GET / HTTP/1\.1" 200' \
 			)"
 
-			assert equal "${apache_access_log_entry}" "\"GET / HTTP/1.1\" 200"
+			assert equal \
+				"${apache_access_log_entry}" \
+				"\"GET / HTTP/1.1\" 200"
 		end
 
 		it "Allows configuration of an alternative, relative, error log path."
 			local curl_get_request=""
 			local status_apache_error_log_path=""
 
-			docker_terminate_container apache-php.pool-1.1.1 &> /dev/null
+			docker_terminate_container \
+				apache-php.pool-1.1.1 \
+			&> /dev/null
 
 			docker run -d \
 				--name apache-php.pool-1.1.1 \
@@ -586,14 +650,18 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 
 			status_apache_error_log_path=${?}
 
-			assert equal "${status_apache_error_log_path}" 0
+			assert equal \
+				"${status_apache_error_log_path}" \
+				0
 		end
 
 		it "Allows configuration of an alternative, absolute, error log path."
 			local curl_get_request=""
 			local status_apache_error_log_path=""
 
-			docker_terminate_container apache-php.pool-1.1.1 &> /dev/null
+			docker_terminate_container \
+				apache-php.pool-1.1.1 \
+			&> /dev/null
 
 			docker run -d \
 				--name apache-php.pool-1.1.1 \
@@ -618,14 +686,18 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 
 			status_apache_error_log_path=${?}
 
-			assert equal "${status_apache_error_log_path}" 0
+			assert equal \
+				"${status_apache_error_log_path}" \
+				0
 		end
 
-		it "Allows configuration with an alternative log level (e.g debug)."
+		it "Allows configuration of an alternative log level (e.g debug)."
 			local curl_get_request=""
 			local status_apache_error_log_pattern=""
 
-			docker_terminate_container apache-php.pool-1.1.1 &> /dev/null
+			docker_terminate_container \
+				apache-php.pool-1.1.1 \
+			&> /dev/null
 
 			docker run -d \
 				--name apache-php.pool-1.1.1 \
@@ -652,13 +724,17 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 
 			status_apache_error_log_pattern=${?}
 
-			assert equal "${status_apache_error_log_pattern}" 0
+			assert equal \
+				"${status_apache_error_log_pattern}" \
+				0
 		end
 
 		it "Allows extended server-status to be enabled and accessed from localhost."
 			local status_apache_server_status_pattern=""
 
-			docker_terminate_container apache-php.pool-1.1.1 &> /dev/null
+			docker_terminate_container \
+				apache-php.pool-1.1.1 \
+			&> /dev/null
 
 			docker run -d \
 				--name apache-php.pool-1.1.1 \
@@ -679,7 +755,9 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 
 			status_apache_server_status_pattern=${?}
 
-			assert equal "${status_apache_server_status_pattern}" 0
+			assert equal \
+				"${status_apache_server_status_pattern}" \
+				0
 
 			it "Prevents remote access to server-status."
 				local status_apache_server_status_pattern=""
@@ -694,7 +772,9 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 
 				status_apache_server_status_pattern=${?}
 
-				assert equal "${status_apache_server_status_pattern}" 1
+				assert equal \
+					"${status_apache_server_status_pattern}" \
+					1
 
 				it "Responds with a 403 status code."
 					local curl_response_code=""
@@ -707,7 +787,9 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 							http://127.0.0.1:${container_port_80}/server-status\?auto
 					)"
 
-					assert equal "${curl_response_code}" "403"
+					assert equal \
+						"${curl_response_code}" \
+						"403"
 				end
 			end
 		end
@@ -715,7 +797,9 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 		it "Allows configuration of the X-Service-UID header."
 			local header_x_service_uid=""
 
-			docker_terminate_container apache-php.pool-1.1.1 &> /dev/null
+			docker_terminate_container \
+				apache-php.pool-1.1.1 \
+			&> /dev/null
 
 			docker run -d \
 				--name apache-php.pool-1.1.1 \
@@ -735,12 +819,16 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 				| tr -d '\r'
 			)"
 
-			assert equal "${header_x_service_uid}" "host-name@1.2"
+			assert equal \
+				"${header_x_service_uid}" \
+				"host-name@1.2"
 
 			it "Allows the {{HOSTNAME}} placeholder to be included in the value."
 				local header_x_service_uid=""
 
-				docker_terminate_container apache-php.pool-1.1.1 &> /dev/null
+				docker_terminate_container \
+					apache-php.pool-1.1.1 \
+				&> /dev/null
 
 				docker run -d \
 					--name apache-php.pool-1.1.1 \
@@ -761,14 +849,18 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 					| tr -d '\r'
 				)"
 
-				assert equal "${header_x_service_uid}" "app-1.local:${DOCKER_PORT_MAP_TCP_80}"
+				assert equal \
+					"${header_x_service_uid}" \
+					"app-1.local:${DOCKER_PORT_MAP_TCP_80}"
 			end
 		end
 
 		it "Allows for loading of additional modules (e.g. rewrite_module)."
 			local status_apache_module_loaded=""
 
-			docker_terminate_container apache-php.pool-1.1.1 &> /dev/null
+			docker_terminate_container \
+				apache-php.pool-1.1.1 \
+			&> /dev/null
 
 			docker run -d \
 				--name apache-php.pool-1.1.1 \
@@ -784,13 +876,17 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 
 			status_apache_module_loaded=${?}
 
-			assert equal "${status_apache_module_loaded}" 0
+			assert equal \
+				"${status_apache_module_loaded}" \
+				0
 		end
 
 		it "Allows configuration of an alternative MPM (e.g. event)."
 			local status_apache_mpm_changed=""
 
-			docker_terminate_container apache-php.pool-1.1.1 &> /dev/null
+			docker_terminate_container \
+				apache-php.pool-1.1.1 \
+			&> /dev/null
 
 			docker run -d \
 				--name apache-php.pool-1.1.1 \
@@ -807,13 +903,17 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 
 			status_apache_mpm_changed=${?}
 
-			assert equal "${status_apache_mpm_changed}" 0
+			assert equal \
+				"${status_apache_mpm_changed}" \
+				0
 		end
 
 		it "Allows configuration of the operating mode internal variable (i.e -D development)."
 			local header_x_service_operating_mode=""
 
-			docker_terminate_container apache-php.pool-1.1.1 &> /dev/null
+			docker_terminate_container \
+				apache-php.pool-1.1.1 \
+			&> /dev/null
 
 			docker run -d \
 				--name apache-php.pool-1.1.1 \
@@ -834,13 +934,17 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 				| tr -d '\r'
 			)"
 
-			assert equal "${header_x_service_operating_mode}" "development"
+			assert equal \
+				"${header_x_service_operating_mode}" \
+				"development"
 		end
 
 		it "Allows configuration of the system user (i.e. application owner)."
 			local apache_system_user=""
 
-			docker_terminate_container apache-php.pool-1.1.1 &> /dev/null
+			docker_terminate_container \
+				apache-php.pool-1.1.1 \
+			&> /dev/null
 
 			docker run -d \
 				--name apache-php.pool-1.1.1 \
@@ -856,13 +960,17 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 					stat -c '%U' /var/www/app/public_html
 			)"
 
-			assert equal "${apache_system_user}" "app-user"
+			assert equal \
+				"${apache_system_user}" \
+				"app-user"
 		end
 
 		it "Allows configuration of the run user (i.e. process runner user)."
 			local apache_run_user=""
 
-			docker_terminate_container apache-php.pool-1.1.1 &> /dev/null
+			docker_terminate_container \
+				apache-php.pool-1.1.1 \
+			&> /dev/null
 
 			docker run -d \
 				--name apache-php.pool-1.1.1 \
@@ -888,7 +996,9 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 		it "Allows configuration of the run group (i.e. process runner's group)."
 			local apache_run_group=""
 
-			docker_terminate_container apache-php.pool-1.1.1 &> /dev/null
+			docker_terminate_container \
+				apache-php.pool-1.1.1 \
+			&> /dev/null
 
 			docker run -d \
 				--name apache-php.pool-1.1.1 \
@@ -915,7 +1025,9 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 			local curl_response_code_default=""
 			local curl_response_code_server_named=""
 
-			docker_terminate_container apache-php.pool-1.1.1 &> /dev/null
+			docker_terminate_container \
+				apache-php.pool-1.1.1 \
+			&> /dev/null
 
 			docker run -d \
 				--name apache-php.pool-1.1.1 \
@@ -973,7 +1085,9 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 					http://127.0.0.1:${container_port_80}
 			)"
 
-			assert equal "${curl_response_code_default}:${curl_response_code_server_named}" "403:200"
+			assert equal \
+				"${curl_response_code_default}:${curl_response_code_server_named}" \
+				"403:200"
 
 			it "Allows configuration of a ServerAlias (e.g www.app-1.local)."
 				local curl_response_code_server_alias=""
@@ -986,14 +1100,18 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 						http://127.0.0.1:${container_port_80}
 				)"
 
-				assert equal "${curl_response_code_server_alias}" "200"
+				assert equal \
+					"${curl_response_code_server_alias}" \
+					"200"
 			end
 		end
 
 		it "Allows configuration of the public directory (e.g web)."
 			local status_header_x_service_uid=""
 
-			docker_terminate_container apache-php.pool-1.1.1 &> /dev/null
+			docker_terminate_container \
+				apache-php.pool-1.1.1 \
+			&> /dev/null
 
 			docker run -d \
 				--name apache-php.pool-1.1.1 \
@@ -1023,14 +1141,18 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 
 			status_header_x_service_uid=${?}
 
-			assert equal "${status_header_x_service_uid}" 0
+			assert equal \
+				"${status_header_x_service_uid}" \
+				0
 		end
 
 		it "Allows ssl_module to be enabled to accept encrypted requests (i.e https)."
 			local container_port_443=""
 			local curl_response_code=""
 
-			docker_terminate_container apache-php.pool-1.1.1 &> /dev/null
+			docker_terminate_container \
+				apache-php.pool-1.1.1 \
+			&> /dev/null
 
 			docker run -d \
 				--name apache-php.pool-1.1.1 \
@@ -1057,7 +1179,9 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 					https://127.0.0.1:${container_port_443}
 			)"
 
-			assert equal "${curl_response_code}" "200"
+			assert equal \
+				"${curl_response_code}" \
+				"200"
 
 			it "Allows configuration of a certificate instead of auto-generating one on startup."
 				local container_port_443=""
@@ -1065,7 +1189,9 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 				local certificate_fingerprint_file=""
 				local certificate_fingerprint_server=""
 
-				docker_terminate_container apache-php.pool-1.1.1 &> /dev/null
+				docker_terminate_container \
+					apache-php.pool-1.1.1 \
+				&> /dev/null
 
 				openssl req \
 					-x509 \
@@ -1141,7 +1267,10 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 			end
 		end
 
-		docker_terminate_container apache-php.pool-1.1.1 &> /dev/null
+		docker_terminate_container \
+			apache-php.pool-1.1.1 \
+		&> /dev/null
+
 		trap - \
 			INT TERM EXIT
 	end
