@@ -787,40 +787,6 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 			assert equal "${status_apache_module_loaded}" 0
 		end
 
-		it "Allows ssl_module to be enabled to accept encrypted requests (i.e https)."
-			local container_port_443=""
-			local curl_response_code=""
-
-			docker_terminate_container apache-php.pool-1.1.1 &> /dev/null
-
-			docker run -d \
-				--name apache-php.pool-1.1.1 \
-				--publish ${DOCKER_PORT_MAP_TCP_443}:443 \
-				--env APACHE_MOD_SSL_ENABLED="true" \
-				--hostname app-1.local \
-				jdeathe/centos-ssh-apache-php:latest \
-			&> /dev/null
-
-			container_port_443="$(
-				docker port \
-					apache-php.pool-1.1.1 \
-					443/tcp
-			)"
-			container_port_443=${container_port_443##*:}
-
-			sleep ${BOOTSTRAP_BACKOFF_TIME}
-
-			curl_response_code="$(
-				curl -ks \
-					-o /dev/null \
-					-w "%{http_code}" \
-					--header 'Host: app-1.local' \
-					https://127.0.0.1:${container_port_443}
-			)"
-
-			assert equal "${curl_response_code}" "200"
-		end
-
 		it "Allows configuration of an alternative MPM (e.g. event)."
 			local status_apache_mpm_changed=""
 
@@ -945,7 +911,7 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 			# assert equal "${apache_run_group}" "runners"
 		end
 
-		it "Allows configuration of the ServerName (e.g test.local)."
+		it "Allows configuration of the ServerName (e.g app-1.local)."
 			local curl_response_code_default=""
 			local curl_response_code_server_named=""
 
@@ -954,8 +920,8 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 			docker run -d \
 				--name apache-php.pool-1.1.1 \
 				--publish ${DOCKER_PORT_MAP_TCP_80}:80 \
-				--env APACHE_SERVER_NAME="test.local" \
-				--env APACHE_SERVER_ALIAS="www.test.local" \
+				--env APACHE_SERVER_NAME="app-1.local" \
+				--env APACHE_SERVER_ALIAS="www.app-1.local" \
 				jdeathe/centos-ssh-apache-php:latest \
 			&> /dev/null
 
@@ -1003,20 +969,20 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 				curl -s \
 					-o /dev/null \
 					-w "%{http_code}" \
-					--header 'Host: test.local' \
+					--header 'Host: app-1.local' \
 					http://127.0.0.1:${container_port_80}
 			)"
 
 			assert equal "${curl_response_code_default}:${curl_response_code_server_named}" "403:200"
 
-			it "Allows configuration of a ServerAlias (e.g www.test.local)."
+			it "Allows configuration of a ServerAlias (e.g www.app-1.local)."
 				local curl_response_code_server_alias=""
 
 				curl_response_code_server_alias="$(
 					curl -s \
 						-o /dev/null \
 						-w "%{http_code}" \
-						--header 'Host: www.test.local' \
+						--header 'Host: www.app-1.local' \
 						http://127.0.0.1:${container_port_80}
 				)"
 
@@ -1058,6 +1024,121 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 			status_header_x_service_uid=${?}
 
 			assert equal "${status_header_x_service_uid}" 0
+		end
+
+		it "Allows ssl_module to be enabled to accept encrypted requests (i.e https)."
+			local container_port_443=""
+			local curl_response_code=""
+
+			docker_terminate_container apache-php.pool-1.1.1 &> /dev/null
+
+			docker run -d \
+				--name apache-php.pool-1.1.1 \
+				--publish ${DOCKER_PORT_MAP_TCP_443}:443 \
+				--env APACHE_MOD_SSL_ENABLED="true" \
+				--env APACHE_SERVER_NAME="app-1.local" \
+				jdeathe/centos-ssh-apache-php:latest \
+			&> /dev/null
+
+			container_port_443="$(
+				docker port \
+					apache-php.pool-1.1.1 \
+					443/tcp
+			)"
+			container_port_443=${container_port_443##*:}
+
+			sleep ${BOOTSTRAP_BACKOFF_TIME}
+
+			curl_response_code="$(
+				curl -ks \
+					-o /dev/null \
+					-w "%{http_code}" \
+					--header 'Host: app-1.local' \
+					https://127.0.0.1:${container_port_443}
+			)"
+
+			assert equal "${curl_response_code}" "200"
+
+			it "Allows configuration of a certificate instead of auto-generating one on startup."
+				local container_port_443=""
+				local certificate_pem_base64=""
+				local certificate_fingerprint_file=""
+				local certificate_fingerprint_server=""
+
+				docker_terminate_container apache-php.pool-1.1.1 &> /dev/null
+
+				openssl req \
+					-x509 \
+					-sha256 \
+					-nodes \
+					-newkey rsa:2048 \
+					-days 365 \
+					-subj "/CN=www.app-1.local" \
+					-keyout /tmp/www.app-1.local.pem \
+					-out /tmp/www.app-1.local.pem \
+				&> /dev/null
+
+				certificate_fingerprint_file="$(
+					cat \
+						/tmp/www.app-1.local.pem \
+					| openssl x509 \
+						-fingerprint \
+						-noout \
+						2&> /dev/null \
+					| sed \
+						-e 's~SHA1 Fingerprint=~~'
+				)"
+
+				if [[ $(uname) == "Darwin" ]]; then
+					ssl_certificate_pem_base64="$(
+						base64 \
+							-i /tmp/www.app-1.local.pem
+					)"
+				else
+					ssl_certificate_pem_base64="$(
+						base64 \
+							-w 0 \
+							-i /tmp/www.app-1.local.pem
+					)"
+				fi
+
+				docker run -d \
+					--name apache-php.pool-1.1.1 \
+					--publish ${DOCKER_PORT_MAP_TCP_443}:443 \
+					--env APACHE_MOD_SSL_ENABLED="true" \
+					--env APACHE_SERVER_NAME="www.app-1.local" \
+					--env APACHE_SSL_CERTIFICATE="${certificate_pem_base64}" \
+					jdeathe/centos-ssh-apache-php:latest \
+				&> /dev/null
+
+				container_port_443="$(
+					docker port \
+						apache-php.pool-1.1.1 \
+						443/tcp
+				)"
+				container_port_443=${container_port_443##*:}
+
+				sleep ${BOOTSTRAP_BACKOFF_TIME}
+
+				certificate_fingerprint_server="$(
+					openssl s_client \
+						-connect 127.0.0.1:${container_port_443} \
+						-CAfile /tmp/www.app-1.local.pem \
+						-nbio \
+						< /dev/null 2&> /dev/null \
+					| openssl \
+						x509 \
+						-fingerprint \
+						-noout \
+						2&> /dev/null \
+					| sed \
+						-e 's~SHA1 Fingerprint=~~'
+				)"
+
+				assert equal \
+					"${certificate_fingerprint_server}" \
+					"${certificate_fingerprint_file}"
+			end
 		end
 
 		docker_terminate_container apache-php.pool-1.1.1 &> /dev/null
