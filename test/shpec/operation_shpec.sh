@@ -33,7 +33,17 @@ function docker_terminate_container ()
 
 function test_setup ()
 {
-	return 0
+	# Generate a self-signed certificate
+	openssl req \
+		-x509 \
+		-sha256 \
+		-nodes \
+		-newkey rsa:2048 \
+		-days 365 \
+		-subj "/CN=www.app-1.local" \
+		-keyout /tmp/www.app-1.local.pem \
+		-out /tmp/www.app-1.local.pem \
+	&> /dev/null
 }
 
 if [[ ! -d ${TEST_DIRECTORY} ]]; then
@@ -1193,39 +1203,32 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 					apache-php.pool-1.1.1 \
 				&> /dev/null
 
-				openssl req \
-					-x509 \
-					-sha256 \
-					-nodes \
-					-newkey rsa:2048 \
-					-days 365 \
-					-subj "/CN=www.app-1.local" \
-					-keyout /tmp/www.app-1.local.pem \
-					-out /tmp/www.app-1.local.pem \
-				&> /dev/null
-
-				certificate_fingerprint_file="$(
-					cat \
-						/tmp/www.app-1.local.pem \
-					| openssl x509 \
-						-fingerprint \
-						-noout \
-						2&> /dev/null \
-					| sed \
-						-e 's~SHA1 Fingerprint=~~'
-				)"
-
-				if [[ $(uname) == "Darwin" ]]; then
-					ssl_certificate_pem_base64="$(
-						base64 \
-							-i /tmp/www.app-1.local.pem
+				if [[ -s /tmp/www.app-1.local.pem ]]; then
+					certificate_fingerprint_file="$(
+						cat \
+							/tmp/www.app-1.local.pem \
+						| sed \
+							-n \
+							-e '/^-----BEGIN CERTIFICATE-----$/,/^-----END CERTIFICATE-----$/p' \
+						| openssl x509 \
+							-fingerprint \
+							-noout \
+						| sed \
+							-e 's~SHA1 Fingerprint=~~'
 					)"
-				else
-					ssl_certificate_pem_base64="$(
-						base64 \
-							-w 0 \
-							-i /tmp/www.app-1.local.pem
-					)"
+
+					if [[ $(uname) == "Darwin" ]]; then
+						certificate_pem_base64="$(
+							base64 \
+								-i /tmp/www.app-1.local.pem
+						)"
+					else
+						certificate_pem_base64="$(
+							base64 \
+								-w 0 \
+								-i /tmp/www.app-1.local.pem
+						)"
+					fi
 				fi
 
 				docker run -d \
@@ -1247,16 +1250,19 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 				sleep ${BOOTSTRAP_BACKOFF_TIME}
 
 				certificate_fingerprint_server="$(
-					openssl s_client \
+					echo -n \
+					| openssl s_client \
 						-connect 127.0.0.1:${container_port_443} \
 						-CAfile /tmp/www.app-1.local.pem \
 						-nbio \
-						< /dev/null 2&> /dev/null \
+						2>&1 \
+					| sed \
+						-n \
+						-e '/^-----BEGIN CERTIFICATE-----$/,/^-----END CERTIFICATE-----$/p' \
 					| openssl \
 						x509 \
 						-fingerprint \
 						-noout \
-						2&> /dev/null \
 					| sed \
 						-e 's~SHA1 Fingerprint=~~'
 				)"
@@ -1264,6 +1270,60 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 				assert equal \
 					"${certificate_fingerprint_server}" \
 					"${certificate_fingerprint_file}"
+			end
+
+			it "Allows configuration of the SSL/TLS cipher suite."
+				local apache_ssl_cipher_suite=""
+				local cipher=""
+				local cipher_match=""
+
+				docker_terminate_container \
+					apache-php.pool-1.1.1 \
+				&> /dev/null
+
+				docker run -d \
+					--name apache-php.pool-1.1.1 \
+					--publish ${DOCKER_PORT_MAP_TCP_443}:443 \
+					--env APACHE_MOD_SSL_ENABLED="true" \
+					--env APACHE_SERVER_NAME="www.app-1.local" \
+					--env APACHE_SSL_CERTIFICATE="${certificate_pem_base64}" \
+					--env APACHE_SSL_CIPHER_SUITE="DHE-RSA-AES128-SHA:DHE-RSA-AES256-SHA" \
+					jdeathe/centos-ssh-apache-php:latest \
+				&> /dev/null
+
+				container_port_443="$(
+					docker port \
+						apache-php.pool-1.1.1 \
+						443/tcp
+				)"
+				container_port_443=${container_port_443##*:}
+
+				sleep ${BOOTSTRAP_BACKOFF_TIME}
+
+				for cipher in DHE-RSA-AES128-SHA DHE-RSA-AES256-SHA EDH-RSA-DES-CBC3-SHA; do
+					cipher_match="$(
+						echo -n \
+						| openssl s_client \
+							-cipher "${cipher}" \
+							-connect 127.0.0.1:${container_port_443} \
+							-CAfile /tmp/www.app-1.local.pem \
+							-nbio \
+							2>&1 \
+						| grep -o "^[ ]*Cipher[ ]*: ${cipher}$" \
+						| awk '{ print $3 }'
+					)"
+
+					if [[ -n ${cipher_match} ]]; then
+						if [[ -n ${apache_ssl_cipher_suite} ]]; then
+							apache_ssl_cipher_suite+=":"
+						fi
+						apache_ssl_cipher_suite+="${cipher_match}"
+					fi
+				done
+
+				assert equal \
+					"${apache_ssl_cipher_suite}" \
+					"DHE-RSA-AES128-SHA:DHE-RSA-AES256-SHA"
 			end
 		end
 
