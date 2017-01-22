@@ -1325,6 +1325,61 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 					"${apache_ssl_cipher_suite}" \
 					"DHE-RSA-AES128-SHA:DHE-RSA-AES256-SHA"
 			end
+
+			it "Allows configuration of the SSL/TLS protocols."
+				local apache_ssl_cipher_suite=""
+				local cipher_match=""
+				local protocol=""
+
+				docker_terminate_container \
+					apache-php.pool-1.1.1 \
+				&> /dev/null
+
+				docker run -d \
+					--name apache-php.pool-1.1.1 \
+					--publish ${DOCKER_PORT_MAP_TCP_443}:443 \
+					--env APACHE_MOD_SSL_ENABLED="true" \
+					--env APACHE_SERVER_NAME="www.app-1.local" \
+					--env APACHE_SSL_CERTIFICATE="${certificate_pem_base64}" \
+					--env APACHE_SSL_CIPHER_SUITE="DHE-RSA-AES128-SHA" \
+					--env APACHE_SSL_PROTOCOL="all -SSLv3 -TLSv1 -TLSv1.1" \
+					jdeathe/centos-ssh-apache-php:latest \
+				&> /dev/null
+
+				container_port_443="$(
+					docker port \
+						apache-php.pool-1.1.1 \
+						443/tcp
+				)"
+				container_port_443=${container_port_443##*:}
+
+				sleep ${BOOTSTRAP_BACKOFF_TIME}
+
+				for protocol in ssl3 tls1 tls1_1 tls1_2; do
+					cipher_match="$(
+						echo -n \
+						| openssl s_client \
+							-${protocol} \
+							-connect 127.0.0.1:${container_port_443} \
+							-CAfile /tmp/www.app-1.local.pem \
+							-nbio \
+							2>&1 \
+						| grep -o "^[ ]*Cipher[ ]*: .*$" \
+						| awk '{ print $3 }'
+					)"
+
+					if [[ -n ${cipher_match} ]]; then
+						if [[ -n ${apache_ssl_cipher_suite} ]]; then
+							apache_ssl_cipher_suite+=":"
+						fi
+						apache_ssl_cipher_suite+="${cipher_match}"
+					fi
+				done
+
+				assert equal \
+					"${apache_ssl_cipher_suite}" \
+					"0000:0000:0000:DHE-RSA-AES128-SHA"
+			end
 		end
 
 		docker_terminate_container \
