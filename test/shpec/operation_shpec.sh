@@ -1433,6 +1433,37 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 			end
 		end
 
+		it "Allows configuration of the PHP date.timezone (e.g Europe/London)."
+			local php_date_timezone=""
+
+			docker_terminate_container \
+				apache-php.pool-1.1.1 \
+			&> /dev/null
+
+			docker run -d \
+				--name apache-php.pool-1.1.1 \
+				--publish ${DOCKER_PORT_MAP_TCP_80}:80 \
+				--env PHP_OPTIONS_DATE_TIMEZONE="Europe/London" \
+				jdeathe/centos-ssh-apache-php:latest \
+			&> /dev/null
+
+			sleep ${BOOTSTRAP_BACKOFF_TIME}
+
+			php_date_timezone="$(
+				docker exec \
+					apache-php.pool-1.1.1 \
+					php \
+						-r \
+						"printf('%s', ini_get('date.timezone'));"
+			)"
+
+			status_apache_server_status_pattern=${?}
+
+			assert equal \
+				"${php_date_timezone}" \
+				"Europe/London"
+		end
+
 		docker_terminate_container \
 			apache-php.pool-1.1.1 \
 		&> /dev/null
