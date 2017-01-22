@@ -1156,6 +1156,57 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 				0
 		end
 
+		it "Allows configuration of the application's package path."
+
+			docker_terminate_container \
+				apache-php.pool-1.1.1 \
+			&> /dev/null
+
+			docker run -d \
+				--name apache-php.pool-1.1.1 \
+				--publish ${DOCKER_PORT_MAP_TCP_80}:80 \
+				--env PACKAGE_PATH="/opt/php-hw" \
+				jdeathe/centos-ssh-apache-php:latest \
+			&> /dev/null
+
+			# For the server to start, the package directory needs to exist.
+			docker exec \
+				apache-php.pool-1.1.1 \
+				mkdir -p /opt/php-hw/{public_html,var/log}
+
+			docker exec -i \
+				apache-php.pool-1.1.1 \
+				tee \
+					/opt/php-hw/public_html/index.php \
+					1> /dev/null \
+					<<-CONFIG
+			<?php
+			    header(
+			        'Content-Type: text/plain; charset=utf-8'
+			    );
+			    print 'Hello, world!';
+			?>
+			CONFIG
+
+			docker restart \
+				apache-php.pool-1.1.1 \
+			&> /dev/null
+
+			sleep ${BOOTSTRAP_BACKOFF_TIME}
+
+			curl -s \
+				--header 'Host: app-1.local' \
+				http://127.0.0.1:${container_port_80} \
+			| grep -q '^Hello, world!' \
+			&> /dev/null
+
+			status_php_hello_world=${?}
+
+			assert equal \
+				"${status_php_hello_world}" \
+				0
+		end
+
 		it "Allows ssl_module to be enabled to accept encrypted requests (i.e https)."
 			local container_port_443=""
 			local curl_response_code=""
