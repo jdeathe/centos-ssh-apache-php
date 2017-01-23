@@ -384,7 +384,7 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 					curl -s \
 						http://app-1.local/server-status\?auto \
 				| grep -qE \
-					'^ServerVersion: Apache/2\.[3-4]\.[0-9]+ \(CentOS\)' \
+					'^Scoreboard: [\._SRWKDCLGI]+$' \
 				&> /dev/null
 
 				status_apache_server_status_pattern=${?}
@@ -407,7 +407,9 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 					status_apache_server_status_pattern=${?}
 
 					# TODO - ISSUE 291: ExtendedStatus should be off by default.
-					# assert equal "${status_apache_server_status_pattern}" 1
+					assert equal \
+						"${status_apache_server_status_pattern}" \
+						1
 				end
 
 				it "Prevents remote access to server-status."
@@ -418,7 +420,7 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 						--header 'Host: app-1.local' \
 						http://127.0.0.1:${container_port_80}/server-status\?auto \
 					| grep -qE \
-						'^ServerVersion: Apache/2\.[3-4]\.[0-9]+ \(CentOS\)' \
+						'^Scoreboard: [\._SRWKDCLGI]+$' \
 					&> /dev/null
 
 					status_apache_server_status_pattern=${?}
