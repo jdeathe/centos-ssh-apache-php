@@ -288,7 +288,8 @@ describe "jdeathe/centos-ssh-apache-php:latest"
  - log_config_module
  - mime_module
  - setenvif_module
- - status_module"
+ - status_module
+ - version_module"
 
 					apache_load_modules="$(
 						docker logs \
@@ -439,7 +440,7 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 			end
 
 			it "Loads all the required Apache modules."
-				readonly required_apache_modules="authz_user_module log_config_module expires_module deflate_module headers_module setenvif_module mime_module status_module dir_module alias_module"
+				readonly required_apache_modules="authz_user_module log_config_module expires_module deflate_module headers_module setenvif_module mime_module status_module dir_module alias_module version_module"
 				readonly other_required_apache_modules="core_module so_module http_module authz_host_module mpm_prefork_module php5_module"
 				local status_apache_modules_loaded=0
 
@@ -1049,8 +1050,10 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 					/etc/services-config/httpd/conf.d/05-vhost.conf \
 					1> /dev/null \
 					<<-CONFIG
-			NameVirtualHost *:80
-			NameVirtualHost *:8443
+			<IfVersion < 2.4>
+			    NameVirtualHost *:80
+			    NameVirtualHost *:8443
+			</IfVersion>
 
 			<VirtualHost *:80 *:8443>
 			    ServerName localhost.localdomain
@@ -1058,8 +1061,13 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 
 			    <Directory /var/www/html>
 			        ErrorDocument 403 "403 Forbidden"
-			        Order deny,allow
-			        Deny from all
+			        <IfVersion < 2.4>
+			            Order deny,allow
+			            Deny from all
+			        </IfVersion>
+			        <IfVersion >= 2.4>
+			            Require all denied
+			        </IfVersion>
 			    </Directory>
 			</VirtualHost>
 			CONFIG

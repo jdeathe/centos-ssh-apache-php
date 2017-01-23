@@ -84,7 +84,6 @@ RUN sed -i \
 # -----------------------------------------------------------------------------
 RUN sed -i \
 	-e 's~^\(LoadModule .*\)$~#\1~g' \
-	-e 's~^\(#LoadModule version_module modules/mod_version.so\)$~\1\n#LoadModule reqtimeout_module modules/mod_reqtimeout.so~g' \
 	-e 's~^#LoadModule mime_module ~LoadModule mime_module ~g' \
 	-e 's~^#LoadModule log_config_module ~LoadModule log_config_module ~g' \
 	-e 's~^#LoadModule setenvif_module ~LoadModule setenvif_module ~g' \
@@ -96,6 +95,7 @@ RUN sed -i \
 	-e 's~^#LoadModule deflate_module ~LoadModule deflate_module ~g' \
 	-e 's~^#LoadModule headers_module ~LoadModule headers_module ~g' \
 	-e 's~^#LoadModule alias_module ~LoadModule alias_module ~g' \
+	-e 's~^#\(LoadModule version_module .*\)$~\1\n#LoadModule reqtimeout_module modules/mod_reqtimeout.so~g' \
 	/etc/httpd/conf/httpd.conf
 
 # -----------------------------------------------------------------------------
@@ -247,7 +247,7 @@ ENV APACHE_CUSTOM_LOG_FORMAT="combined" \
 	APACHE_ERROR_LOG_LEVEL="warn" \
 	APACHE_EXTENDED_STATUS_ENABLED="false" \
 	APACHE_HEADER_X_SERVICE_UID="{{HOSTNAME}}" \
-	APACHE_LOAD_MODULES="authz_user_module log_config_module expires_module deflate_module headers_module setenvif_module mime_module status_module dir_module alias_module" \
+	APACHE_LOAD_MODULES="authz_user_module log_config_module expires_module deflate_module headers_module setenvif_module mime_module status_module dir_module alias_module version_module" \
 	APACHE_MOD_SSL_ENABLED="false" \
 	APACHE_MPM="prefork" \
 	APACHE_OPERATING_MODE="production" \
