@@ -3,10 +3,11 @@
 # -----------------------------------------------------------------------------
 DOCKER_USER := jdeathe
 DOCKER_IMAGE_NAME := centos-ssh-apache-php
+SHPEC_ROOT := test/shpec
 
 # Tag validation patterns
-DOCKER_IMAGE_TAG_PATTERN := ^(latest|(centos-[6-7])|centos-6-httpd24u-php56u|(centos-(6-1|6-httpd24u-php56u-2|7-3).[0-9]+.[0-9]+))$
-DOCKER_IMAGE_RELEASE_TAG_PATTERN := ^centos-(6-1|6-httpd24u-php56u-2|7-3).[0-9]+.[0-9]+$
+DOCKER_IMAGE_TAG_PATTERN := ^(latest|centos-[6-7]|centos-6-httpd24u-php56u|(([1-3]|centos-(6-1|6-httpd24u-php56u-2|7-3))\.[0-9]+\.[0-9]+))$
+DOCKER_IMAGE_RELEASE_TAG_PATTERN := ^(1|2|centos-(6-1|6-httpd24u-php56u-2))\.[0-9]+\.[0-9]+$
 
 # -----------------------------------------------------------------------------
 # Variables
