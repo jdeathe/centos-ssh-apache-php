@@ -4,7 +4,7 @@
 # CentOS-6, Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1
 #
 # =============================================================================
-FROM jdeathe/centos-ssh:centos-6-1.7.3
+FROM jdeathe/centos-ssh:1.7.5
 
 MAINTAINER James Deathe <james.deathe@gmail.com>
 
@@ -36,41 +36,48 @@ RUN rpm --rebuilddb \
 
 # -----------------------------------------------------------------------------
 # Global Apache configuration changes
+# - Disable Apache directory indexes.
+# - Disable Apache language based content negotiation.
+# - Enable ServerStatus access via /server-status to local client.
 # -----------------------------------------------------------------------------
 RUN sed -i \
-	-e 's~^KeepAlive .*$~KeepAlive On~g' \
-	-e 's~^MaxKeepAliveRequests .*$~MaxKeepAliveRequests 200~g' \
-	-e 's~^KeepAliveTimeout .*$~KeepAliveTimeout 2~g' \
-	-e 's~^ServerSignature On$~ServerSignature Off~g' \
-	-e 's~^ServerTokens OS$~ServerTokens Prod~g' \
-	-e 's~^NameVirtualHost \(.*\)$~#NameVirtualHost \1~g' \
-	-e 's~^User .*$~User ${APACHE_RUN_USER}~g' \
-	-e 's~^Group .*$~Group ${APACHE_RUN_GROUP}~g' \
-	-e 's~^DocumentRoot \(.*\)$~#DocumentRoot \1~g' \
-	/etc/httpd/conf/httpd.conf
-
-# -----------------------------------------------------------------------------
-# Disable Apache directory indexes
-# -----------------------------------------------------------------------------
-RUN sed -i \
-	-e 's~^IndexOptions \(.*\)$~#IndexOptions \1~g' \
-	-e 's~^IndexIgnore \(.*\)$~#IndexIgnore \1~g' \
-	-e 's~^AddIconByEncoding \(.*\)$~#AddIconByEncoding \1~g' \
-	-e 's~^AddIconByType \(.*\)$~#AddIconByType \1~g' \
-	-e 's~^AddIcon \(.*\)$~#AddIcon \1~g' \
-	-e 's~^DefaultIcon \(.*\)$~#DefaultIcon \1~g' \
-	-e 's~^ReadmeName \(.*\)$~#ReadmeName \1~g' \
-	-e 's~^HeaderName \(.*\)$~#HeaderName \1~g' \
-	/etc/httpd/conf/httpd.conf
-
-# -----------------------------------------------------------------------------
-# Disable Apache language based content negotiation
-# -----------------------------------------------------------------------------
-RUN sed -i \
-	-e 's~^LanguagePriority \(.*\)$~#LanguagePriority \1~g' \
-	-e 's~^ForceLanguagePriority \(.*\)$~#ForceLanguagePriority \1~g' \
-	-e 's~^AddLanguage \(.*\)$~#AddLanguage \1~g' \
-	/etc/httpd/conf/httpd.conf
+		-e 's~^KeepAlive .*$~KeepAlive On~g' \
+		-e 's~^MaxKeepAliveRequests .*$~MaxKeepAliveRequests 200~g' \
+		-e 's~^KeepAliveTimeout .*$~KeepAliveTimeout 2~g' \
+		-e 's~^ServerSignature On$~ServerSignature Off~g' \
+		-e 's~^ServerTokens OS$~ServerTokens Prod~g' \
+		-e 's~^NameVirtualHost \(.*\)$~#NameVirtualHost \1~g' \
+		-e 's~^User .*$~User ${APACHE_RUN_USER}~g' \
+		-e 's~^Group .*$~Group ${APACHE_RUN_GROUP}~g' \
+		-e 's~^DocumentRoot \(.*\)$~#DocumentRoot \1~g' \
+		-e 's~^IndexOptions \(.*\)$~#IndexOptions \1~g' \
+		-e 's~^IndexIgnore \(.*\)$~#IndexIgnore \1~g' \
+		-e 's~^AddIconByEncoding \(.*\)$~#AddIconByEncoding \1~g' \
+		-e 's~^AddIconByType \(.*\)$~#AddIconByType \1~g' \
+		-e 's~^AddIcon \(.*\)$~#AddIcon \1~g' \
+		-e 's~^DefaultIcon \(.*\)$~#DefaultIcon \1~g' \
+		-e 's~^ReadmeName \(.*\)$~#ReadmeName \1~g' \
+		-e 's~^HeaderName \(.*\)$~#HeaderName \1~g' \
+		-e 's~^LanguagePriority \(.*\)$~#LanguagePriority \1~g' \
+		-e 's~^ForceLanguagePriority \(.*\)$~#ForceLanguagePriority \1~g' \
+		-e 's~^AddLanguage \(.*\)$~#AddLanguage \1~g' \
+		-e '/#<Location \/server-status>/,/#<\/Location>/ s~^#~~' \
+		-e '/<Location \/server-status>/,/<\/Location>/ s~Allow from .example.com~Allow from localhost 127.0.0.1~' \
+		/etc/httpd/conf/httpd.conf \
+	&& { \
+			echo ''; \
+			echo '#'; \
+			echo '# Custom configuration'; \
+			echo '#'; \
+			echo 'LogFormat \'; \
+			echo '  "%{X-Forwarded-For}i %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\"" \'; \
+			echo '  forwarded_for_combined'; \
+			echo 'Include /etc/services-config/httpd/conf.d/*.conf'; \
+			echo 'Options -Indexes'; \
+			echo 'TraceEnable Off'; \
+			echo 'UseCanonicalName On'; \
+			echo 'UseCanonicalPhysicalPort On'; \
+		} >> /etc/httpd/conf/httpd.conf
 
 # -----------------------------------------------------------------------------
 # Disable all Apache modules and enable the minimum
@@ -92,42 +99,12 @@ RUN sed -i \
 	/etc/httpd/conf/httpd.conf
 
 # -----------------------------------------------------------------------------
-# Enable ServerStatus access via /_httpdstatus to local client
+# Disable SSL + the default SSL Virtual Host
 # -----------------------------------------------------------------------------
 RUN sed -i \
-	-e '/#<Location \/server-status>/,/#<\/Location>/ s~^#~~' \
-	-e '/<Location \/server-status>/,/<\/Location>/ s~Allow from .example.com~Allow from localhost 127.0.0.1~' \
-	/etc/httpd/conf/httpd.conf
-
-# -----------------------------------------------------------------------------
-# Disable the default SSL Virtual Host
-# -----------------------------------------------------------------------------
-RUN sed -i \
-	-e '/<VirtualHost _default_:443>/,/#<\/VirtualHost>/ s~^~#~' \
-	/etc/httpd/conf.d/ssl.conf
-
-# -----------------------------------------------------------------------------
-# Custom Apache configuration
-# -----------------------------------------------------------------------------
-RUN { \
-		echo ''; \
-		echo '#'; \
-		echo '# Custom configuration'; \
-		echo '#'; \
-		echo 'LogFormat \'; \
-		echo '  "%{X-Forwarded-For}i %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\"" \'; \
-		echo '  forwarded_for_combined'; \
-		echo 'Include /etc/services-config/httpd/conf.d/*.conf'; \
-		echo 'Options -Indexes'; \
-		echo 'TraceEnable Off'; \
-		echo 'UseCanonicalName On'; \
-		echo 'UseCanonicalPhysicalPort On'; \
-	} >> /etc/httpd/conf/httpd.conf
-
-# -----------------------------------------------------------------------------
-# Disable the SSL support by default
-# -----------------------------------------------------------------------------
-RUN cat \
+		-e '/<VirtualHost _default_:443>/,/#<\/VirtualHost>/ s~^~#~' \
+		/etc/httpd/conf.d/ssl.conf \
+	&& cat \
 		/etc/httpd/conf.d/ssl.conf \
 		> /etc/httpd/conf.d/ssl.conf.off \
 	&& touch \
