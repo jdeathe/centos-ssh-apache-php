@@ -823,7 +823,7 @@ fi
 update_user_login "${DEFAULT_SYSTEM_USER}" "${OPTS_APACHE_SYSTEM_USER}"
 update_group_name "${DEFAULT_SYSTEM_USER}" "${OPTS_APACHE_SYSTEM_USER}"
 update_user_login "${DEFAULT_APACHE_USER}" "${OPTS_APACHE_RUN_USER}"
-update_group_name "${DEFAULT_APACHE_USER}" "${OPTS_APACHE_RUN_USER}"
+update_group_name "${DEFAULT_APACHE_USER}" "${OPTS_APACHE_RUN_GROUP}"
 
 # Wait for background processes
 wait ${PIDS[0]}
