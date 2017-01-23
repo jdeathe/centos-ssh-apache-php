@@ -992,8 +992,9 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 				| awk '{ print $1 }'
 			)"
 
-			# TODO - ISSUE 293: Setting APACHE_RUN_GROUP ineffective.
-			# assert equal "${apache_run_user}" "runner"
+			assert equal \
+				"${apache_run_user}" \
+				"runner"
 		end
 
 		it "Allows configuration of the run group (i.e. process runner's group)."
@@ -1020,8 +1021,9 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 				| awk '{ print $2 }'
 			)"
 
-			# TODO - ISSUE 293: Setting APACHE_RUN_GROUP ineffective.
-			# assert equal "${apache_run_group}" "runners"
+			assert equal \
+				"${apache_run_group}" \
+				"runners"
 		end
 
 		it "Allows configuration of the ServerName (e.g app-1.local)."
