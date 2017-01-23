@@ -87,6 +87,7 @@ RUN cp -pf \
 		echo '  "%{X-Forwarded-For}i %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\"" \'; \
 		echo '  forwarded_for_combined'; \
 		echo 'Include /etc/services-config/httpd/conf.d/*.conf'; \
+		echo 'ExtendedStatus Off'; \
 		echo 'Options -Indexes'; \
 		echo 'ServerSignature Off'; \
 		echo 'ServerTokens Prod'; \
