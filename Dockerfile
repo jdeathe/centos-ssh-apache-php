@@ -127,7 +127,7 @@ RUN sed -i \
 	&& cat \
 		/etc/httpd/conf.d/ssl.conf \
 		> /etc/httpd/conf.d/ssl.conf.off \
-	&& touch \
+	&& > \
 		/etc/httpd/conf.d/ssl.conf \
 	&& chmod 444 \
 		/etc/httpd/conf.d/ssl.conf
