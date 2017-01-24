@@ -6,7 +6,7 @@ Summary of release changes for Version 1.
 
 CentOS-6 6.8 x86_64, Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1.
 
-### 1.8.2 - 2017-12-24
+### 1.8.2 - 2017-01-24
 
 - Replaces `mv` operations with `cat` to work-around OverlayFS limitations in CentOS-7.
 - Adds updated source image to [1.7.5 tag](https://github.com/jdeathe/centos-ssh/releases/tag/1.7.5).
