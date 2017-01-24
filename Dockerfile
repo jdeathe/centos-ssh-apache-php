@@ -4,7 +4,7 @@
 # CentOS-6, Apache 2.4, PHP-FPM 5.6, PHP memcached 2.2, Zend Opcache 7.0
 #
 # =============================================================================
-FROM jdeathe/centos-ssh:centos-6-1.7.3
+FROM jdeathe/centos-ssh:1.7.5
 
 MAINTAINER James Deathe <james.deathe@gmail.com>
 
@@ -36,6 +36,9 @@ RUN rpm --rebuilddb \
 
 # -----------------------------------------------------------------------------
 # Global Apache configuration changes
+# - Disable Apache directory indexes and welcome page.
+# - Disable Apache language based content negotiation.
+# - Custom Apache configuration.
 # -----------------------------------------------------------------------------
 RUN cp -pf \
 		/etc/httpd/conf/httpd.conf \
@@ -50,12 +53,6 @@ RUN cp -pf \
 		-e 's~^User .*$~User ${APACHE_RUN_USER}~g' \
 		-e 's~^Group .*$~Group ${APACHE_RUN_GROUP}~g' \
 		-e 's~^DocumentRoot \(.*\)$~#DocumentRoot \1~g' \
-		/etc/httpd/conf/httpd.conf
-
-# -----------------------------------------------------------------------------
-# Disable Apache directory indexes and welcome page.
-# -----------------------------------------------------------------------------
-RUN sed -i \
 		-e 's~^IndexOptions \(.*\)$~#IndexOptions \1~g' \
 		-e 's~^IndexIgnore \(.*\)$~#IndexIgnore \1~g' \
 		-e 's~^AddIconByEncoding \(.*\)$~#AddIconByEncoding \1~g' \
@@ -66,6 +63,9 @@ RUN sed -i \
 		-e 's~^HeaderName \(.*\)$~#HeaderName \1~g' \
 		-e 's~^\(Alias /icons/ ".*"\)$~#\1~' \
 		-e '/<Directory "\/var\/www\/icons">/,/#<\/Directory>/ s~^~#~' \
+		-e 's~^LanguagePriority \(.*\)$~#LanguagePriority \1~g' \
+		-e 's~^ForceLanguagePriority \(.*\)$~#ForceLanguagePriority \1~g' \
+		-e 's~^AddLanguage \(.*\)$~#AddLanguage \1~g' \
 		/etc/httpd/conf/httpd.conf \
 	&& truncate -s 0 \
 		/etc/httpd/conf.d/autoindex.conf \
@@ -74,16 +74,27 @@ RUN sed -i \
 	&& truncate -s 0 \
 		/etc/httpd/conf.d/welcome.conf \
 	&& chmod 444 \
-		/etc/httpd/conf.d/welcome.conf
-
-# -----------------------------------------------------------------------------
-# Disable Apache language based content negotiation
-# -----------------------------------------------------------------------------
-RUN sed -i \
-	-e 's~^LanguagePriority \(.*\)$~#LanguagePriority \1~g' \
-	-e 's~^ForceLanguagePriority \(.*\)$~#ForceLanguagePriority \1~g' \
-	-e 's~^AddLanguage \(.*\)$~#AddLanguage \1~g' \
-	/etc/httpd/conf/httpd.conf
+		/etc/httpd/conf.d/welcome.conf \
+	&& { \
+		echo ''; \
+		echo '#'; \
+		echo '# Custom configuration'; \
+		echo '#'; \
+		echo 'KeepAlive On'; \
+		echo 'MaxKeepAliveRequests 200'; \
+		echo 'KeepAliveTimeout 2'; \
+		echo 'LogFormat \'; \
+		echo '  "%{X-Forwarded-For}i %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\"" \'; \
+		echo '  forwarded_for_combined'; \
+		echo 'Include /etc/services-config/httpd/conf.d/*.conf'; \
+		echo 'ExtendedStatus Off'; \
+		echo 'Options -Indexes'; \
+		echo 'ServerSignature Off'; \
+		echo 'ServerTokens Prod'; \
+		echo 'TraceEnable Off'; \
+		echo 'UseCanonicalName On'; \
+		echo 'UseCanonicalPhysicalPort On'; \
+	} >> /etc/httpd/conf/httpd.conf
 
 # -----------------------------------------------------------------------------
 # Disable all Apache modules and enable the minimum
@@ -108,42 +119,15 @@ RUN sed -i \
 	/etc/httpd/conf.modules.d/00-proxy.conf
 
 # -----------------------------------------------------------------------------
-# Disable the default SSL Virtual Host
+# Disable SSL + the default SSL Virtual Host
 # -----------------------------------------------------------------------------
 RUN sed -i \
-	-e '/<VirtualHost _default_:443>/,/#<\/VirtualHost>/ s~^~#~' \
-	/etc/httpd/conf.d/ssl.conf
-
-# -----------------------------------------------------------------------------
-# Custom Apache configuration
-# -----------------------------------------------------------------------------
-RUN { \
-		echo ''; \
-		echo '#'; \
-		echo '# Custom configuration'; \
-		echo '#'; \
-		echo 'KeepAlive On'; \
-		echo 'MaxKeepAliveRequests 200'; \
-		echo 'KeepAliveTimeout 2'; \
-		echo 'LogFormat \'; \
-		echo '  "%{X-Forwarded-For}i %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\"" \'; \
-		echo '  forwarded_for_combined'; \
-		echo 'Include /etc/services-config/httpd/conf.d/*.conf'; \
-		echo 'Options -Indexes'; \
-		echo 'ServerSignature Off'; \
-		echo 'ServerTokens Prod'; \
-		echo 'TraceEnable Off'; \
-		echo 'UseCanonicalName On'; \
-		echo 'UseCanonicalPhysicalPort On'; \
-	} >> /etc/httpd/conf/httpd.conf
-
-# -----------------------------------------------------------------------------
-# Disable the SSL support by default
-# -----------------------------------------------------------------------------
-RUN mv \
+		-e '/<VirtualHost _default_:443>/,/#<\/VirtualHost>/ s~^~#~' \
 		/etc/httpd/conf.d/ssl.conf \
-		/etc/httpd/conf.d/ssl.conf.off \
-	&& touch \
+	&& cat \
+		/etc/httpd/conf.d/ssl.conf \
+		> /etc/httpd/conf.d/ssl.conf.off \
+	&& > \
 		/etc/httpd/conf.d/ssl.conf \
 	&& chmod 444 \
 		/etc/httpd/conf.d/ssl.conf
@@ -200,9 +184,9 @@ RUN cp -pf \
 		-e 's~^\(php_value\[soap.wsdl_cache_dir\].*\)$~;\1~' \
 		-e 's~^;\(pm.status_path = \).*$~\1/status~' \
 		/etc/php-fpm.d/www.conf \
-	&& mv \
+	&& cat \
 		/etc/php-fpm.d/www.conf \
-		/etc/php-fpm.d/www.conf.template \
+		> /etc/php-fpm.d/www.conf.template \
 	&& sed -i \
 		-e 's~^\([ \t]*\)\(SetHandler "proxy:fcgi:.*\)$~\1#\2~' \
 		-e 's~^\([ \t]*\)#\(SetHandler "proxy:unix:.*\)$~\1\2~' \
@@ -331,29 +315,29 @@ ENV APACHE_CUSTOM_LOG_FORMAT="combined" \
 # -----------------------------------------------------------------------------
 # Set image metadata
 # -----------------------------------------------------------------------------
-ARG RELEASE_VERSION="2.0.0"
+ARG RELEASE_VERSION="2.0.1"
 LABEL \
 	install="docker run \
 --rm \
 --privileged \
 --volume /:/media/root \
-jdeathe/centos-ssh-apache-php:centos-6-httpd24u-php56u-${RELEASE_VERSION} \
+jdeathe/centos-ssh-apache-php:${RELEASE_VERSION} \
 /usr/sbin/scmi install \
 --chroot=/media/root \
 --name=\${NAME} \
---tag=centos-6-httpd24u-php56u-${RELEASE_VERSION}" \
+--tag=${RELEASE_VERSION}" \
 	uninstall="docker run \
 --rm \
 --privileged \
 --volume /:/media/root \
-jdeathe/centos-ssh-apache-php:centos-6-httpd24u-php56u-${RELEASE_VERSION} \
+jdeathe/centos-ssh-apache-php:${RELEASE_VERSION} \
 /usr/sbin/scmi uninstall \
 --chroot=/media/root \
 --name=\${NAME} \
---tag=centos-6-httpd24u-php56u-${RELEASE_VERSION}" \
+--tag=${RELEASE_VERSION}" \
 	org.deathe.name="centos-ssh-apache-php" \
 	org.deathe.version="${RELEASE_VERSION}" \
-	org.deathe.release="jdeathe/centos-ssh-apache-php:centos-6-httpd24u-php56u-${RELEASE_VERSION}" \
+	org.deathe.release="jdeathe/centos-ssh-apache-php:${RELEASE_VERSION}" \
 	org.deathe.license="MIT" \
 	org.deathe.vendor="jdeathe" \
 	org.deathe.url="https://github.com/jdeathe/centos-ssh-apache-php" \

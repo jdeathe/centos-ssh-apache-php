@@ -10,16 +10,18 @@ Apache PHP web server, loading only a minimal set of Apache modules by default. 
 
 ## Overview & links
 
-- centos-6 [(centos-6/Dockerfile)](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6/Dockerfile)
-- centos-6-httpd24u-php56u [(centos-6-httpd24u-php56u/Dockerfile)](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6-httpd24u-php56u/Dockerfile)
+### Tags and respective `Dockerfile` links
+
+- `centos-6-httpd24u-php56u`, `centos-6-httpd24u-php56u-2.0.1`, `2.0.1` [(centos-6-httpd24u-php56u/Dockerfile)](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6-httpd24u-php56u/Dockerfile)
+- `centos-6`, `centos-6-1.8.2`, `1.8.2` [(centos-6/Dockerfile)](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6/Dockerfile)
 
 #### centos-6
 
-The latest CentOS-6 Standard Package based release can be pulled from the `centos-6` Docker tag. For a specific release tag the convention is `centos-6-1.8.0` for the [1.8.0](https://github.com/jdeathe/centos-ssh-apache-php/tree/1.8.0) release tag. This build of [Apache](https://httpd.apache.org/), (httpd CentOS package), uses the mpm_prefork_module and php5_module modules for handling [PHP](http://php.net/).
+The latest CentOS-6 Standard Package based release can be pulled from the `centos-6` Docker tag. It is recommended to select a specific release tag - the convention is `centos-6-1.8.0` or `1.8.0` for the [1.8.0](https://github.com/jdeathe/centos-ssh-apache-php/tree/1.8.0) release tag. This build of [Apache](https://httpd.apache.org/), (httpd CentOS package), uses the mpm_prefork_module and php5_module modules for handling [PHP](http://php.net/).
 
 #### centos-6-httpd24u-php56u
 
-The latest CentOS-6 [IUS](https://ius.io) Apache 2.4, PHP-FPM 5.6 based release can be pulled from the `centos-6-httpd24u-php56u` Docker tag. For a specific release tag the convention is `centos-6-httpd24u-php56u-2.0.0` for the [2.0.0](https://github.com/jdeathe/centos-ssh-apache-php/tree/2.0.0) release tag. This build of [Apache](https://httpd.apache.org/), (httpd24u package), uses the mpm_prefork_module and php-fpm for handling [PHP](http://php.net/). This version has the option of using the worker or event MPM.
+The latest CentOS-6 [IUS](https://ius.io) Apache 2.4, PHP-FPM 5.6 based release can be pulled from the `centos-6-httpd24u-php56u` Docker tag. It is recommended to select a specific release tag - the convention is `centos-6-httpd24u-php56u-2.0.0` or `2.0.0` for the [2.0.0](https://github.com/jdeathe/centos-ssh-apache-php/tree/2.0.0) release tag. This build of [Apache](https://httpd.apache.org/), (httpd24u package), uses the mpm_prefork_module and php-fpm for handling [PHP](http://php.net/). This version has the option of using the worker or event MPM.
 
 Included in the build are the [SCL](https://www.softwarecollections.org/), [EPEL](http://fedoraproject.org/wiki/EPEL) and [IUS](https://ius.io) repositories. Installed packages include [OpenSSH](http://www.openssh.com/portable.html) secure shell, [vim-minimal](http://www.vim.org/), [elinks](http://elinks.or.cz) (for fullstatus support), PHP [Memcached](http://pecl.php.net/package/memcached) are installed along with python-setuptools, [supervisor](http://supervisord.org/) and [supervisor-stdout](https://github.com/coderanger/supervisor-stdout). The `centos-6` "Standard" PHP 5.3 build includes PHP [APC](http://pecl.php.net/package/APC) where Zend Opcache is bundled in  PHP 5.6.
 
@@ -93,10 +95,10 @@ $ docker run \
   --rm \
   --privileged \
   --volume /:/media/root \
-  jdeathe/centos-ssh-apache-php:centos-6-1.8.1 \
+  jdeathe/centos-ssh-apache-php:2.0.1 \
   /usr/sbin/scmi install \
     --chroot=/media/root \
-    --tag=centos-6-1.8.1 \
+    --tag=2.0.1 \
     --name=apache-php.pool-1.1.1
 ```
 
@@ -109,10 +111,10 @@ $ docker run \
   --rm \
   --privileged \
   --volume /:/media/root \
-  jdeathe/centos-ssh-apache-php:centos-6-1.8.1 \
+  jdeathe/centos-ssh-apache-php:2.0.1 \
   /usr/sbin/scmi uninstall \
     --chroot=/media/root \
-    --tag=centos-6-1.8.1 \
+    --tag=2.0.1 \
     --name=apache-php.pool-1.1.1
 ```
 
@@ -125,10 +127,10 @@ $ docker run \
   --rm \
   --privileged \
   --volume /:/media/root \
-  jdeathe/centos-ssh-apache-php:centos-6-1.8.1 \
+  jdeathe/centos-ssh-apache-php:2.0.1 \
   /usr/sbin/scmi install \
     --chroot=/media/root \
-    --tag=centos-6-1.8.1 \
+    --tag=2.0.1 \
     --name=apache-php.pool-1.1.1 \
     --manager=systemd \
     --register \
@@ -147,11 +149,11 @@ Since release `centos-6-1.7.2` the install template has been added to the image 
 To see detailed information about the image run `scmi` with the `--info` option. To see all available `scmi` options run with the `--help` option.
 
 ```
-$ docker pull jdeathe/centos-ssh-apache-php:centos-6-1.8.1
+$ docker pull jdeathe/centos-ssh-apache-php:2.0.1
 $ eval "sudo -E $(
     docker inspect \
     -f "{{.ContainerConfig.Labels.install}}" \
-    jdeathe/centos-ssh-apache-php:centos-6-1.8.1
+    jdeathe/centos-ssh-apache-php:2.0.1
   ) --info"
 ```
 
@@ -161,7 +163,7 @@ To perform an installation using the docker name `apache-php.pool-1.2.1` simply 
 $ eval "sudo -E $(
     docker inspect \
     -f "{{.ContainerConfig.Labels.install}}" \
-    jdeathe/centos-ssh-apache-php:centos-6-1.8.1
+    jdeathe/centos-ssh-apache-php:2.0.1
   ) --name=apache-php.pool-1.2.1"
 ```
 
@@ -171,7 +173,7 @@ To uninstall use the *same command* that was used to install but with the `unins
 $ eval "sudo -E $(
     docker inspect \
     -f "{{.ContainerConfig.Labels.uninstall}}" \
-    jdeathe/centos-ssh-apache-php:centos-6-1.8.1
+    jdeathe/centos-ssh-apache-php:2.0.1
   ) --name=apache-php.pool-1.2.1"
 ```
 
@@ -184,7 +186,7 @@ To see detailed information about the image run `scmi` with the `--info` option.
 ```
 $ sudo -E atomic install \
   -n apache-php.pool-1.3.1 \
-  jdeathe/centos-ssh-apache-php:centos-6-1.8.1 \
+  jdeathe/centos-ssh-apache-php:2.0.1 \
   --info
 ```
 
@@ -193,14 +195,14 @@ To perform an installation using the docker name `apache-php.pool-1.3.1` simply 
 ```
 $ sudo -E atomic install \
   -n apache-php.pool-1.3.1 \
-  jdeathe/centos-ssh-apache-php:centos-6-1.8.1
+  jdeathe/centos-ssh-apache-php:2.0.1
 ```
 
 Alternatively, you could use the `scmi` options `--name` or `-n` for naming the container.
 
 ```
 $ sudo -E atomic install \
-  jdeathe/centos-ssh-apache-php:centos-6-1.8.1 \
+  jdeathe/centos-ssh-apache-php:2.0.1 \
   --name apache-php.pool-1.3.1
 ```
 
@@ -209,7 +211,7 @@ To uninstall use the *same command* that was used to install but with the `unins
 ```
 $ sudo -E atomic uninstall \
   -n apache-php.pool-1.3.1 \
-  jdeathe/centos-ssh-apache-php:centos-6-1.8.1
+  jdeathe/centos-ssh-apache-php:2.0.1
 ```
 
 #### Environment Variables
