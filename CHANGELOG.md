@@ -6,6 +6,18 @@ Summary of release changes for Version 1.
 
 CentOS-6 6.8 x86_64, Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1.
 
+### 1.8.2 - 2017-12-24
+
+- Replaces `mv` operations with `cat` to work-around OverlayFS limitations in CentOS-7.
+- Adds updated source image to [1.7.5 tag](https://github.com/jdeathe/centos-ssh/releases/tag/1.7.5).
+- Adds reduced number of image layers.
+- Adds a Change Log.
+- Adds support for semantic version numbered tags.
+- Adds minor code style changes to the Makefile.
+- Adds test cases using [shpec](https://github.com/rylnd/shpec), run with `make test`.
+- Set the Apache run group to the group defined in `APACHE_RUN_GROUP`.
+- Adds `version_module` as a default loaded module.
+
 ### 1.8.1 - 2016-10-27
 
 - Adds updated README with details of new 2.0.0 release tag.
