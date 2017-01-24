@@ -3,10 +3,11 @@
 # -----------------------------------------------------------------------------
 DOCKER_USER := jdeathe
 DOCKER_IMAGE_NAME := centos-ssh-apache-php
+SHPEC_ROOT := test/shpec
 
 # Tag validation patterns
-DOCKER_IMAGE_TAG_PATTERN := ^(latest|(centos-[6-7])|centos-6-httpd24u-php56u|(centos-(6-1|6-httpd24u-php56u-2|7-3).[0-9]+.[0-9]+))$
-DOCKER_IMAGE_RELEASE_TAG_PATTERN := ^centos-(6-1|6-httpd24u-php56u-2|7-3).[0-9]+.[0-9]+$
+DOCKER_IMAGE_TAG_PATTERN := ^(latest|centos-[6-7]|centos-6-httpd24u-php56u|(([1-3]|centos-(6-1|6-httpd24u-php56u-2|7-3))\.[0-9]+\.[0-9]+))$
+DOCKER_IMAGE_RELEASE_TAG_PATTERN := ^(1|2|centos-(6-1|6-httpd24u-php56u-2))\.[0-9]+\.[0-9]+$
 
 # -----------------------------------------------------------------------------
 # Variables
@@ -52,7 +53,7 @@ APACHE_ERROR_LOG_LOCATION ?= var/log/apache_error_log
 APACHE_ERROR_LOG_LEVEL ?= warn
 APACHE_EXTENDED_STATUS_ENABLED ?= false
 APACHE_HEADER_X_SERVICE_UID ?= {{HOSTNAME}}
-APACHE_LOAD_MODULES ?= authz_user_module log_config_module expires_module deflate_module headers_module setenvif_module mime_module status_module dir_module alias_module
+APACHE_LOAD_MODULES ?= authz_user_module log_config_module expires_module deflate_module headers_module setenvif_module mime_module status_module dir_module alias_module version_module
 APACHE_OPERATING_MODE ?= production
 APACHE_MOD_SSL_ENABLED ?= false
 APACHE_MPM ?= prefork

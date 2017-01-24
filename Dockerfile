@@ -4,7 +4,7 @@
 # CentOS-6, Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1
 #
 # =============================================================================
-FROM jdeathe/centos-ssh:centos-6-1.7.3
+FROM jdeathe/centos-ssh:1.7.5
 
 MAINTAINER James Deathe <james.deathe@gmail.com>
 
@@ -36,48 +36,54 @@ RUN rpm --rebuilddb \
 
 # -----------------------------------------------------------------------------
 # Global Apache configuration changes
+# - Disable Apache directory indexes.
+# - Disable Apache language based content negotiation.
+# - Enable ServerStatus access via /server-status to local client.
 # -----------------------------------------------------------------------------
 RUN sed -i \
-	-e 's~^KeepAlive .*$~KeepAlive On~g' \
-	-e 's~^MaxKeepAliveRequests .*$~MaxKeepAliveRequests 200~g' \
-	-e 's~^KeepAliveTimeout .*$~KeepAliveTimeout 2~g' \
-	-e 's~^ServerSignature On$~ServerSignature Off~g' \
-	-e 's~^ServerTokens OS$~ServerTokens Prod~g' \
-	-e 's~^NameVirtualHost \(.*\)$~#NameVirtualHost \1~g' \
-	-e 's~^User .*$~User ${APACHE_RUN_USER}~g' \
-	-e 's~^Group .*$~Group ${APACHE_RUN_GROUP}~g' \
-	-e 's~^DocumentRoot \(.*\)$~#DocumentRoot \1~g' \
-	/etc/httpd/conf/httpd.conf
-
-# -----------------------------------------------------------------------------
-# Disable Apache directory indexes
-# -----------------------------------------------------------------------------
-RUN sed -i \
-	-e 's~^IndexOptions \(.*\)$~#IndexOptions \1~g' \
-	-e 's~^IndexIgnore \(.*\)$~#IndexIgnore \1~g' \
-	-e 's~^AddIconByEncoding \(.*\)$~#AddIconByEncoding \1~g' \
-	-e 's~^AddIconByType \(.*\)$~#AddIconByType \1~g' \
-	-e 's~^AddIcon \(.*\)$~#AddIcon \1~g' \
-	-e 's~^DefaultIcon \(.*\)$~#DefaultIcon \1~g' \
-	-e 's~^ReadmeName \(.*\)$~#ReadmeName \1~g' \
-	-e 's~^HeaderName \(.*\)$~#HeaderName \1~g' \
-	/etc/httpd/conf/httpd.conf
-
-# -----------------------------------------------------------------------------
-# Disable Apache language based content negotiation
-# -----------------------------------------------------------------------------
-RUN sed -i \
-	-e 's~^LanguagePriority \(.*\)$~#LanguagePriority \1~g' \
-	-e 's~^ForceLanguagePriority \(.*\)$~#ForceLanguagePriority \1~g' \
-	-e 's~^AddLanguage \(.*\)$~#AddLanguage \1~g' \
-	/etc/httpd/conf/httpd.conf
+		-e 's~^KeepAlive .*$~KeepAlive On~g' \
+		-e 's~^MaxKeepAliveRequests .*$~MaxKeepAliveRequests 200~g' \
+		-e 's~^KeepAliveTimeout .*$~KeepAliveTimeout 2~g' \
+		-e 's~^ServerSignature On$~ServerSignature Off~g' \
+		-e 's~^ServerTokens OS$~ServerTokens Prod~g' \
+		-e 's~^NameVirtualHost \(.*\)$~#NameVirtualHost \1~g' \
+		-e 's~^User .*$~User ${APACHE_RUN_USER}~g' \
+		-e 's~^Group .*$~Group ${APACHE_RUN_GROUP}~g' \
+		-e 's~^DocumentRoot \(.*\)$~#DocumentRoot \1~g' \
+		-e 's~^IndexOptions \(.*\)$~#IndexOptions \1~g' \
+		-e 's~^IndexIgnore \(.*\)$~#IndexIgnore \1~g' \
+		-e 's~^AddIconByEncoding \(.*\)$~#AddIconByEncoding \1~g' \
+		-e 's~^AddIconByType \(.*\)$~#AddIconByType \1~g' \
+		-e 's~^AddIcon \(.*\)$~#AddIcon \1~g' \
+		-e 's~^DefaultIcon \(.*\)$~#DefaultIcon \1~g' \
+		-e 's~^ReadmeName \(.*\)$~#ReadmeName \1~g' \
+		-e 's~^HeaderName \(.*\)$~#HeaderName \1~g' \
+		-e 's~^LanguagePriority \(.*\)$~#LanguagePriority \1~g' \
+		-e 's~^ForceLanguagePriority \(.*\)$~#ForceLanguagePriority \1~g' \
+		-e 's~^AddLanguage \(.*\)$~#AddLanguage \1~g' \
+		-e '/#<Location \/server-status>/,/#<\/Location>/ s~^#~~' \
+		-e '/<Location \/server-status>/,/<\/Location>/ s~Allow from .example.com~Allow from localhost 127.0.0.1~' \
+		/etc/httpd/conf/httpd.conf \
+	&& { \
+			echo ''; \
+			echo '#'; \
+			echo '# Custom configuration'; \
+			echo '#'; \
+			echo 'LogFormat \'; \
+			echo '  "%{X-Forwarded-For}i %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\"" \'; \
+			echo '  forwarded_for_combined'; \
+			echo 'Include /etc/services-config/httpd/conf.d/*.conf'; \
+			echo 'Options -Indexes'; \
+			echo 'TraceEnable Off'; \
+			echo 'UseCanonicalName On'; \
+			echo 'UseCanonicalPhysicalPort On'; \
+		} >> /etc/httpd/conf/httpd.conf
 
 # -----------------------------------------------------------------------------
 # Disable all Apache modules and enable the minimum
 # -----------------------------------------------------------------------------
 RUN sed -i \
 	-e 's~^\(LoadModule .*\)$~#\1~g' \
-	-e 's~^\(#LoadModule version_module modules/mod_version.so\)$~\1\n#LoadModule reqtimeout_module modules/mod_reqtimeout.so~g' \
 	-e 's~^#LoadModule mime_module ~LoadModule mime_module ~g' \
 	-e 's~^#LoadModule log_config_module ~LoadModule log_config_module ~g' \
 	-e 's~^#LoadModule setenvif_module ~LoadModule setenvif_module ~g' \
@@ -89,48 +95,19 @@ RUN sed -i \
 	-e 's~^#LoadModule deflate_module ~LoadModule deflate_module ~g' \
 	-e 's~^#LoadModule headers_module ~LoadModule headers_module ~g' \
 	-e 's~^#LoadModule alias_module ~LoadModule alias_module ~g' \
+	-e 's~^#\(LoadModule version_module .*\)$~\1\n#LoadModule reqtimeout_module modules/mod_reqtimeout.so~g' \
 	/etc/httpd/conf/httpd.conf
 
 # -----------------------------------------------------------------------------
-# Enable ServerStatus access via /_httpdstatus to local client
+# Disable SSL + the default SSL Virtual Host
 # -----------------------------------------------------------------------------
 RUN sed -i \
-	-e '/#<Location \/server-status>/,/#<\/Location>/ s~^#~~' \
-	-e '/<Location \/server-status>/,/<\/Location>/ s~Allow from .example.com~Allow from localhost 127.0.0.1~' \
-	/etc/httpd/conf/httpd.conf
-
-# -----------------------------------------------------------------------------
-# Disable the default SSL Virtual Host
-# -----------------------------------------------------------------------------
-RUN sed -i \
-	-e '/<VirtualHost _default_:443>/,/#<\/VirtualHost>/ s~^~#~' \
-	/etc/httpd/conf.d/ssl.conf
-
-# -----------------------------------------------------------------------------
-# Custom Apache configuration
-# -----------------------------------------------------------------------------
-RUN { \
-		echo ''; \
-		echo '#'; \
-		echo '# Custom configuration'; \
-		echo '#'; \
-		echo 'LogFormat \'; \
-		echo '  "%{X-Forwarded-For}i %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\"" \'; \
-		echo '  forwarded_for_combined'; \
-		echo 'Include /etc/services-config/httpd/conf.d/*.conf'; \
-		echo 'Options -Indexes'; \
-		echo 'TraceEnable Off'; \
-		echo 'UseCanonicalName On'; \
-		echo 'UseCanonicalPhysicalPort On'; \
-	} >> /etc/httpd/conf/httpd.conf
-
-# -----------------------------------------------------------------------------
-# Disable the SSL support by default
-# -----------------------------------------------------------------------------
-RUN mv \
+		-e '/<VirtualHost _default_:443>/,/#<\/VirtualHost>/ s~^~#~' \
 		/etc/httpd/conf.d/ssl.conf \
-		/etc/httpd/conf.d/ssl.conf.off \
-	&& touch \
+	&& cat \
+		/etc/httpd/conf.d/ssl.conf \
+		> /etc/httpd/conf.d/ssl.conf.off \
+	&& > \
 		/etc/httpd/conf.d/ssl.conf \
 	&& chmod 444 \
 		/etc/httpd/conf.d/ssl.conf
@@ -270,7 +247,7 @@ ENV APACHE_CUSTOM_LOG_FORMAT="combined" \
 	APACHE_ERROR_LOG_LEVEL="warn" \
 	APACHE_EXTENDED_STATUS_ENABLED="false" \
 	APACHE_HEADER_X_SERVICE_UID="{{HOSTNAME}}" \
-	APACHE_LOAD_MODULES="authz_user_module log_config_module expires_module deflate_module headers_module setenvif_module mime_module status_module dir_module alias_module" \
+	APACHE_LOAD_MODULES="authz_user_module log_config_module expires_module deflate_module headers_module setenvif_module mime_module status_module dir_module alias_module version_module" \
 	APACHE_MOD_SSL_ENABLED="false" \
 	APACHE_MPM="prefork" \
 	APACHE_OPERATING_MODE="production" \
@@ -291,29 +268,29 @@ ENV APACHE_CUSTOM_LOG_FORMAT="combined" \
 # -----------------------------------------------------------------------------
 # Set image metadata
 # -----------------------------------------------------------------------------
-ARG RELEASE_VERSION="1.8.1"
+ARG RELEASE_VERSION="1.8.2"
 LABEL \
 	install="docker run \
 --rm \
 --privileged \
 --volume /:/media/root \
-jdeathe/centos-ssh-apache-php:centos-6-${RELEASE_VERSION} \
+jdeathe/centos-ssh-apache-php:${RELEASE_VERSION} \
 /usr/sbin/scmi install \
 --chroot=/media/root \
 --name=\${NAME} \
---tag=centos-6-${RELEASE_VERSION}" \
+--tag=${RELEASE_VERSION}" \
 	uninstall="docker run \
 --rm \
 --privileged \
 --volume /:/media/root \
-jdeathe/centos-ssh-apache-php:centos-6-${RELEASE_VERSION} \
+jdeathe/centos-ssh-apache-php:${RELEASE_VERSION} \
 /usr/sbin/scmi uninstall \
 --chroot=/media/root \
 --name=\${NAME} \
---tag=centos-6-${RELEASE_VERSION}" \
+--tag=${RELEASE_VERSION}" \
 	org.deathe.name="centos-ssh-apache-php" \
 	org.deathe.version="${RELEASE_VERSION}" \
-	org.deathe.release="jdeathe/centos-ssh-apache-php:centos-6-${RELEASE_VERSION}" \
+	org.deathe.release="jdeathe/centos-ssh-apache-php:${RELEASE_VERSION}" \
 	org.deathe.license="MIT" \
 	org.deathe.vendor="jdeathe" \
 	org.deathe.url="https://github.com/jdeathe/centos-ssh-apache-php" \

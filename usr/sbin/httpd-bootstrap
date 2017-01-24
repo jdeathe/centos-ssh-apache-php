@@ -666,17 +666,15 @@ if [[ ${OPTS_APACHE_MOD_SSL_ENABLED} == true ]]; then
 		> /etc/httpd/conf.d/ssl.conf
 
 	if [[ -f /etc/services-config/httpd/conf.d/10-ssl-vhost.conf.off ]]; then
-		mv \
+		cat \
 			/etc/services-config/httpd/conf.d/10-ssl-vhost.conf.off \
-			/etc/services-config/httpd/conf.d/10-ssl-vhost.conf
+			> /etc/services-config/httpd/conf.d/10-ssl-vhost.conf
 	fi
 else
 	> /etc/httpd/conf.d/ssl.conf
 
 	if [[ -f /etc/services-config/httpd/conf.d/10-ssl-vhost.conf ]]; then
-		mv \
-			/etc/services-config/httpd/conf.d/10-ssl-vhost.conf \
-			/etc/services-config/httpd/conf.d/10-ssl-vhost.conf.off
+		> /etc/services-config/httpd/conf.d/10-ssl-vhost.conf
 	fi
 fi
 
@@ -691,7 +689,7 @@ fi
 update_user_login "${DEFAULT_SYSTEM_USER}" "${OPTS_APACHE_SYSTEM_USER}"
 update_group_name "${DEFAULT_SYSTEM_USER}" "${OPTS_APACHE_SYSTEM_USER}"
 update_user_login "${DEFAULT_APACHE_USER}" "${OPTS_APACHE_RUN_USER}"
-update_group_name "${DEFAULT_APACHE_USER}" "${OPTS_APACHE_RUN_USER}"
+update_group_name "${DEFAULT_APACHE_USER}" "${OPTS_APACHE_RUN_GROUP}"
 
 # Wait for background processes
 wait ${PIDS[0]}
