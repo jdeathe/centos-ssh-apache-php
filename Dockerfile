@@ -315,29 +315,29 @@ ENV APACHE_CUSTOM_LOG_FORMAT="combined" \
 # -----------------------------------------------------------------------------
 # Set image metadata
 # -----------------------------------------------------------------------------
-ARG RELEASE_VERSION="2.0.0"
+ARG RELEASE_VERSION="2.0.1"
 LABEL \
 	install="docker run \
 --rm \
 --privileged \
 --volume /:/media/root \
-jdeathe/centos-ssh-apache-php:centos-6-httpd24u-php56u-${RELEASE_VERSION} \
+jdeathe/centos-ssh-apache-php:${RELEASE_VERSION} \
 /usr/sbin/scmi install \
 --chroot=/media/root \
 --name=\${NAME} \
---tag=centos-6-httpd24u-php56u-${RELEASE_VERSION}" \
+--tag=${RELEASE_VERSION}" \
 	uninstall="docker run \
 --rm \
 --privileged \
 --volume /:/media/root \
-jdeathe/centos-ssh-apache-php:centos-6-httpd24u-php56u-${RELEASE_VERSION} \
+jdeathe/centos-ssh-apache-php:${RELEASE_VERSION} \
 /usr/sbin/scmi uninstall \
 --chroot=/media/root \
 --name=\${NAME} \
---tag=centos-6-httpd24u-php56u-${RELEASE_VERSION}" \
+--tag=${RELEASE_VERSION}" \
 	org.deathe.name="centos-ssh-apache-php" \
 	org.deathe.version="${RELEASE_VERSION}" \
-	org.deathe.release="jdeathe/centos-ssh-apache-php:centos-6-httpd24u-php56u-${RELEASE_VERSION}" \
+	org.deathe.release="jdeathe/centos-ssh-apache-php:${RELEASE_VERSION}" \
 	org.deathe.license="MIT" \
 	org.deathe.vendor="jdeathe" \
 	org.deathe.url="https://github.com/jdeathe/centos-ssh-apache-php" \
