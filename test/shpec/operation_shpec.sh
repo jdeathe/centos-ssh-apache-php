@@ -57,7 +57,7 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 	test_setup
 
 	describe "Basic Apache PHP operations"
-		trap "docker_terminate_container apache-php.pool-1.1.1 &> /dev/null" \
+		trap "docker_terminate_container apache-php.pool-1.1.1 &> /dev/null; exit 1" \
 			INT TERM EXIT
 
 		docker_terminate_container \
@@ -508,7 +508,7 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 	end
 
 	describe "Customised Apache PHP configuration"
-		trap "docker_terminate_container apache-php.pool-1.1.1 &> /dev/null" \
+		trap "docker_terminate_container apache-php.pool-1.1.1 &> /dev/null; exit 1" \
 			INT TERM EXIT
 
 		it "Allows configuration of access logs written in common LogFormat."
@@ -1176,21 +1176,36 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 			# For the server to start, the package directory needs to exist.
 			docker exec \
 				apache-php.pool-1.1.1 \
-				mkdir -p /opt/php-hw/{public_html,var/log}
+				mkdir -p -m 750 /opt/php-hw/{public_html,var/{log,tmp}}
 
 			docker exec -i \
 				apache-php.pool-1.1.1 \
 				tee \
 					/opt/php-hw/public_html/index.php \
 					1> /dev/null \
-					<<-CONFIG
+					<<-EOT
 			<?php
 			    header(
 			        'Content-Type: text/plain; charset=utf-8'
 			    );
 			    print 'Hello, world!';
-			?>
-			CONFIG
+			EOT
+
+			docker exec \
+				apache-php.pool-1.1.1 \
+				chown -R app:app-www /opt/php-hw
+
+			docker exec \
+				apache-php.pool-1.1.1 \
+				find /opt/php-hw -type d -exec chmod 750 {} +
+
+			docker exec \
+				apache-php.pool-1.1.1 \
+				find /opt/php-hw/var -type d -exec chmod 770 {} +
+
+			docker exec \
+				apache-php.pool-1.1.1 \
+				find /opt/php-hw -type f -exec chmod 640 {} +
 
 			docker restart \
 				apache-php.pool-1.1.1 \

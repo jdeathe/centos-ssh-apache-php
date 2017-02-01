@@ -9,6 +9,7 @@ CentOS-6 6.8 x86_64, Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1.
 ### 1.9.0 - Unreleased
 
 - Fixes issue with app specific `httpd` configuration requiring the `etc/php.d` directory to exist.
+- Fixes `shpec` test definition to allow tests to be interruptible + ports back some minor improvements made to the tests for the fcgid version.
 
 ### 1.8.2 - 2017-01-24
 
