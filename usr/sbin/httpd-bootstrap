@@ -301,7 +301,8 @@ function load_httpd_conf_scan_files ()
 	local FILE_PATH
 	local PACKAGE_PATH="${1:-}"
 
-	if [[ -n ${PACKAGE_PATH} ]] && [[ -d ${PACKAGE_PATH}/etc/php.d ]]; then
+	if [[ -n ${PACKAGE_PATH} ]] \
+		&& [[ -d ${PACKAGE_PATH}/etc/httpd/conf.d ]]; then
 		for FILE_PATH in "${PACKAGE_PATH}"/etc/httpd/conf.d/*.conf; do
 			cat  \
 				"${FILE_PATH}" \
@@ -315,7 +316,8 @@ function load_php_ini_scan_files ()
 	local FILE_PATH
 	local PACKAGE_PATH="${1:-}"
 
-	if [[ -n ${PACKAGE_PATH} ]] && [[ -d ${PACKAGE_PATH}/etc/php.d ]]; then
+	if [[ -n ${PACKAGE_PATH} ]] \
+		&& [[ -d ${PACKAGE_PATH}/etc/php.d ]]; then
 		# Replace environment variables to support fcgid php-wrapper
 		for FILE_PATH in "${PACKAGE_PATH}"/etc/php.d/*.ini; do
 			printf -- \
