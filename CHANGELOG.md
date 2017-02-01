@@ -10,6 +10,7 @@ CentOS-6 6.8 x86_64, Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1.
 
 - Fixes issue with app specific `httpd` configuration requiring the `etc/php.d` directory to exist.
 - Fixes `shpec` test definition to allow tests to be interruptible + ports back some minor improvements made to the tests for the fcgid version.
+- Adds default Apache modules appropriate for Apache 2.4/2.2 in the bootstrap script for the unlikely case where the values in the environment and configuration file defaults are both unset.
 
 ### 1.8.2 - 2017-01-24
 
