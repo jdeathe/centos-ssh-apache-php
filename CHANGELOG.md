@@ -6,6 +6,11 @@ Summary of release changes for Version 2.
 
 CentOS-6 6.8 x86_64, Apache 2.4, PHP-FPM 5.6, PHP memcached 2.2, Zend Opcache 7.0.
 
+### 2.1.0 - Unreleased
+
+- Fixes issue with app specific `httpd` configuration requiring the `etc/php.d` directory to exist.
+- Fixes `shpec` test definition to allow tests to be interruptible + ports back some minor improvements made to the tests for the fcgid version.
+
 ### 2.0.1 - 2017-01-24
 
 - Replaces `mv` operations with `cat` to work-around OverlayFS limitations in CentOS-7.
