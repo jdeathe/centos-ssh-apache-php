@@ -636,18 +636,43 @@ function update_user_login ()
 
 DEFAULT_SYSTEM_USER=app
 DEFAULT_APACHE_USER=app-www
-DEFAULT_APACHE_LOAD_MODULES="
- authz_user_module
- log_config_module
- expires_module
- deflate_module
- headers_module
- setenvif_module
- mime_module
- status_module
- dir_module
- alias_module
-"
+if [[ -f /etc/httpd/conf.modules.d/00-base.conf ]]; then
+	# Default Apache 2.4 DSO Modules
+	DEFAULT_APACHE_LOAD_MODULES="
+	 authz_core_module
+	 authz_user_module
+	 log_config_module
+	 expires_module
+	 deflate_module
+	 filter_module
+	 headers_module
+	 setenvif_module
+	 socache_shmcb_module
+	 mime_module
+	 status_module
+	 dir_module
+	 alias_module
+	 unixd_module
+	 version_module
+	 proxy_module
+	 proxy_fcgi_module
+	"
+else
+	# Default Apache 2.2 DSO Modules
+	DEFAULT_APACHE_LOAD_MODULES="
+	 authz_user_module
+	 log_config_module
+	 expires_module
+	 deflate_module
+	 headers_module
+	 setenvif_module
+	 mime_module
+	 status_module
+	 dir_module
+	 alias_module
+	 version_module
+	"
+fi
 PACKAGE_PATH="${PACKAGE_PATH:-/opt/app}"
 PASSWORD_LENGTH=16
 
