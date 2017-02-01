@@ -57,7 +57,7 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 	test_setup
 
 	describe "Basic Apache PHP operations"
-		trap "docker_terminate_container apache-php.pool-1.1.1 &> /dev/null" \
+		trap "docker_terminate_container apache-php.pool-1.1.1 &> /dev/null; exit 1" \
 			INT TERM EXIT
 
 		docker_terminate_container \
@@ -455,7 +455,7 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 				for module in ${required_apache_modules}; do
 					docker exec \
 						apache-php.pool-1.1.1 \
-						bash -c "apachectl -M | grep -q ${module}"
+						bash -c "apachectl -M 2>&1 | grep -q ${module}"
 
 					status_apache_modules_loaded=$((
 						status_apache_modules_loaded + ${?}
@@ -474,7 +474,7 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 					all_loaded_apache_modules="$(
 						docker exec \
 							apache-php.pool-1.1.1 \
-							bash -c "apachectl -M | sed -e '/Loaded Modules:/d' -e 's~^ *\([a-z_]*\).*~\1~g'"
+							bash -c "apachectl -M 2>&1 | sed -e '/Loaded Modules:/d' -e 's~^ *\([a-z_]*\).*~\1~g'"
 					)"
 
 					for module in ${all_loaded_apache_modules}; do
@@ -516,7 +516,7 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 	end
 
 	describe "Customised Apache PHP configuration"
-		trap "docker_terminate_container apache-php.pool-1.1.1 &> /dev/null" \
+		trap "docker_terminate_container apache-php.pool-1.1.1 &> /dev/null; exit 1" \
 			INT TERM EXIT
 
 		it "Allows configuration of access logs written in common LogFormat."
@@ -884,7 +884,7 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 
 			docker exec \
 				apache-php.pool-1.1.1 \
-				bash -c "apachectl -M | grep -q rewrite_module"
+				bash -c "apachectl -M 2>&1 | grep -q rewrite_module"
 
 			status_apache_module_loaded=${?}
 
@@ -911,7 +911,7 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 
 			docker exec \
 				apache-php.pool-1.1.1 \
-				bash -c "apachectl -V | grep -qE '^Server MPM:[ ]+event$'"
+				bash -c "apachectl -V 2>&1 | grep -qiE '^Server MPM:[ ]+event$'"
 
 			status_apache_mpm_changed=${?}
 
@@ -1176,21 +1176,36 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 			# For the server to start, the package directory needs to exist.
 			docker exec \
 				apache-php.pool-1.1.1 \
-				mkdir -p /opt/php-hw/{public_html,var/log}
+				mkdir -p -m 750 /opt/php-hw/{public_html,var/{log,tmp}}
 
 			docker exec -i \
 				apache-php.pool-1.1.1 \
 				tee \
 					/opt/php-hw/public_html/index.php \
 					1> /dev/null \
-					<<-CONFIG
+					<<-EOT
 			<?php
 			    header(
 			        'Content-Type: text/plain; charset=utf-8'
 			    );
 			    print 'Hello, world!';
-			?>
-			CONFIG
+			EOT
+
+			docker exec \
+				apache-php.pool-1.1.1 \
+				chown -R app:app-www /opt/php-hw
+
+			docker exec \
+				apache-php.pool-1.1.1 \
+				find /opt/php-hw -type d -exec chmod 750 {} +
+
+			docker exec \
+				apache-php.pool-1.1.1 \
+				find /opt/php-hw/var -type d -exec chmod 770 {} +
+
+			docker exec \
+				apache-php.pool-1.1.1 \
+				find /opt/php-hw -type f -exec chmod 640 {} +
 
 			docker restart \
 				apache-php.pool-1.1.1 \
