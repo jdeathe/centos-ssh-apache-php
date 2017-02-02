@@ -11,6 +11,7 @@ CentOS-6 6.8 x86_64, Apache 2.4, PHP-FPM 5.6, PHP memcached 2.2, Zend Opcache 7.
 - Fixes issue with app specific `httpd` configuration requiring the `etc/php.d` directory to exist.
 - Fixes `shpec` test definition to allow tests to be interruptible + ports back some minor improvements made to the tests for the fcgid version.
 - Adds default Apache modules appropriate for Apache 2.4/2.2 in the bootstrap script for the unlikely case where the values in the environment and configuration file defaults are both unset.
+- Updates `README.md` with details of the SCMI install example's prerequisite step of either pulling or loading the image.
 
 ### 2.0.1 - 2017-01-24
 
