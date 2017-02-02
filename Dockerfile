@@ -19,14 +19,14 @@ ARG PACKAGE_RELEASE_VERSION="0.4.0"
 RUN rpm --rebuilddb \
 	&& yum --setopt=tsflags=nodocs -y install \
 		elinks-0.12-0.21.pre5.el6_3 \
-		httpd24u-httpd \
-		httpd24u-httpd-tools \
-		httpd24u-mod_ssl \
-		php56u-fpm \
-		php56u-fpm-httpd \
-		php56u-php-cli \
-		php56u-opcache \
-		php56u-pecl-memcached \
+		httpd24u-2.4.25-2.ius.centos6 \
+		httpd24u-tools-2.4.25-2.ius.centos6 \
+		httpd24u-mod_ssl-2.4.25-2.ius.centos6 \
+		php56u-fpm-5.6.30-1.ius.centos6 \
+		php56u-fpm-httpd-5.6.30-1.ius.centos6 \
+		php56u-cli-5.6.30-1.ius.centos6 \
+		php56u-opcache-5.6.30-1.ius.centos6 \
+		php56u-pecl-memcached-5.6.30-1.ius.centos6 \
 	&& yum versionlock add \
 		elinks \
 		httpd24u* \
