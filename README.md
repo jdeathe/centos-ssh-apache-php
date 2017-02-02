@@ -146,10 +146,15 @@ If your docker host has systemd, fleetd (and optionally etcd) installed then `sc
 
 Since release `centos-6-1.7.2` the install template has been added to the image metadata. Using docker inspect you can access `scmi` to simplify install/uninstall tasks.
 
-To see detailed information about the image run `scmi` with the `--info` option. To see all available `scmi` options run with the `--help` option.
+_NOTE:_ A prerequisite of the following examples is that the image has been pulled (or loaded from the release package).
 
 ```
 $ docker pull jdeathe/centos-ssh-apache-php:2.0.1
+```
+
+To see detailed information about the image run `scmi` with the `--info` option. To see all available `scmi` options run with the `--help` option.
+
+```
 $ eval "sudo -E $(
     docker inspect \
     -f "{{.ContainerConfig.Labels.install}}" \
