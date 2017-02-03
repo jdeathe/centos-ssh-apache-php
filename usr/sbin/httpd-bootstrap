@@ -718,6 +718,7 @@ if [[ ${OPTS_APACHE_MOD_SSL_ENABLED} == true ]] \
 		'LOCALITY' \
 		'ORGANIZATION' \
 		"${OPTS_APACHE_SERVER_NAME}" \
+		1&> /dev/null \
 		&
 
 	PIDS[2]=${!}
