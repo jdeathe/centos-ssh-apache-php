@@ -84,17 +84,17 @@ RUN sed -i \
 # -----------------------------------------------------------------------------
 RUN sed -i \
 	-e 's~^\(LoadModule .*\)$~#\1~g' \
-	-e 's~^#LoadModule mime_module ~LoadModule mime_module ~g' \
-	-e 's~^#LoadModule log_config_module ~LoadModule log_config_module ~g' \
-	-e 's~^#LoadModule setenvif_module ~LoadModule setenvif_module ~g' \
-	-e 's~^#LoadModule status_module ~LoadModule status_module ~g' \
-	-e 's~^#LoadModule authz_host_module ~LoadModule authz_host_module ~g' \
-	-e 's~^#LoadModule dir_module ~LoadModule dir_module ~g' \
-	-e 's~^#LoadModule alias_module ~LoadModule alias_module ~g' \
-	-e 's~^#LoadModule expires_module ~LoadModule expires_module ~g' \
-	-e 's~^#LoadModule deflate_module ~LoadModule deflate_module ~g' \
-	-e 's~^#LoadModule headers_module ~LoadModule headers_module ~g' \
-	-e 's~^#LoadModule alias_module ~LoadModule alias_module ~g' \
+	-e 's~^#\(LoadModule mime_module .*\)$~\1~' \
+	-e 's~^#\(LoadModule log_config_module .*\)$~\1~' \
+	-e 's~^#\(LoadModule setenvif_module .*\)$~\1~' \
+	-e 's~^#\(LoadModule status_module .*\)$~\1~' \
+	-e 's~^#\(LoadModule authz_host_module .*\)$~\1~' \
+	-e 's~^#\(LoadModule dir_module .*\)$~\1~' \
+	-e 's~^#\(LoadModule alias_module .*\)$~\1~' \
+	-e 's~^#\(LoadModule expires_module .*\)$~\1~' \
+	-e 's~^#\(LoadModule deflate_module .*\)$~\1~' \
+	-e 's~^#\(LoadModule headers_module .*\)$~\1~' \
+	-e 's~^#\(LoadModule alias_module .*\)$~\1~' \
 	-e 's~^#\(LoadModule version_module .*\)$~\1\n#LoadModule reqtimeout_module modules/mod_reqtimeout.so~g' \
 	/etc/httpd/conf/httpd.conf
 
