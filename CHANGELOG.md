@@ -13,6 +13,7 @@ CentOS-6 6.8 x86_64, Apache 2.4, PHP-FPM 5.6, PHP memcached 2.2, Zend Opcache 7.
 - Adds default Apache modules appropriate for Apache 2.4/2.2 in the bootstrap script for the unlikely case where the values in the environment and configuration file defaults are both unset.
 - Updates `README.md` with details of the SCMI install example's prerequisite step of either pulling or loading the image.
 - Updates package versions for `httpd24u` and `php56u` + define specific versions in the Dockerfile.
+- Fixes issue with `ssl_module` being loaded when `APACHE_MOD_SSL_ENABLED` was set to `false`.
 
 ### 2.0.1 - 2017-01-24
 

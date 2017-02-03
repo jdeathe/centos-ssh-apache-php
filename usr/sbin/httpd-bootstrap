@@ -831,11 +831,23 @@ if [[ ${OPTS_APACHE_MOD_SSL_ENABLED} == true ]]; then
 			/etc/services-config/httpd/conf.d/10-ssl-vhost.conf.off \
 			> /etc/services-config/httpd/conf.d/10-ssl-vhost.conf
 	fi
+
+	if [[ -f /etc/httpd/conf.modules.d/00-ssl.conf ]]; then
+		sed -i \
+			-e 's~^#\(LoadModule ssl_module .*\)$~\1~' \
+			/etc/httpd/conf.modules.d/00-ssl.conf
+	fi
 else
 	> /etc/httpd/conf.d/ssl.conf
 
 	if [[ -f /etc/services-config/httpd/conf.d/10-ssl-vhost.conf ]]; then
 		> /etc/services-config/httpd/conf.d/10-ssl-vhost.conf
+	fi
+
+	if [[ -f /etc/httpd/conf.modules.d/00-ssl.conf ]]; then
+		sed -i \
+			-e 's~^\(LoadModule ssl_module .*\)$~#\1~' \
+			/etc/httpd/conf.modules.d/00-ssl.conf
 	fi
 fi
 

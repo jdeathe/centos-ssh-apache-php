@@ -449,7 +449,7 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 
 			it "Loads all the required Apache modules."
 				readonly required_apache_modules="authz_core_module authz_user_module log_config_module expires_module deflate_module filter_module headers_module setenvif_module socache_shmcb_module mime_module status_module dir_module alias_module unixd_module version_module proxy_module proxy_fcgi_module"
-				readonly other_required_apache_modules="core_module so_module http_module authz_host_module mpm_prefork_module ssl_module cgi_module"
+				readonly other_required_apache_modules="core_module so_module http_module authz_host_module mpm_prefork_module cgi_module"
 				local status_apache_modules_loaded=0
 
 				for module in ${required_apache_modules}; do
