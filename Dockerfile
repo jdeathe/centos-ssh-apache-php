@@ -19,8 +19,8 @@ ARG PACKAGE_RELEASE_VERSION="0.4.0"
 RUN rpm --rebuilddb \
 	&& yum --setopt=tsflags=nodocs -y install \
 		elinks-0.12-0.21.pre5.el6_3 \
-		httpd-2.2.15-54.el6.centos \
-		mod_ssl-2.2.15-54.el6.centos \
+		httpd-2.2.15-56.el6.centos.3 \
+		mod_ssl-2.2.15-56.el6.centos.3 \
 		php-5.3.3-48.el6_8 \
 		php-cli-5.3.3-48.el6_8 \
 		php-zts-5.3.3-48.el6_8 \
