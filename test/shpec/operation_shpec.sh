@@ -194,7 +194,7 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 						"app-www"
 				end
 
-				it "Includes the server name default (app-1.local)."
+				it "Includes the server name default (container hostname)."
 					local apache_server_name=""
 
 					apache_server_name="$(
@@ -207,7 +207,7 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 
 					assert equal \
 						"${apache_server_name}" \
-						"app-1.local"
+						"${container_hostname}"
 				end
 
 				it "Includes the server alias default (EMPTY)."
