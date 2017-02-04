@@ -266,7 +266,7 @@ RUN mkdir -p -m 750 ${PACKAGE_PATH} \
 		-C ${PACKAGE_PATH} \
 	&& rm -f /tmp/${PACKAGE_NAME}.tar.gz \
 	&& sed -i \
-		-e 's~^description =.*$~description = "This CentOS / Apache / PHP (PHP-FPM) service is running in a container."~' \
+		-e 's~^description =.*$~description = "This CentOS / Apache / PHP-FPM (FastCGI) service is running in a container."~' \
 		${PACKAGE_PATH}/etc/views/index.ini \
 	&& $(\
 		if [[ -f /usr/share/php-pecl-apc/apc.php ]]; then \
