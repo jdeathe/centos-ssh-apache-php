@@ -763,7 +763,6 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 				curl -s \
 					--header "Host: ${container_hostname}" \
 					http://127.0.0.1:${container_port_80}/server-status\?auto \
-					http://app-1.local/server-status\?auto \
 			| grep -qE \
 				'^Total Accesses: [0-9]+' \
 			&> /dev/null
