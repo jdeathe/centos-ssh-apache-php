@@ -762,7 +762,7 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 				apache-php.pool-1.1.1 \
 				curl -s \
 					--header "Host: ${container_hostname}" \
-					http://127.0.0.1:${container_port_80}/server-status\?auto \
+					http://127.0.0.1/server-status\?auto \
 			| grep -qE \
 				'^Total Accesses: [0-9]+' \
 			&> /dev/null
