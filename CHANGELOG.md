@@ -14,6 +14,7 @@ CentOS-6 6.8 x86_64, Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1.
 - Updates `README.md` with details of the SCMI install example's prerequisite step of either pulling or loading the image.
 - Updates `httpd` and `mod_ssl` packages.
 - Fixes noisy certificate generation output in logs during bootstrap when `APACHE_MOD_SSL_ENABLED` is `true`.
+- Changes `APACHE_SERVER_ALIAS` to a default empty value for `Makefile`, `scmi` and `systemd` templates which is the existing `Dockerfile` default.
 
 ### 1.8.2 - 2017-01-24
 
