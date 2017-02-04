@@ -17,6 +17,7 @@ CentOS-6 6.8 x86_64, Apache 2.4, PHP-FPM 5.6, PHP memcached 2.2, Zend Opcache 7.
 - Fixes noisy certificate generation output in logs during bootstrap when `APACHE_MOD_SSL_ENABLED` is `true`.
 - Changes `APACHE_SERVER_ALIAS` to a default empty value for `Makefile`, `scmi` and `systemd` templates which is the existing `Dockerfile` default.
 - Changes description of app to include "PHP-FPM (FastCGI)" instead of "PHP (PHP-FPM)".
+- Changes default `APACHE_SERVER_NAME` to unset and use the container's hostname for the Apache ServerName.
 
 ### 2.0.1 - 2017-01-24
 
