@@ -105,7 +105,7 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 			it "Responds with a Server header of 'Apache' only."
 				header_server="$(
 					curl -sI \
-						--header 'Host: app-1.local' \
+						--header "Host: ${container_hostname}" \
 						http://127.0.0.1:${container_port_80} \
 					| grep '^Server: ' \
 					| cut -c 9- \
@@ -120,7 +120,7 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 			it "Responds with a X-Service-UID header of the container hostname."
 				header_x_service_uid="$(
 					curl -sI \
-						--header 'Host: app-1.local' \
+						--header "Host: ${container_hostname}" \
 						http://127.0.0.1:${container_port_80} \
 					| grep '^X-Service-UID: ' \
 					| cut -c 16- \
@@ -194,7 +194,7 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 						"app-www"
 				end
 
-				it "Includes the server name default (app-1.local)."
+				it "Includes the server name default (container hostname)."
 					local apache_server_name=""
 
 					apache_server_name="$(
@@ -207,7 +207,7 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 
 					assert equal \
 						"${apache_server_name}" \
-						"app-1.local"
+						"${container_hostname}"
 				end
 
 				it "Includes the server alias default (EMPTY)."
@@ -317,7 +317,7 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 
 				curl_get_request="$(
 					curl -s \
-						--header 'Host: app-1.local' \
+						--header "Host: ${container_hostname}" \
 						http://127.0.0.1:${container_port_80}
 				)"
 
@@ -359,7 +359,7 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 
 				curl_get_request="$(
 					curl -s \
-						--header 'Host: app-1.local' \
+						--header "Host: ${container_hostname}" \
 						http://127.0.0.1:${container_port_80}
 				)"
 
@@ -382,7 +382,8 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 				docker exec \
 					apache-php.pool-1.1.1 \
 					curl -s \
-						http://app-1.local/server-status\?auto \
+						--header "Host: ${container_hostname}" \
+						http://127.0.0.1/server-status\?auto \
 				| grep -qE \
 					'^Scoreboard: [\._SRWKDCLGI]+$' \
 				&> /dev/null
@@ -399,14 +400,14 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 					docker exec \
 						apache-php.pool-1.1.1 \
 						curl -s \
-							http://app-1.local/server-status\?auto \
+							--header "Host: ${container_hostname}" \
+							http://127.0.0.1/server-status\?auto \
 					| grep -qE \
 						'^Total Accesses: [0-9]+' \
 					&> /dev/null
 
 					status_apache_server_status_pattern=${?}
 
-					# TODO - ISSUE 291: ExtendedStatus should be off by default.
 					assert equal \
 						"${status_apache_server_status_pattern}" \
 						1
@@ -417,7 +418,7 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 					local curl_get_request=""
 
 					curl -s \
-						--header 'Host: app-1.local' \
+						--header "Host: ${container_hostname}" \
 						http://127.0.0.1:${container_port_80}/server-status\?auto \
 					| grep -qE \
 						'^Scoreboard: [\._SRWKDCLGI]+$' \
@@ -436,7 +437,7 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 							curl -s \
 								-o /dev/null \
 								-w "%{http_code}" \
-								--header 'Host: app-1.local' \
+								--header "Host: ${container_hostname}" \
 								http://127.0.0.1:${container_port_80}/server-status\?auto
 						)"
 
@@ -538,7 +539,7 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 
 			curl_get_request="$(
 				curl -s \
-					--header 'Host: app-1.local' \
+					--header "Host: ${container_hostname}" \
 					http://127.0.0.1:${container_port_80}
 			)"
 
@@ -576,7 +577,7 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 
 			curl_get_request="$(
 				curl -s \
-					--header 'Host: app-1.local' \
+					--header "Host: ${container_hostname}" \
 					http://127.0.0.1:${container_port_80}
 			)"
 
@@ -613,7 +614,7 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 
 			curl_get_request="$(
 				curl -s \
-					--header 'Host: app-1.local' \
+					--header "Host: ${container_hostname}" \
 					http://127.0.0.1:${container_port_80}
 			)"
 
@@ -650,7 +651,7 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 
 			curl_get_request="$(
 				curl -s \
-					--header 'Host: app-1.local' \
+					--header "Host: ${container_hostname}" \
 					http://127.0.0.1:${container_port_80}
 			)"
 
@@ -686,7 +687,7 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 
 			curl_get_request="$(
 				curl -s \
-					--header 'Host: app-1.local' \
+					--header "Host: ${container_hostname}" \
 					http://127.0.0.1:${container_port_80}
 			)"
 
@@ -722,7 +723,7 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 
 			curl_get_request="$(
 				curl -s \
-					--header 'Host: app-1.local' \
+					--header "Host: ${container_hostname}" \
 					http://127.0.0.1:${container_port_80}
 			)"
 
@@ -760,7 +761,8 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 			docker exec \
 				apache-php.pool-1.1.1 \
 				curl -s \
-					http://app-1.local/server-status\?auto \
+					--header "Host: ${container_hostname}" \
+					http://127.0.0.1/server-status\?auto \
 			| grep -qE \
 				'^Total Accesses: [0-9]+' \
 			&> /dev/null
@@ -776,7 +778,7 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 				local curl_get_request=""
 
 				curl -s \
-					--header 'Host: app-1.local' \
+					--header "Host: ${container_hostname}" \
 					http://127.0.0.1:${container_port_80}/server-status\?auto \
 				| grep -qE \
 					'^Total Accesses: [0-9]+' \
@@ -795,7 +797,7 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 						curl -s \
 							-o /dev/null \
 							-w "%{http_code}" \
-							--header 'Host: app-1.local' \
+							--header "Host: ${container_hostname}" \
 							http://127.0.0.1:${container_port_80}/server-status\?auto
 					)"
 
@@ -824,7 +826,7 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 
 			header_x_service_uid="$(
 				curl -sI \
-					--header 'Host: app-1.local' \
+					--header "Host: ${container_hostname}" \
 					http://127.0.0.1:${container_port_80} \
 				| grep '^X-Service-UID: ' \
 				| cut -c 16- \
@@ -854,7 +856,7 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 
 				header_x_service_uid="$(
 					curl -sI \
-						--header 'Host: app-1.local' \
+						--header "Host: ${container_hostname}" \
 						http://127.0.0.1:${container_port_80} \
 					| grep '^X-Service-UID: ' \
 					| cut -c 16- \
@@ -939,7 +941,7 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 
 			header_x_service_operating_mode="$(
 				curl -sI \
-					--header 'Host: app-1.local' \
+					--header "Host: ${container_hostname}" \
 					http://127.0.0.1:${container_port_80} \
 				| grep '^X-Service-Operating-Mode: ' \
 				| cut -c 27- \
@@ -1094,7 +1096,7 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 				curl -s \
 					-o /dev/null \
 					-w "%{http_code}" \
-					--header 'Host: app-1.local' \
+					--header "Host: app-1.local" \
 					http://127.0.0.1:${container_port_80}
 			)"
 
@@ -1215,7 +1217,7 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 			sleep ${BOOTSTRAP_BACKOFF_TIME}
 
 			curl -sI \
-				--header 'Host: app-1.local' \
+				--header "Host: ${container_hostname}" \
 				http://127.0.0.1:${container_port_80} \
 			| grep -q '^X-Service-UID: app-1.local' \
 			&> /dev/null
@@ -1281,7 +1283,7 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 			sleep ${BOOTSTRAP_BACKOFF_TIME}
 
 			curl -s \
-				--header 'Host: app-1.local' \
+				--header "Host: ${container_hostname}" \
 				http://127.0.0.1:${container_port_80} \
 			| grep -q '^Hello, world!' \
 			&> /dev/null
@@ -1322,7 +1324,7 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 				curl -ks \
 					-o /dev/null \
 					-w "%{http_code}" \
-					--header 'Host: app-1.local' \
+					--header "Host: app-1.local" \
 					https://127.0.0.1:${container_port_443}
 			)"
 
