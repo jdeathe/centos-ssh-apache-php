@@ -95,6 +95,8 @@ $ docker run \
   --rm \
   --privileged \
   --volume /:/media/root \
+  --env BASH_ENV="" \
+  --env ENV="" \
   jdeathe/centos-ssh-apache-php:1.8.2 \
   /usr/sbin/scmi install \
     --chroot=/media/root \
@@ -111,6 +113,8 @@ $ docker run \
   --rm \
   --privileged \
   --volume /:/media/root \
+  --env BASH_ENV="" \
+  --env ENV="" \
   jdeathe/centos-ssh-apache-php:1.8.2 \
   /usr/sbin/scmi uninstall \
     --chroot=/media/root \
@@ -127,6 +131,8 @@ $ docker run \
   --rm \
   --privileged \
   --volume /:/media/root \
+  --env BASH_ENV="" \
+  --env ENV="" \
   jdeathe/centos-ssh-apache-php:1.8.2 \
   /usr/sbin/scmi install \
     --chroot=/media/root \

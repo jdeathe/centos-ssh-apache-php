@@ -274,6 +274,8 @@ LABEL \
 --rm \
 --privileged \
 --volume /:/media/root \
+--env BASH_ENV="" \
+--env ENV="" \
 jdeathe/centos-ssh-apache-php:${RELEASE_VERSION} \
 /usr/sbin/scmi install \
 --chroot=/media/root \
@@ -283,6 +285,8 @@ jdeathe/centos-ssh-apache-php:${RELEASE_VERSION} \
 --rm \
 --privileged \
 --volume /:/media/root \
+--env BASH_ENV="" \
+--env ENV="" \
 jdeathe/centos-ssh-apache-php:${RELEASE_VERSION} \
 /usr/sbin/scmi uninstall \
 --chroot=/media/root \
