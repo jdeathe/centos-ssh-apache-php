@@ -18,6 +18,7 @@ CentOS-6 6.8 x86_64, Apache 2.4, PHP-FPM 5.6, PHP memcached 2.2, Zend Opcache 7.
 - Changes `APACHE_SERVER_ALIAS` to a default empty value for `Makefile`, `scmi` and `systemd` templates which is the existing `Dockerfile` default.
 - Changes description of app to include "PHP-FPM (FastCGI)" instead of "PHP (PHP-FPM)".
 - Changes default `APACHE_SERVER_NAME` to unset and use the container's hostname for the Apache ServerName.
+- Fixes `scmi` install/uninstall examples and Dockerfile `LABEL` install/uninstall templates to prevent the `X-Service-UID` header being populated with the hostname of the ephemeral container used to run `scmi`.
 - Adds feature to allow both `APACHE_SERVER_NAME` and `APACHE_SERVER_ALIAS` to contain the `{{HOSTNAME}}` placeholder which is replaced on startup with the container's hostname.
 
 ### 2.0.1 - 2017-01-24
