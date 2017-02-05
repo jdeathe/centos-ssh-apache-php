@@ -229,7 +229,9 @@ $ sudo -E atomic uninstall \
 
 ##### APACHE_SERVER_NAME & APACHE_SERVER_ALIAS
 
-The `APACHE_SERVER_NAME` and `APACHE_SERVER_ALIAS` environmental variables are used to set the VirtualHost `ServerName` and `ServerAlias` values respectively. In the following example the running container would respond to the host names `app-1.local` or `app-1`:
+The `APACHE_SERVER_NAME` and `APACHE_SERVER_ALIAS` environmental variables are used to set the VirtualHost `ServerName` and `ServerAlias` values respectively. If the value contains the placeholder `{{HOSTNAME}}` it will be replaced with the system `hostname` value; by default this is the container id but the hostname can be modified using the `--hostname` docker create|run parameter.
+
+In the following example the running container would respond to the host names `app-1.local` or `app-1`.
 
 ```
 ...
