@@ -110,18 +110,42 @@ function get_apache_header_x_service_uid ()
 		"${VALUE}"
 }
 
-function get_apache_server_name ()
+function get_apache_server_alias ()
 {
 	local HOST_NAME="${HOSTNAME:-}"
-	local VALUE="${APACHE_SERVER_NAME:-}"
+	local VALUE="${APACHE_SERVER_ALIAS:-}"
 
-	if [[ -z ${VALUE} ]]; then
+	if [[ -n ${VALUE} ]]; then
 		if [[ -z ${HOST_NAME} ]]; then
 			HOST_NAME="$(
 				hostname
 			)"
 		fi
+
+		# Replace {{HOSTNAME}} with system hostname
+		VALUE="${VALUE//\{\{HOSTNAME\}\}/${HOST_NAME}}"
+	fi
+
+	printf -- \
+		'%s' \
+		"${VALUE}"
+}
+
+function get_apache_server_name ()
+{
+	local HOST_NAME="${HOSTNAME:-}"
+	local VALUE="${APACHE_SERVER_NAME:-}"
+
+	if [[ -z ${HOST_NAME} ]]; then
+		HOST_NAME="$(
+			hostname
+		)"
+	fi
+
+	if [[ -z ${VALUE} ]]; then
 		VALUE="${HOST_NAME}"
+	else
+		VALUE="${VALUE//\{\{HOSTNAME\}\}/${HOST_NAME}}"
 	fi
 
 	printf -- \
@@ -139,6 +163,9 @@ export APACHE_ERROR_LOG_LOCATION="$(
 )"
 export APACHE_HEADER_X_SERVICE_UID="$(
 	get_apache_header_x_service_uid
+)"
+export APACHE_SERVER_ALIAS="$(
+	get_apache_server_alias
 )"
 export APACHE_SERVER_NAME="$(
 	get_apache_server_name
