@@ -23,7 +23,6 @@ CentOS-6 6.8 x86_64, Apache 2.4, PHP-FPM 5.6, PHP memcached 2.2, Zend Opcache 7.
 - Removes environment variable re-mappings that are no longer in use: `APP_HOME_DIR`, `APACHE_SUEXEC_USER_GROUP`, `DATE_TIMEZONE`, `SERVICE_USER`, `SUEXECUSERGROUP`, `SERVICE_UID`.
 - Changes Apache configuration so that `NameVirtualHost` and `Listen` are separated out from `VirtualHost`.
 
-
 ### 2.0.1 - 2017-01-24
 
 - Replaces `mv` operations with `cat` to work-around OverlayFS limitations in CentOS-7.
