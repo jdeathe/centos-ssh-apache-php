@@ -73,6 +73,7 @@ RUN sed -i \
 			echo '  "%{X-Forwarded-For}i %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\"" \'; \
 			echo '  forwarded_for_combined'; \
 			echo 'Include /etc/services-config/httpd/conf.d/*.conf'; \
+			echo 'Listen 8443'; \
 			echo 'Options -Indexes'; \
 			echo 'TraceEnable Off'; \
 			echo 'UseCanonicalName On'; \
