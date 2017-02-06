@@ -284,13 +284,13 @@ The variable `APACHE_EXTENDED_STATUS_ENABLED` allows you to turn ExtendedStatus 
 ...
 ```
 
-You can view the output from Apache server-status either using the elinks browser from onboard the container or by using `watch` and `curl` to monitor status over time - the following command shows the server-status updated at a 1 second interval.
+You can view the output from Apache server-status either using the elinks browser from onboard the container or by using `watch` and `curl` to monitor status over time. The following command shows the server-status updated at a 1 second interval given an `APACHE_SERVER_NAME` or `APACHE_SERVER_ALIAS` of "app-1.local".
 
 ```
 $ docker exec -it apache-php.pool-1.1.1 \
   env TERM=xterm \
   watch -n 1 \
-  -d "curl -s http://app-1/server-status?auto"
+  -d "curl -sH 'Host: app-1.local' http://127.0.0.1/server-status?auto"
 ```
 
 ##### APACHE_HEADER_X_SERVICE_UID
