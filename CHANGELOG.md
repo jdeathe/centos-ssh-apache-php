@@ -23,6 +23,7 @@ CentOS-6 6.8 x86_64, Apache 2.4, PHP-FPM 5.6, PHP memcached 2.2, Zend Opcache 7.
 - Removes environment variable re-mappings that are no longer in use: `APP_HOME_DIR`, `APACHE_SUEXEC_USER_GROUP`, `DATE_TIMEZONE`, `SERVICE_USER`, `SUEXECUSERGROUP`, `SERVICE_UID`.
 - Changes Apache configuration so that `NameVirtualHost` and `Listen` are separated out from `VirtualHost`.
 - Adds further information on the use of `watch` to monitor `server-status`.
+- Changes the auto-generated self-signed certificate to include hosts from `APACHE_SERVER_NAME` and `APACHE_SERVER_ALIAS` via subjectAltName.
 
 ### 2.0.1 - 2017-01-24
 

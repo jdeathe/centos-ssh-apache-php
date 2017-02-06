@@ -431,21 +431,54 @@ function load_php_ini_scan_files ()
 	fi
 }
 
-function make_self_signed_certificate ()
+function make_self_signed_san_certificate ()
 {
-	local C="${1:-'--'}"
-	local ST="${2:-STATE}"
-	local L="${3:-LOCALITY}"
-	local O="${4:-ORGANIZATION}"
-	local CN="${5:-localhost.localdomain}"
+	local CN
+	local HOST
+	local HOSTS="${@}"
+	local SAN
 
+	# Use default host if none specified.
+	if [[ ${#HOSTS[@]} -eq 0 ]]; then
+		HOSTS="localhost.localdomain"
+	fi
+
+	if [[ ${#HOSTS[@]} -gt 0 ]]; then
+		for HOST in ${HOSTS[@]}; do
+			if [[ -z ${SAN} ]]; then
+				# Common Name is required - use the first host.
+				CN="${HOST}"
+			else
+				# Additional hosts should be comma separated.
+				SAN+=","
+			fi
+
+			# Build up the subjectAltName value.
+			SAN+="DNS:${HOST}"
+		done
+	fi
+
+	# Generate a custom openssl configuration - appending a san section.
+	cat \
+		/etc/pki/tls/openssl.cnf \
+		- \
+		<<-CONFIG > /etc/services-config/ssl/certs/localhost.cnf
+
+	[ san ]
+	subjectAltName="${SAN:-root@localhost.localdomain}"
+	CONFIG
+
+	# Generate the certificate.
 	openssl req \
 		-x509 \
 		-sha256 \
 		-nodes \
 		-newkey rsa:2048 \
 		-days 365 \
-		-subj "/C=${C}/ST=${ST}/L=${L}/O=${O}/CN=${CN}" \
+		-reqexts san \
+		-extensions san \
+		-subj "/CN=${CN}" \
+		-config /etc/services-config/ssl/certs/localhost.cnf \
 		-keyout /etc/services-config/ssl/certs/localhost.crt \
 		-out /etc/services-config/ssl/certs/localhost.crt
 
@@ -711,13 +744,9 @@ fi
 # Generate SSL certificate.
 if [[ ${OPTS_APACHE_MOD_SSL_ENABLED} == true ]] \
 	&& [[ ! -f /etc/services-config/ssl/certs/localhost.crt ]]; then
-
-	make_self_signed_certificate \
-		'--' \
-		'STATE' \
-		'LOCALITY' \
-		'ORGANIZATION' \
+	make_self_signed_san_certificate \
 		"${OPTS_APACHE_SERVER_NAME}" \
+		"${OPTS_APACHE_SERVER_ALIAS}" \
 		1&> /dev/null \
 		&
 
