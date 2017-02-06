@@ -1068,12 +1068,10 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 			# Add a default VirtualHost that rejects access (403 response).
 			docker exec -i \
 				apache-php.pool-1.1.1 \
-				tee /etc/services-config/httpd/conf.d/05-vhost.conf 1> /dev/null <<-CONFIG
-			<IfVersion < 2.4>
-			    NameVirtualHost *:80
-			    NameVirtualHost *:8443
-			</IfVersion>
-
+				tee \
+					/etc/services-config/httpd/conf.d/05-virtual-host.conf \
+					1> /dev/null \
+					<<-CONFIG
 			<VirtualHost *:80 *:8443>
 			    ServerName localhost.localdomain
 			    DocumentRoot /var/www/html
@@ -1151,12 +1149,10 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 			# Add a default VirtualHost that rejects access (403 response).
 			docker exec -i \
 				apache-php.pool-1.1.1 \
-				tee /etc/services-config/httpd/conf.d/05-vhost.conf 1> /dev/null <<-CONFIG
-			<IfVersion < 2.4>
-			    NameVirtualHost *:80
-			    NameVirtualHost *:8443
-			</IfVersion>
-
+				tee \
+					/etc/services-config/httpd/conf.d/05-virtual-host.conf \
+					1> /dev/null \
+					<<-CONFIG
 			<VirtualHost *:80 *:8443>
 			    ServerName localhost.localdomain
 			    DocumentRoot /var/www/html
@@ -1219,12 +1215,10 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 			# Add a default VirtualHost that rejects access (403 response).
 			docker exec -i \
 				apache-php.pool-1.1.1 \
-				tee /etc/services-config/httpd/conf.d/05-vhost.conf 1> /dev/null <<-CONFIG
-			<IfVersion < 2.4>
-			    NameVirtualHost *:80
-			    NameVirtualHost *:8443
-			</IfVersion>
-
+				tee \
+					/etc/services-config/httpd/conf.d/05-virtual-host.conf \
+					1> /dev/null \
+					<<-CONFIG
 			<VirtualHost *:80 *:8443>
 			    ServerName localhost.localdomain
 			    DocumentRoot /var/www/html
@@ -1288,12 +1282,10 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 			# Add a default VirtualHost that rejects access (403 response).
 			docker exec -i \
 				apache-php.pool-1.1.1 \
-				tee /etc/services-config/httpd/conf.d/05-vhost.conf 1> /dev/null <<-CONFIG
-			<IfVersion < 2.4>
-			    NameVirtualHost *:80
-			    NameVirtualHost *:8443
-			</IfVersion>
-
+				tee \
+					/etc/services-config/httpd/conf.d/05-virtual-host.conf \
+					1> /dev/null \
+					<<-CONFIG
 			<VirtualHost *:80 *:8443>
 			    ServerName localhost.localdomain
 			    DocumentRoot /var/www/html

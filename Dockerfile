@@ -88,6 +88,7 @@ RUN cp -pf \
 		echo '  forwarded_for_combined'; \
 		echo 'Include /etc/services-config/httpd/conf.d/*.conf'; \
 		echo 'ExtendedStatus Off'; \
+		echo 'Listen 8443'; \
 		echo 'Options -Indexes'; \
 		echo 'ServerSignature Off'; \
 		echo 'ServerTokens Prod'; \
