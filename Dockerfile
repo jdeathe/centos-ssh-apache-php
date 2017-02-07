@@ -19,14 +19,14 @@ ARG PACKAGE_RELEASE_VERSION="0.4.0"
 RUN rpm --rebuilddb \
 	&& yum --setopt=tsflags=nodocs -y install \
 		elinks-0.12-0.21.pre5.el6_3 \
-		httpd24u-httpd \
-		httpd24u-httpd-tools \
-		httpd24u-mod_ssl \
-		php56u-fpm \
-		php56u-fpm-httpd \
-		php56u-php-cli \
-		php56u-opcache \
-		php56u-pecl-memcached \
+		httpd24u-2.4.25-2.ius.centos6 \
+		httpd24u-tools-2.4.25-2.ius.centos6 \
+		httpd24u-mod_ssl-2.4.25-2.ius.centos6 \
+		php56u-fpm-5.6.30-1.ius.centos6 \
+		php56u-fpm-httpd-5.6.30-1.ius.centos6 \
+		php56u-cli-5.6.30-1.ius.centos6 \
+		php56u-opcache-5.6.30-1.ius.centos6 \
+		php56u-pecl-memcached-5.6.30-1.ius.centos6 \
 	&& yum versionlock add \
 		elinks \
 		httpd24u* \
@@ -88,6 +88,7 @@ RUN cp -pf \
 		echo '  forwarded_for_combined'; \
 		echo 'Include /etc/services-config/httpd/conf.d/*.conf'; \
 		echo 'ExtendedStatus Off'; \
+		echo 'Listen 8443'; \
 		echo 'Options -Indexes'; \
 		echo 'ServerSignature Off'; \
 		echo 'ServerTokens Prod'; \
@@ -101,22 +102,23 @@ RUN cp -pf \
 # -----------------------------------------------------------------------------
 RUN sed -i \
 	-e 's~^\(LoadModule .*\)$~#\1~g' \
-	-e 's~^#LoadModule mime_module ~LoadModule mime_module ~g' \
-	-e 's~^#LoadModule log_config_module ~LoadModule log_config_module ~g' \
-	-e 's~^#LoadModule setenvif_module ~LoadModule setenvif_module ~g' \
-	-e 's~^#LoadModule status_module ~LoadModule status_module ~g' \
-	-e 's~^#LoadModule authz_host_module ~LoadModule authz_host_module ~g' \
-	-e 's~^#LoadModule dir_module ~LoadModule dir_module ~g' \
-	-e 's~^#LoadModule alias_module ~LoadModule alias_module ~g' \
-	-e 's~^#LoadModule expires_module ~LoadModule expires_module ~g' \
-	-e 's~^#LoadModule deflate_module ~LoadModule deflate_module ~g' \
-	-e 's~^#LoadModule headers_module ~LoadModule headers_module ~g' \
-	-e 's~^#LoadModule alias_module ~LoadModule alias_module ~g' \
-	-e 's~^#LoadModule version_module ~LoadModule version_module ~g' \
+	-e 's~^#\(LoadModule mime_module .*\)$~\1~' \
+	-e 's~^#\(LoadModule log_config_module .*\)$~\1~' \
+	-e 's~^#\(LoadModule setenvif_module .*\)$~\1~' \
+	-e 's~^#\(LoadModule status_module .*\)$~\1~' \
+	-e 's~^#\(LoadModule authz_host_module .*\)$~\1~' \
+	-e 's~^#\(LoadModule dir_module .*\)$~\1~' \
+	-e 's~^#\(LoadModule alias_module .*\)$~\1~' \
+	-e 's~^#\(LoadModule expires_module .*\)$~\1~' \
+	-e 's~^#\(LoadModule deflate_module .*\)$~\1~' \
+	-e 's~^#\(LoadModule headers_module .*\)$~\1~' \
+	-e 's~^#\(LoadModule alias_module .*\)$~\1~' \
+	-e 's~^#\(LoadModule version_module .*\)$~\1~' \
 	/etc/httpd/conf.modules.d/00-base.conf \
 	/etc/httpd/conf.modules.d/00-dav.conf \
 	/etc/httpd/conf.modules.d/00-lua.conf \
-	/etc/httpd/conf.modules.d/00-proxy.conf
+	/etc/httpd/conf.modules.d/00-proxy.conf \
+	/etc/httpd/conf.modules.d/00-ssl.conf
 
 # -----------------------------------------------------------------------------
 # Disable SSL + the default SSL Virtual Host
@@ -265,7 +267,7 @@ RUN mkdir -p -m 750 ${PACKAGE_PATH} \
 		-C ${PACKAGE_PATH} \
 	&& rm -f /tmp/${PACKAGE_NAME}.tar.gz \
 	&& sed -i \
-		-e 's~^description =.*$~description = "This CentOS / Apache / PHP (PHP-FPM) service is running in a container."~' \
+		-e 's~^description =.*$~description = "This CentOS / Apache / PHP-FPM (FastCGI) service is running in a container."~' \
 		${PACKAGE_PATH}/etc/views/index.ini \
 	&& $(\
 		if [[ -f /usr/share/php-pecl-apc/apc.php ]]; then \
@@ -302,7 +304,7 @@ ENV APACHE_CUSTOM_LOG_FORMAT="combined" \
 	APACHE_RUN_GROUP="app-www" \
 	APACHE_RUN_USER="app-www" \
 	APACHE_SERVER_ALIAS="" \
-	APACHE_SERVER_NAME="app-1.local" \
+	APACHE_SERVER_NAME="" \
 	APACHE_SSL_CERTIFICATE="" \
 	APACHE_SSL_CIPHER_SUITE="ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES256-SHA384:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA:ECDHE-RSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA:DHE-RSA-AES256-SHA256:DHE-RSA-AES256-SHA:ECDHE-ECDSA-DES-CBC3-SHA:ECDHE-RSA-DES-CBC3-SHA:EDH-RSA-DES-CBC3-SHA:AES128-GCM-SHA256:AES256-GCM-SHA384:AES128-SHA256:AES256-SHA256:AES128-SHA:AES256-SHA:DES-CBC3-SHA:!DSS" \
 	APACHE_SSL_PROTOCOL="All -SSLv2 -SSLv3" \
@@ -315,12 +317,14 @@ ENV APACHE_CUSTOM_LOG_FORMAT="combined" \
 # -----------------------------------------------------------------------------
 # Set image metadata
 # -----------------------------------------------------------------------------
-ARG RELEASE_VERSION="2.0.1"
+ARG RELEASE_VERSION="2.1.0"
 LABEL \
 	install="docker run \
 --rm \
 --privileged \
 --volume /:/media/root \
+--env BASH_ENV="" \
+--env ENV="" \
 jdeathe/centos-ssh-apache-php:${RELEASE_VERSION} \
 /usr/sbin/scmi install \
 --chroot=/media/root \
@@ -330,6 +334,8 @@ jdeathe/centos-ssh-apache-php:${RELEASE_VERSION} \
 --rm \
 --privileged \
 --volume /:/media/root \
+--env BASH_ENV="" \
+--env ENV="" \
 jdeathe/centos-ssh-apache-php:${RELEASE_VERSION} \
 /usr/sbin/scmi uninstall \
 --chroot=/media/root \
