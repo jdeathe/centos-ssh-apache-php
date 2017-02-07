@@ -301,7 +301,8 @@ function load_httpd_conf_scan_files ()
 	local FILE_PATH
 	local PACKAGE_PATH="${1:-}"
 
-	if [[ -n ${PACKAGE_PATH} ]] && [[ -d ${PACKAGE_PATH}/etc/php.d ]]; then
+	if [[ -n ${PACKAGE_PATH} ]] \
+		&& [[ -d ${PACKAGE_PATH}/etc/httpd/conf.d ]]; then
 		for FILE_PATH in "${PACKAGE_PATH}"/etc/httpd/conf.d/*.conf; do
 			cat  \
 				"${FILE_PATH}" \
@@ -315,7 +316,8 @@ function load_php_ini_scan_files ()
 	local FILE_PATH
 	local PACKAGE_PATH="${1:-}"
 
-	if [[ -n ${PACKAGE_PATH} ]] && [[ -d ${PACKAGE_PATH}/etc/php.d ]]; then
+	if [[ -n ${PACKAGE_PATH} ]] \
+		&& [[ -d ${PACKAGE_PATH}/etc/php.d ]]; then
 		# Replace environment variables to support fcgid php-wrapper
 		for FILE_PATH in "${PACKAGE_PATH}"/etc/php.d/*.ini; do
 			printf -- \
@@ -331,21 +333,54 @@ function load_php_ini_scan_files ()
 	fi
 }
 
-function make_self_signed_certificate ()
+function make_self_signed_san_certificate ()
 {
-	local C="${1:-'--'}"
-	local ST="${2:-STATE}"
-	local L="${3:-LOCALITY}"
-	local O="${4:-ORGANIZATION}"
-	local CN="${5:-localhost.localdomain}"
+	local CN
+	local HOST
+	local HOSTS="${@}"
+	local SAN
 
+	# Use default host if none specified.
+	if [[ ${#HOSTS[@]} -eq 0 ]]; then
+		HOSTS="localhost.localdomain"
+	fi
+
+	if [[ ${#HOSTS[@]} -gt 0 ]]; then
+		for HOST in ${HOSTS[@]}; do
+			if [[ -z ${SAN} ]]; then
+				# Common Name is required - use the first host.
+				CN="${HOST}"
+			else
+				# Additional hosts should be comma separated.
+				SAN+=","
+			fi
+
+			# Build up the subjectAltName value.
+			SAN+="DNS:${HOST}"
+		done
+	fi
+
+	# Generate a custom openssl configuration - appending a san section.
+	cat \
+		/etc/pki/tls/openssl.cnf \
+		- \
+		<<-CONFIG > /etc/services-config/ssl/certs/localhost.cnf
+
+	[ san ]
+	subjectAltName="${SAN:-root@localhost.localdomain}"
+	CONFIG
+
+	# Generate the certificate.
 	openssl req \
 		-x509 \
 		-sha256 \
 		-nodes \
 		-newkey rsa:2048 \
 		-days 365 \
-		-subj "/C=${C}/ST=${ST}/L=${L}/O=${O}/CN=${CN}" \
+		-reqexts san \
+		-extensions san \
+		-subj "/CN=${CN}" \
+		-config /etc/services-config/ssl/certs/localhost.cnf \
 		-keyout /etc/services-config/ssl/certs/localhost.crt \
 		-out /etc/services-config/ssl/certs/localhost.crt
 
@@ -480,18 +515,43 @@ function update_user_login ()
 
 DEFAULT_SYSTEM_USER=app
 DEFAULT_APACHE_USER=app-www
-DEFAULT_APACHE_LOAD_MODULES="
- authz_user_module
- log_config_module
- expires_module
- deflate_module
- headers_module
- setenvif_module
- mime_module
- status_module
- dir_module
- alias_module
-"
+if [[ -f /etc/httpd/conf.modules.d/00-base.conf ]]; then
+	# Default Apache 2.4 DSO Modules
+	DEFAULT_APACHE_LOAD_MODULES="
+	 authz_core_module
+	 authz_user_module
+	 log_config_module
+	 expires_module
+	 deflate_module
+	 filter_module
+	 headers_module
+	 setenvif_module
+	 socache_shmcb_module
+	 mime_module
+	 status_module
+	 dir_module
+	 alias_module
+	 unixd_module
+	 version_module
+	 proxy_module
+	 proxy_fcgi_module
+	"
+else
+	# Default Apache 2.2 DSO Modules
+	DEFAULT_APACHE_LOAD_MODULES="
+	 authz_user_module
+	 log_config_module
+	 expires_module
+	 deflate_module
+	 headers_module
+	 setenvif_module
+	 mime_module
+	 status_module
+	 dir_module
+	 alias_module
+	 version_module
+	"
+fi
 PACKAGE_PATH="${PACKAGE_PATH:-/opt/app}"
 PASSWORD_LENGTH=16
 
@@ -530,13 +590,10 @@ fi
 # Generate SSL certificate.
 if [[ ${OPTS_APACHE_MOD_SSL_ENABLED} == true ]] \
 	&& [[ ! -f /etc/services-config/ssl/certs/localhost.crt ]]; then
-
-	make_self_signed_certificate \
-		'--' \
-		'STATE' \
-		'LOCALITY' \
-		'ORGANIZATION' \
+	make_self_signed_san_certificate \
 		"${OPTS_APACHE_SERVER_NAME}" \
+		"${OPTS_APACHE_SERVER_ALIAS}" \
+		1&> /dev/null \
 		&
 
 	PIDS[2]=${!}
@@ -670,11 +727,23 @@ if [[ ${OPTS_APACHE_MOD_SSL_ENABLED} == true ]]; then
 			/etc/services-config/httpd/conf.d/10-ssl-vhost.conf.off \
 			> /etc/services-config/httpd/conf.d/10-ssl-vhost.conf
 	fi
+
+	if [[ -f /etc/httpd/conf.modules.d/00-ssl.conf ]]; then
+		sed -i \
+			-e 's~^#\(LoadModule ssl_module .*\)$~\1~' \
+			/etc/httpd/conf.modules.d/00-ssl.conf
+	fi
 else
 	> /etc/httpd/conf.d/ssl.conf
 
 	if [[ -f /etc/services-config/httpd/conf.d/10-ssl-vhost.conf ]]; then
 		> /etc/services-config/httpd/conf.d/10-ssl-vhost.conf
+	fi
+
+	if [[ -f /etc/httpd/conf.modules.d/00-ssl.conf ]]; then
+		sed -i \
+			-e 's~^\(LoadModule ssl_module .*\)$~#\1~' \
+			/etc/httpd/conf.modules.d/00-ssl.conf
 	fi
 fi
 

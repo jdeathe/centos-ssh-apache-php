@@ -19,8 +19,8 @@ ARG PACKAGE_RELEASE_VERSION="0.4.0"
 RUN rpm --rebuilddb \
 	&& yum --setopt=tsflags=nodocs -y install \
 		elinks-0.12-0.21.pre5.el6_3 \
-		httpd-2.2.15-54.el6.centos \
-		mod_ssl-2.2.15-54.el6.centos \
+		httpd-2.2.15-56.el6.centos.3 \
+		mod_ssl-2.2.15-56.el6.centos.3 \
 		php-5.3.3-48.el6_8 \
 		php-cli-5.3.3-48.el6_8 \
 		php-zts-5.3.3-48.el6_8 \
@@ -73,6 +73,7 @@ RUN sed -i \
 			echo '  "%{X-Forwarded-For}i %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\"" \'; \
 			echo '  forwarded_for_combined'; \
 			echo 'Include /etc/services-config/httpd/conf.d/*.conf'; \
+			echo 'Listen 8443'; \
 			echo 'Options -Indexes'; \
 			echo 'TraceEnable Off'; \
 			echo 'UseCanonicalName On'; \
@@ -84,17 +85,17 @@ RUN sed -i \
 # -----------------------------------------------------------------------------
 RUN sed -i \
 	-e 's~^\(LoadModule .*\)$~#\1~g' \
-	-e 's~^#LoadModule mime_module ~LoadModule mime_module ~g' \
-	-e 's~^#LoadModule log_config_module ~LoadModule log_config_module ~g' \
-	-e 's~^#LoadModule setenvif_module ~LoadModule setenvif_module ~g' \
-	-e 's~^#LoadModule status_module ~LoadModule status_module ~g' \
-	-e 's~^#LoadModule authz_host_module ~LoadModule authz_host_module ~g' \
-	-e 's~^#LoadModule dir_module ~LoadModule dir_module ~g' \
-	-e 's~^#LoadModule alias_module ~LoadModule alias_module ~g' \
-	-e 's~^#LoadModule expires_module ~LoadModule expires_module ~g' \
-	-e 's~^#LoadModule deflate_module ~LoadModule deflate_module ~g' \
-	-e 's~^#LoadModule headers_module ~LoadModule headers_module ~g' \
-	-e 's~^#LoadModule alias_module ~LoadModule alias_module ~g' \
+	-e 's~^#\(LoadModule mime_module .*\)$~\1~' \
+	-e 's~^#\(LoadModule log_config_module .*\)$~\1~' \
+	-e 's~^#\(LoadModule setenvif_module .*\)$~\1~' \
+	-e 's~^#\(LoadModule status_module .*\)$~\1~' \
+	-e 's~^#\(LoadModule authz_host_module .*\)$~\1~' \
+	-e 's~^#\(LoadModule dir_module .*\)$~\1~' \
+	-e 's~^#\(LoadModule alias_module .*\)$~\1~' \
+	-e 's~^#\(LoadModule expires_module .*\)$~\1~' \
+	-e 's~^#\(LoadModule deflate_module .*\)$~\1~' \
+	-e 's~^#\(LoadModule headers_module .*\)$~\1~' \
+	-e 's~^#\(LoadModule alias_module .*\)$~\1~' \
 	-e 's~^#\(LoadModule version_module .*\)$~\1\n#LoadModule reqtimeout_module modules/mod_reqtimeout.so~g' \
 	/etc/httpd/conf/httpd.conf
 
@@ -255,7 +256,7 @@ ENV APACHE_CUSTOM_LOG_FORMAT="combined" \
 	APACHE_RUN_GROUP="app-www" \
 	APACHE_RUN_USER="app-www" \
 	APACHE_SERVER_ALIAS="" \
-	APACHE_SERVER_NAME="app-1.local" \
+	APACHE_SERVER_NAME="" \
 	APACHE_SSL_CERTIFICATE="" \
 	APACHE_SSL_CIPHER_SUITE="ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES256-SHA384:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA:ECDHE-RSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA:DHE-RSA-AES256-SHA256:DHE-RSA-AES256-SHA:ECDHE-ECDSA-DES-CBC3-SHA:ECDHE-RSA-DES-CBC3-SHA:EDH-RSA-DES-CBC3-SHA:AES128-GCM-SHA256:AES256-GCM-SHA384:AES128-SHA256:AES256-SHA256:AES128-SHA:AES256-SHA:DES-CBC3-SHA:!DSS" \
 	APACHE_SSL_PROTOCOL="All -SSLv2 -SSLv3" \
@@ -268,12 +269,14 @@ ENV APACHE_CUSTOM_LOG_FORMAT="combined" \
 # -----------------------------------------------------------------------------
 # Set image metadata
 # -----------------------------------------------------------------------------
-ARG RELEASE_VERSION="1.8.2"
+ARG RELEASE_VERSION="1.9.0"
 LABEL \
 	install="docker run \
 --rm \
 --privileged \
 --volume /:/media/root \
+--env BASH_ENV="" \
+--env ENV="" \
 jdeathe/centos-ssh-apache-php:${RELEASE_VERSION} \
 /usr/sbin/scmi install \
 --chroot=/media/root \
@@ -283,6 +286,8 @@ jdeathe/centos-ssh-apache-php:${RELEASE_VERSION} \
 --rm \
 --privileged \
 --volume /:/media/root \
+--env BASH_ENV="" \
+--env ENV="" \
 jdeathe/centos-ssh-apache-php:${RELEASE_VERSION} \
 /usr/sbin/scmi uninstall \
 --chroot=/media/root \
