@@ -9,6 +9,7 @@ CentOS-6 6.8 x86_64, Apache 2.4, PHP-FPM 5.6, PHP memcached 2.2, Zend Opcache 7.
 ### 2.1.1 - Unreleased
 
 - Adds updated `httpd24u` packages to 2.4.25-3.
+- Adds updated source image to [1.7.6 tag](https://github.com/jdeathe/centos-ssh/releases/tag/1.7.6).
 
 ### 2.1.0 - 2017-02-07
 
