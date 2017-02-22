@@ -1083,12 +1083,6 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 			</VirtualHost>
 			CONFIG
 
-			docker exec \
-				apache-php.pool-1.1.1 \
-				sed -i \
-					-e 's~^NameVirtualHost \(.*\)$~#NameVirtualHost \1~g' \
-					/etc/services-config/httpd/conf.d/10-vhost.conf
-
 			sleep ${BOOTSTRAP_BACKOFF_TIME}
 
 			docker exec \
