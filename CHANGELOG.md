@@ -6,6 +6,10 @@ Summary of release changes for Version 1.
 
 CentOS-6 6.8 x86_64, Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1.
 
+### 1.9.1 - 2017-03-12
+
+- Adds updated source image to [1.7.6 tag](https://github.com/jdeathe/centos-ssh/releases/tag/1.7.6).
+
 ### 1.9.0 - 2017-02-07
 
 - Fixes issue with app specific `httpd` configuration requiring the `etc/php.d` directory to exist.

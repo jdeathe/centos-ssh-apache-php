@@ -4,7 +4,7 @@
 # CentOS-6, Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1
 #
 # =============================================================================
-FROM jdeathe/centos-ssh:1.7.5
+FROM jdeathe/centos-ssh:1.7.6
 
 MAINTAINER James Deathe <james.deathe@gmail.com>
 
@@ -269,7 +269,7 @@ ENV APACHE_CUSTOM_LOG_FORMAT="combined" \
 # -----------------------------------------------------------------------------
 # Set image metadata
 # -----------------------------------------------------------------------------
-ARG RELEASE_VERSION="1.9.0"
+ARG RELEASE_VERSION="1.9.1"
 LABEL \
 	install="docker run \
 --rm \
