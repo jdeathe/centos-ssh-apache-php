@@ -4,7 +4,7 @@
 # CentOS-6, Apache 2.4, PHP-FPM 5.6, PHP memcached 2.2, Zend Opcache 7.0
 #
 # =============================================================================
-FROM jdeathe/centos-ssh:1.7.5
+FROM jdeathe/centos-ssh:1.7.6
 
 MAINTAINER James Deathe <james.deathe@gmail.com>
 
@@ -19,9 +19,9 @@ ARG PACKAGE_RELEASE_VERSION="0.4.0"
 RUN rpm --rebuilddb \
 	&& yum --setopt=tsflags=nodocs -y install \
 		elinks-0.12-0.21.pre5.el6_3 \
-		httpd24u-2.4.25-2.ius.centos6 \
-		httpd24u-tools-2.4.25-2.ius.centos6 \
-		httpd24u-mod_ssl-2.4.25-2.ius.centos6 \
+		httpd24u-2.4.25-3.ius.centos6 \
+		httpd24u-tools-2.4.25-3.ius.centos6 \
+		httpd24u-mod_ssl-2.4.25-3.ius.centos6 \
 		php56u-fpm-5.6.30-1.ius.centos6 \
 		php56u-fpm-httpd-5.6.30-1.ius.centos6 \
 		php56u-cli-5.6.30-1.ius.centos6 \
@@ -317,7 +317,7 @@ ENV APACHE_CUSTOM_LOG_FORMAT="combined" \
 # -----------------------------------------------------------------------------
 # Set image metadata
 # -----------------------------------------------------------------------------
-ARG RELEASE_VERSION="2.1.0"
+ARG RELEASE_VERSION="2.1.1"
 LABEL \
 	install="docker run \
 --rm \
