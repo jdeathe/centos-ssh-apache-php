@@ -124,7 +124,7 @@ RUN sed -i \
 # Disable SSL + the default SSL Virtual Host
 # -----------------------------------------------------------------------------
 RUN sed -i \
-		-e '/<VirtualHost _default_:443>/,/#<\/VirtualHost>/ s~^~#~' \
+		-e '/<VirtualHost _default_:443>/,/<\/VirtualHost>/ s~^~#~' \
 		/etc/httpd/conf.d/ssl.conf \
 	&& cat \
 		/etc/httpd/conf.d/ssl.conf \
