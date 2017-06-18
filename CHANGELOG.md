@@ -10,6 +10,7 @@ CentOS-6 6.8 x86_64, Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1.
 
 - Adds updated packages `httpd` (including `mod_ssl`) and `php` to 2.2.15-59 and 5.3.3-49.
 - Adds improvement to VirtualHost pattern match used to disable default SSL.
+- Replaces deprecated Dockerfile `MAINTAINER` with a `LABEL`.
 
 ### 1.9.1 - 2017-03-12
 
