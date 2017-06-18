@@ -145,7 +145,7 @@ RUN sed \
 RUN sed -i \
 	-e "s~'ADMIN_PASSWORD','password'~'ADMIN_PASSWORD','apc!123'~g" \
 	-e "s~'DATE_FORMAT', 'Y/m/d H:i:s'~'DATE_FORMAT', 'Y-m-d H:i:s'~g" \
-	-e "s~php_uname('n');~gethostname();~g" \
+	-e "s~php_uname(\'n\');~gethostname();~g" \
 	/usr/share/php-pecl-apc/apc.php
 
 # -----------------------------------------------------------------------------
