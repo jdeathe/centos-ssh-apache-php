@@ -10,6 +10,7 @@ CentOS-6 6.8 x86_64, Apache 2.4, PHP-FPM 5.6, PHP memcached 2.2, Zend Opcache 7.
 
 - Adds updated `httpd24u` and `php56u` packages to 2.4.25-4 and 5.6.30-2.
 - Adds improvement to VirtualHost pattern match used to disable default SSL.
+- Replaces deprecated Dockerfile `MAINTAINER` with a `LABEL`.
 
 ### 2.1.1 - 2017-03-12
 

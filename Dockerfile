@@ -6,8 +6,6 @@
 # =============================================================================
 FROM jdeathe/centos-ssh:1.7.6
 
-MAINTAINER James Deathe <james.deathe@gmail.com>
-
 # Use the form ([{fqdn}-]{package-name}|[{fqdn}-]{provider-name})
 ARG PACKAGE_NAME="app"
 ARG PACKAGE_PATH="/opt/${PACKAGE_NAME}"
@@ -319,6 +317,7 @@ ENV APACHE_CUSTOM_LOG_FORMAT="combined" \
 # -----------------------------------------------------------------------------
 ARG RELEASE_VERSION="2.1.1"
 LABEL \
+	maintainer="James Deathe <james.deathe@gmail.com>" \
 	install="docker run \
 --rm \
 --privileged \
