@@ -19,11 +19,11 @@ ARG PACKAGE_RELEASE_VERSION="0.4.0"
 RUN rpm --rebuilddb \
 	&& yum --setopt=tsflags=nodocs -y install \
 		elinks-0.12-0.21.pre5.el6_3 \
-		httpd-2.2.15-56.el6.centos.3 \
-		mod_ssl-2.2.15-56.el6.centos.3 \
-		php-5.3.3-48.el6_8 \
-		php-cli-5.3.3-48.el6_8 \
-		php-zts-5.3.3-48.el6_8 \
+		httpd-2.2.15-59.el6.centos \
+		mod_ssl-2.2.15-59.el6.centos \
+		php-5.3.3-49.el6 \
+		php-cli-5.3.3-49.el6 \
+		php-zts-5.3.3-49.el6 \
 		php-pecl-apc-3.1.9-2.el6 \
 		php-pecl-memcached-1.0.0-1.el6 \
 	&& yum versionlock add \
