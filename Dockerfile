@@ -203,22 +203,22 @@ RUN useradd -r -M -d /var/www/app -s /sbin/nologin app \
 # -----------------------------------------------------------------------------
 # Copy files into place
 # -----------------------------------------------------------------------------
-ADD usr/sbin/httpd-bootstrap \
-	usr/sbin/httpd-startup \
-	usr/sbin/httpd-wrapper \
-	usr/sbin/php-fpm-wrapper \
+ADD src/usr/sbin/httpd-bootstrap \
+	src/usr/sbin/httpd-startup \
+	src/usr/sbin/httpd-wrapper \
+	src/usr/sbin/php-fpm-wrapper \
 	/usr/sbin/
-ADD opt/scmi \
+ADD src/opt/scmi \
 	/opt/scmi/
-ADD etc/profile.d \
+ADD src/etc/profile.d \
 	/etc/profile.d/
-ADD etc/systemd/system \
+ADD src/etc/systemd/system \
 	/etc/systemd/system/
-ADD etc/services-config/httpd/httpd-bootstrap.conf \
+ADD src/etc/services-config/httpd/httpd-bootstrap.conf \
 	/etc/services-config/httpd/
-ADD etc/services-config/httpd/conf.d/*.conf \
+ADD src/etc/services-config/httpd/conf.d/*.conf \
 	/etc/services-config/httpd/conf.d/
-ADD etc/services-config/supervisor/supervisord.d \
+ADD src/etc/services-config/supervisor/supervisord.d \
 	/etc/services-config/supervisor/supervisord.d/
 
 RUN mkdir -p \
