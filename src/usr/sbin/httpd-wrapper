@@ -18,15 +18,15 @@ function get_httpd_bin ()
 	fi
 }
 
-HTTPD="$(
+readonly HTTPD="$(
 	get_httpd_bin
 )"
-NICE=/bin/nice
-NICENESS="${APACHE_NICENESS:-10}"
+readonly NICE=/bin/nice
+readonly NICENESS="${APACHE_NICENESS:-10}"
 
-while true; do 
+while true; do
 	sleep 0.1
-	[[ -e /tmp/httpd-bootstrap.lock ]] || break
+	[[ -e /var/lock/subsys/httpd-bootstrap.lock ]] || break
 done
 
 exec ${NICE} \

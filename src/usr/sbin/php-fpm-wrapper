@@ -17,15 +17,15 @@ function setup_php_fpm_pool ()
 		/etc/httpd/conf.d/php-fpm.conf
 }
 
-PHP_FPM=/usr/sbin/php-fpm
-NICE=/bin/nice
-NICENESS="${PHP_FPM_NICENESS:-10}"
+readonly NICE=/bin/nice
+readonly NICENESS="${PHP_FPM_NICENESS:-10}"
+readonly PHP_FPM=/usr/sbin/php-fpm
 
 setup_php_fpm_pool
 
-while true; do 
+while true; do
 	sleep 0.1
-	[[ -e /tmp/httpd-bootstrap.lock ]] || break
+	[[ -e /var/lock/subsys/httpd-bootstrap.lock ]] || break
 done
 
 exec ${NICE} \
