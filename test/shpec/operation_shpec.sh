@@ -39,16 +39,19 @@ function __is_container_ready ()
 	local counter=$(
 		awk \
 			-v seconds="${3:-10}" \
-			'BEGIN { print 2 * seconds; }'
+			'BEGIN { print 10 * seconds; }'
 	)
 
 	until (( counter == 0 )); do
-		sleep 0.5
+		sleep 0.1
 
 		if docker exec ${container} \
 			bash -c "ps axo command" \
 			| grep -qE "${process_pattern}" \
-			> /dev/null 2>&1; then
+			> /dev/null 2>&1 \
+			&& [[ 000 != $(docker exec ${container} \
+				bash -c "curl -sI -o /dev/null -w %{http_code} localhost/") ]]
+		then
 			break
 		fi
 
