@@ -15,6 +15,7 @@ CentOS-6 6.9 x86_64, Apache 2.4, PHP-FPM 5.6, PHP memcached 2.2, Zend Opcache 7.
 - Adds a `src` directory for the image root files.
 - Adds `STARTUP_TIME` variable for the `logs-delayed` Makefile target.
 - Adds use of `/var/lock/subsys/` (subsystem lock directory) for bootstrap lock files.
+- Refactored test case output for readability.
 
 ### 2.1.1 - 2017-03-12
 
