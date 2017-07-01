@@ -39,11 +39,11 @@ function __is_container_ready ()
 	local counter=$(
 		awk \
 			-v seconds="${3:-10}" \
-			'BEGIN { print 10 * seconds; }'
+			'BEGIN { print 2 * seconds; }'
 	)
 
 	until (( counter == 0 )); do
-		sleep 0.1
+		sleep 0.5
 
 		if docker exec ${container} \
 			bash -c "ps axo command" \
