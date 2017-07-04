@@ -203,6 +203,8 @@ RUN useradd -r -M -d /var/www/app -s /sbin/nologin app \
 # -----------------------------------------------------------------------------
 # Copy files into place
 # -----------------------------------------------------------------------------
+ADD src/usr/bin \
+	/usr/bin/
 ADD src/usr/sbin/httpd-bootstrap \
 	src/usr/sbin/httpd-startup \
 	src/usr/sbin/httpd-wrapper \
@@ -347,5 +349,11 @@ jdeathe/centos-ssh-apache-php:${RELEASE_VERSION} \
 	org.deathe.vendor="jdeathe" \
 	org.deathe.url="https://github.com/jdeathe/centos-ssh-apache-php" \
 	org.deathe.description="CentOS-6 6.9 x86_64 - IUS Apache 2.4, IUS PHP-FPM 5.6, PHP memcached 2.2, Zend Opcache 7.0."
+
+HEALTHCHECK \
+	--interval=1s \
+	--timeout=1s \
+	--retries=10 \
+	CMD ["/usr/bin/healthcheck"]
 
 CMD ["/usr/sbin/httpd-startup", "/usr/bin/supervisord", "--configuration=/etc/supervisord.conf"]

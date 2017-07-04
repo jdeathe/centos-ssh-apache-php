@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+
+source /etc/httpd-bootstrap.conf
+
+readonly check_host="${2:-localhost.localdomain}"
+readonly check_url="${1:-http://127.0.0.1/}"
+
+# httpd-bootstrap
+[[ -e /var/lock/subsys/httpd-bootstrap ]] && exit 1
+
+# httpd-wrapper
+ps axo command \
+| grep -qE '^/usr/sbin/httpd ' || exit 1
+
+http_code="$(
+	curl \
+		-f \
+		-k \
+		-s \
+		-I \
+		-m 0.5 \
+		--no-keepalive \
+		-w %{http_code} \
+		-o /dev/null \
+		-A Docker-Healthcheck \
+		-H "Connection: close" \
+		-H "Host: ${check_host}" \
+		"${check_url}"
+)"
+
+# Fail on server errors only.
+if [[ ${http_code} == 000 ]] \
+	|| [[ ${http_code} -ge 500 ]]
+then
+	printf -- \
+		'%s Host:%s %s' \
+		"${http_code}" \
+		"${check_host}" \
+		"${check_url}"
+	exit 1
+fi
+
+exit 0
