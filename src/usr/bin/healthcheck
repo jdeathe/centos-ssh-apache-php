@@ -2,8 +2,72 @@
 
 source /etc/httpd-bootstrap.conf
 
-readonly check_host="${2:-localhost.localdomain}"
-readonly check_url="${1:-http://127.0.0.1/}"
+readonly CHECK_HOST="${2:-localhost.localdomain}"
+readonly CHECK_URL="${1:-http://127.0.0.1/}"
+readonly LAST_STATUS_PATH="/tmp/healthcheck_last_status"
+
+THROTTLE_INTERVAL="${3:-10}"
+
+function is_throttled_interval ()
+{
+	local interval="${1:-10}"
+	local pattern_seconds_in_minute='^(?:[1-9]|[1-5][0-9]|60)$'
+
+	# interval must be between 1 and 60 seconds
+	if [[ ! ${interval} =~ ${pattern_seconds_in_minute} ]]; then
+		interval=10
+	fi
+
+	if (( $(date +%-S)%${interval} == 0 )); then
+		return 0
+	else
+		return 1
+	fi
+}
+
+function last_check_passed ()
+{
+	local status=0
+
+	if [[ ! -f ${LAST_STATUS_PATH} ]]; then
+		return ${status}
+	else
+		read status < "${LAST_STATUS_PATH}"
+
+		if [[ ${status} =~ [0-9]+ ]]; then
+			return ${status}
+		else
+			return 1
+		fi
+	fi
+}
+
+function record_exit_status ()
+{
+	local status=${1:-${?}}
+
+	if [[ ! -f ${LAST_STATUS_PATH} ]]; then
+		install \
+			-m 0666 \
+			-o root \
+			-g root \
+			/dev/null \
+			"${LAST_STATUS_PATH}"
+	fi
+
+	printf -- \
+		'%d' \
+		"${status}" \
+	> "${LAST_STATUS_PATH}"
+
+	trap - \
+		EXIT
+
+	exit ${status}
+}
+
+trap "record_exit_status \${?}" \
+	EXIT
 
 # httpd-bootstrap
 [[ -e /var/lock/subsys/httpd-bootstrap ]] && exit 1
@@ -11,6 +75,13 @@ readonly check_url="${1:-http://127.0.0.1/}"
 # httpd-wrapper
 ps axo command \
 | grep -qE '^/usr/sbin/httpd ' || exit 1
+
+# Throttle CURL checks if last check passed.
+if last_check_passed \
+	&& ! is_throttled_interval "${THROTTLE_INTERVAL}"
+then
+	exit 0
+fi
 
 http_code="$(
 	curl \
@@ -24,8 +95,8 @@ http_code="$(
 		-o /dev/null \
 		-A Docker-Healthcheck \
 		-H "Connection: close" \
-		-H "Host: ${check_host}" \
-		"${check_url}"
+		-H "Host: ${CHECK_HOST}" \
+		"${CHECK_URL}"
 )"
 
 # Fail on server errors only.
@@ -35,8 +106,8 @@ then
 	printf -- \
 		'%s Host:%s %s' \
 		"${http_code}" \
-		"${check_host}" \
-		"${check_url}"
+		"${CHECK_HOST}" \
+		"${CHECK_URL}"
 	exit 1
 fi
 
