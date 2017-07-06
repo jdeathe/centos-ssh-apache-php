@@ -23,10 +23,10 @@ function __last_check_passed ()
 {
 	local status=0
 
-	if [[ ! -f ${LAST_STATUS_PATH} ]]; then
+	if [[ ! -f ${STATUS_PATH} ]]; then
 		return ${status}
 	else
-		read status < "${LAST_STATUS_PATH}"
+		read status < "${STATUS_PATH}"
 
 		if [[ ${status} =~ [0-9]+ ]]; then
 			return ${status}
@@ -77,20 +77,32 @@ function __print_message ()
 function __record_exit_status ()
 {
 	local status=${1:-${?}}
+	local status_directory="$(
+		dirname "${STATUS_PATH}"
+	)"
 
-	if [[ ! -f ${LAST_STATUS_PATH} ]]; then
+	if [[ ! -d ${status_directory} ]]; then
 		install \
-			-m 0666 \
+			-d \
+			-m 0660 \
+			-o root \
+			-g root \
+			"${status_directory}"
+	fi
+
+	if [[ ! -f ${STATUS_PATH} ]]; then
+		install \
+			-m 0660 \
 			-o root \
 			-g root \
 			/dev/null \
-			"${LAST_STATUS_PATH}"
+			"${STATUS_PATH}"
 	fi
 
 	printf -- \
 		'%d' \
 		"${status}" \
-	> "${LAST_STATUS_PATH}"
+	> "${STATUS_PATH}"
 
 	trap - \
 		EXIT
@@ -132,7 +144,7 @@ function __usage ()
 
 function main ()
 {
-	local readonly LAST_STATUS_PATH="/tmp/healthcheck_last_status"
+	local readonly STATUS_PATH="/var/lib/healthcheck/status"
 	local QUITE=false
 
 	local host="localhost.localdomain"
