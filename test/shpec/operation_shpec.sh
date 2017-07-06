@@ -1841,6 +1841,101 @@ function test_custom_configuration ()
 	end
 }
 
+function test_healthcheck ()
+{
+	local -r interval_seconds=1
+	local -r retries=10
+	local health_status=""
+
+	describe "Healthcheck"
+		trap "__terminate_container apache-php.pool-1.1.1 &> /dev/null; \
+			__destroy; \
+			exit 1" \
+			INT TERM EXIT
+
+		describe "Default configuration"
+			__terminate_container \
+				apache-php.pool-1.1.1 \
+			&> /dev/null
+
+			docker run \
+				--detach \
+				--name apache-php.pool-1.1.1 \
+				jdeathe/centos-ssh-apache-php:latest \
+			&> /dev/null
+
+			it "Returns a valid status on starting."
+				health_status="$(
+					docker inspect \
+						--format='{{json .State.Health.Status}}' \
+						apache-php.pool-1.1.1
+				)"
+
+				assert __shpec_matcher_egrep \
+					"${health_status}" \
+					"\"(starting|healthy|unhealthy)\""
+			end
+
+			sleep $(
+				awk \
+					-v interval_seconds="${interval_seconds}" \
+					-v startup_time="${STARTUP_TIME}" \
+					'BEGIN { print interval_seconds + startup_time; }'
+			)
+
+			it "Returns healthy after startup."
+				health_status="$(
+					docker inspect \
+						--format='{{json .State.Health.Status}}' \
+						apache-php.pool-1.1.1
+				)"
+
+				assert equal \
+					"${health_status}" \
+					"\"healthy\""
+			end
+
+			it "Returns unhealthy on failure."
+				# sshd-wrapper failure
+				docker exec -t \
+					apache-php.pool-1.1.1 \
+					bash -c "mv \
+						/usr/sbin/httpd \
+						/usr/sbin/httpd2" \
+				&& docker exec -t \
+					apache-php.pool-1.1.1 \
+					bash -c "if [[ -n \$(pgrep -f '^/usr/sbin/httpd ') ]]; then \
+						kill -9 \$(pgrep -f '^/usr/sbin/httpd '); \
+					fi"
+
+				sleep $(
+					awk \
+						-v interval_seconds="${interval_seconds}" \
+						-v retries="${retries}" \
+						'BEGIN { print 1 + interval_seconds * retries; }'
+				)
+
+				health_status="$(
+					docker inspect \
+						--format='{{json .State.Health.Status}}' \
+						apache-php.pool-1.1.1
+				)"
+
+				assert equal \
+					"${health_status}" \
+					"\"unhealthy\""
+			end
+		end
+
+		__terminate_container \
+			apache-php.pool-1.1.1 \
+		&> /dev/null
+
+		trap - \
+			INT TERM EXIT
+	end
+}
+
 if [[ ! -d ${TEST_DIRECTORY} ]]; then
 	printf -- \
 		"ERROR: Please run from the project root.\n" \
@@ -1853,5 +1948,6 @@ describe "jdeathe/centos-ssh-apache-php:latest"
 	__setup
 	test_basic_operations
 	test_custom_configuration
+	test_healthcheck
 	__destroy
 end
