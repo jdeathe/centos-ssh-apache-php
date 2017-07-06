@@ -2,16 +2,10 @@
 
 source /etc/httpd-bootstrap.conf
 
-readonly CHECK_HOST="${2:-localhost.localdomain}"
-readonly CHECK_URL="${1:-http://127.0.0.1/}"
-readonly LAST_STATUS_PATH="/tmp/healthcheck_last_status"
-
-THROTTLE_INTERVAL="${3:-10}"
-
-function is_throttled_interval ()
+function __is_throttled_interval ()
 {
 	local interval="${1:-10}"
-	local pattern_seconds_in_minute='^(?:[1-9]|[1-5][0-9]|60)$'
+	local pattern_seconds_in_minute='^([1-9]|[1-5][0-9]|60)$'
 
 	# interval must be between 1 and 60 seconds
 	if [[ ! ${interval} =~ ${pattern_seconds_in_minute} ]]; then
@@ -25,7 +19,7 @@ function is_throttled_interval ()
 	fi
 }
 
-function last_check_passed ()
+function __last_check_passed ()
 {
 	local status=0
 
@@ -42,7 +36,45 @@ function last_check_passed ()
 	fi
 }
 
-function record_exit_status ()
+function __print_message ()
+{
+	local readonly message="${2:-}"
+	local readonly type="${1:-}"
+	local readonly quiet=${QUIET:-false}
+	local prefix=""
+
+	case "${type}" in
+		error)
+			prefix="[ERROR] "
+			;;
+		info)
+			prefix="[INFO] "
+			;;
+		*)
+			message="${type}"
+			;;
+	esac
+
+	if [[ ${quiet} == true ]] \
+		&& [[ ${type} != error ]]
+	then
+		return 0
+	elif [[ ${quiet} == true ]] \
+		&& [[ ${type} == error ]]
+	then
+		>&2 printf -- \
+			'%s%s\n' \
+			"${prefix}" \
+			"${message}"
+	else
+		printf -- \
+			'%s%s\n' \
+			"${prefix}" \
+			"${message}"
+	fi
+}
+
+function __record_exit_status ()
 {
 	local status=${1:-${?}}
 
@@ -66,49 +98,184 @@ function record_exit_status ()
 	exit ${status}
 }
 
-trap "record_exit_status \${?}" \
-	EXIT
+function __usage ()
+{
+	cat <<-USAGE
+	
+	Usage: $(basename ${0}) [OPTIONS]
+	       $(basename ${0}) [-h|--help]
+	
+	Options:
+	  -H, --host=<hostname>               Hostname used in the Host request 
+	                                      header.
+	                                      Default: localhost.localdomain
+	  -i, --interval=<seconds>            After the first successful check the 
+	                                      CURL request interval can be throttled 
+	                                      to repeat at an interval of seconds 
+	                                      between 1-60. An interval of 1 results 
+	                                      in a check request occurring every 
+	                                      second whereas an interval of 60 limits 
+	                                      check requests to once per minute.
+	                                      Default: 10
+	  -m, --max-time=<seconds>            Maximum time allowed for the CURL check 
+	                                      to complete.
+	                                      Default: 0.5
+	  -u, --url=<url>                     The local IPv4 URL endpoint to check 
+	                                      inclusive of protocol.
+	                                      Default: http://127.0.0.1/
+	  -q, --quiet                         Do not print message output.
+	
+	USAGE
 
-# httpd-bootstrap
-[[ -e /var/lock/subsys/httpd-bootstrap ]] && exit 1
-
-# httpd-wrapper
-ps axo command \
-| grep -qE '^/usr/sbin/httpd ' || exit 1
-
-# Throttle CURL checks if last check passed.
-if last_check_passed \
-	&& ! is_throttled_interval "${THROTTLE_INTERVAL}"
-then
-	exit 0
-fi
-
-http_code="$(
-	curl \
-		-f \
-		-k \
-		-s \
-		-I \
-		-m 0.5 \
-		--no-keepalive \
-		-w %{http_code} \
-		-o /dev/null \
-		-A Docker-Healthcheck \
-		-H "Connection: close" \
-		-H "Host: ${CHECK_HOST}" \
-		"${CHECK_URL}"
-)"
-
-# Fail on server errors only.
-if [[ ${http_code} == 000 ]] \
-	|| [[ ${http_code} -ge 500 ]]
-then
-	printf -- \
-		'%s Host:%s %s' \
-		"${http_code}" \
-		"${CHECK_HOST}" \
-		"${CHECK_URL}"
 	exit 1
-fi
+}
 
-exit 0
+function main ()
+{
+	local readonly LAST_STATUS_PATH="/tmp/healthcheck_last_status"
+	local QUITE=false
+
+	local host="localhost.localdomain"
+	local interval=10
+	local max_time=0.5
+	local pattern_host='^([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])(\.([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]{0,61}[a-zA-Z0-9]))*$'
+	local pattern_local_url='^https?://(127\.0\.0\.1|localhost)/'
+	local pattern_max_time='^(0\.[1-9]|[1-9][0-9]*)$'
+	local pattern_seconds_in_minute='^([1-9]|[1-5][0-9]|60)$'
+	local url="http://127.0.0.1/"
+
+	# Trap and record the exit status
+	trap "__record_exit_status \${?}" \
+		EXIT
+
+	while [[ ${#} -gt 0 ]]; do
+		case "${1}" in
+			-h|--help)
+				__usage
+				break
+				;;
+			-H)
+				host="${2}"
+				shift 2 || break
+				;;
+			--host=*)
+				host="${1#*=}"
+				shift 1
+				;;
+			-i)
+				interval="${2}"
+				shift 2 || break
+				;;
+			--interval=*)
+				interval="${1#*=}"
+				shift 1
+				;;
+			-m)
+				max_time="${2}"
+				shift 2 || break
+				;;
+			--max-time=*)
+				max_time="${1#*=}"
+				shift 1
+				;;
+			-u)
+				url="${2}"
+				shift 2 || break
+				;;
+			--url=*)
+				url="${1#*=}"
+				shift 1
+				;;
+			-q|--quiet)
+				QUIET=true
+				shift 1
+				;;
+			*)
+				__usage
+				;;
+		esac
+	done
+
+	if [[ ! ${host} =~ ${pattern_host} ]]; then
+		__print_message \
+			"error" \
+			"Invalid host."
+		exit 1
+	fi
+
+	if [[ ! ${interval} =~ ${pattern_seconds_in_minute} ]]; then
+		__print_message \
+			"error" \
+			"Invalid interval."
+		exit 1
+	fi
+
+	if [[ ! ${max_time} =~ ${pattern_max_time} ]]; then
+		__print_message \
+			"error" \
+			"Invalid max_time."
+		exit 1
+	fi
+
+	if [[ ! ${url} =~ ${pattern_local_url} ]]; then
+		__print_message \
+			"error" \
+			"Invalid url."
+		exit 1
+	fi
+
+	# httpd-bootstrap
+	if [[ -e /var/lock/subsys/httpd-bootstrap ]]; then
+		exit 1
+	fi
+
+	# httpd-wrapper
+	if ! ps axo command \
+		| grep -qE '^/usr/sbin/httpd '
+	then
+		exit 1
+	fi
+
+	# Throttle CURL checks if last check passed.
+	if __last_check_passed \
+		&& ! __is_throttled_interval \
+			"${interval}"
+	then
+		exit 0
+	fi
+
+	http_code="$(
+		curl \
+			-f \
+			-k \
+			-s \
+			-I \
+			-m ${max_time} \
+			--no-keepalive \
+			-w %{http_code} \
+			-o /dev/null \
+			-A Docker-Healthcheck \
+			-H "Connection: close" \
+			-H "Host: ${host}" \
+			"${url}"
+	)"
+
+	# Fail on server errors only.
+	if [[ ${http_code} == 000 ]] \
+		|| [[ ${http_code} -ge 500 ]]
+	then
+		__print_message \
+			"$(
+				printf -- \
+					'%s Host:%s %s' \
+					"${http_code}" \
+					"${host}" \
+					"${url}"
+			)"
+		exit 1
+	fi
+
+	exit 0
+}
+
+main "${@}"
