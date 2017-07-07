@@ -26,9 +26,12 @@ function __last_check_passed ()
 	if [[ ! -f ${STATUS_PATH} ]]; then
 		return ${status}
 	else
-		read status < "${STATUS_PATH}"
+		read \
+			-n 1 \
+			status \
+		< "${STATUS_PATH}"
 
-		if [[ ${status} =~ [0-9]+ ]]; then
+		if [[ ${status} =~ ^[01]$ ]]; then
 			return ${status}
 		else
 			return 1
