@@ -4,7 +4,7 @@ source /etc/httpd-bootstrap.conf
 
 function __is_throttled_interval ()
 {
-	local interval="${1:-10}"
+	local -i interval="${1:-10}"
 	local pattern_seconds_in_minute='^([1-9]|[1-5][0-9]|60)$'
 
 	# interval must be between 1 and 60 seconds
@@ -21,7 +21,7 @@ function __is_throttled_interval ()
 
 function __last_check_passed ()
 {
-	local status=0
+	local -i status=0
 
 	if [[ ! -f ${STATUS_PATH} ]]; then
 		return ${status}
@@ -38,9 +38,9 @@ function __last_check_passed ()
 
 function __print_message ()
 {
-	local readonly message="${2:-}"
-	local readonly type="${1:-}"
-	local readonly quiet=${QUIET:-false}
+	local -r message="${2:-}"
+	local -r type="${1:-}"
+	local -r quiet=${QUIET:-false}
 	local prefix=""
 
 	case "${type}" in
@@ -76,7 +76,7 @@ function __print_message ()
 
 function __record_exit_status ()
 {
-	local status=${1:-${?}}
+	local -i status=${1:-${?}}
 	local status_directory="$(
 		dirname "${STATUS_PATH}"
 	)"
@@ -144,11 +144,11 @@ function __usage ()
 
 function main ()
 {
-	local readonly STATUS_PATH="/var/lib/healthcheck/status"
+	local -r STATUS_PATH="/var/lib/healthcheck/status"
 	local QUITE=false
 
 	local host="localhost.localdomain"
-	local interval=10
+	local -i interval=10
 	local max_time=0.5
 	local pattern_host='^([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])(\.([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]{0,61}[a-zA-Z0-9]))*$'
 	local pattern_local_url='^https?://(127\.0\.0\.1|localhost)/'
