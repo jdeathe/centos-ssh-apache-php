@@ -123,7 +123,7 @@ function __terminate_container ()
 
 function test_basic_operations ()
 {
-	local readonly apache_load_modules_details=" - alias_module
+	local -r apache_load_modules_details=" - alias_module
  - authz_core_module
  - authz_user_module
  - deflate_module
@@ -140,7 +140,7 @@ function test_basic_operations ()
  - status_module
  - unixd_module
  - version_module"
-	local readonly required_apache_modules="
+	local -r required_apache_modules="
 authz_core_module
 authz_user_module
 log_config_module
@@ -159,7 +159,7 @@ version_module
 proxy_module
 proxy_fcgi_module
 "
-	local readonly other_required_apache_modules="
+	local -r other_required_apache_modules="
 core_module
 so_module
 http_module
@@ -167,7 +167,7 @@ authz_host_module
 mpm_prefork_module
 cgi_module
 "
-	local readonly necessary_apache_modules="
+	local -r necessary_apache_modules="
 ${required_apache_modules}
 ${other_required_apache_modules}
 "
