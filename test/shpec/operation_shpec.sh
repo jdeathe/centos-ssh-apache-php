@@ -545,7 +545,7 @@ ${other_required_apache_modules}
 					bash -c "apachectl -M 2>&1 \
 						| sed -r \
 							-e '/Loaded Modules:/d' \
-							-e 's~^ *([a-z_]*).*~\1~g'"
+							-e 's~^ *([0-9a-z_]*).*~\1~g'"
 			)"
 
 			it "Has all required."
