@@ -4,13 +4,19 @@
 
 Summary of release changes for Version 2.
 
-CentOS-6 6.8 x86_64, Apache 2.4, PHP-FPM 5.6, PHP memcached 2.2, Zend Opcache 7.0.
+CentOS-6 6.9 x86_64, Apache 2.4, PHP-FPM 5.6, PHP memcached 2.2, Zend Opcache 7.0.
 
 ### 2.2.0 - Unreleased
 
 - Adds updated `httpd24u` and `php56u` packages to 2.4.26-1 and 5.6.30-2.
 - Adds improvement to VirtualHost pattern match used to disable default SSL.
 - Replaces deprecated Dockerfile `MAINTAINER` with a `LABEL`.
+- Update source image to [1.8.1 tag](https://github.com/jdeathe/centos-ssh/releases/tag/1.8.1).
+- Adds a `src` directory for the image root files.
+- Adds `STARTUP_TIME` variable for the `logs-delayed` Makefile target.
+- Adds use of `/var/lock/subsys/` (subsystem lock directory) for bootstrap lock files.
+- Adds test case output with improved readability.
+- Adds a healthcheck.
 
 ### 2.1.1 - 2017-03-12
 
