@@ -12,6 +12,12 @@ CentOS-6 6.8 x86_64, Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1.
 - Adds improvement to VirtualHost pattern match used to disable default SSL.
 - Replaces deprecated Dockerfile `MAINTAINER` with a `LABEL`.
 - Adds improvement to the sed pattern match for `php_uname('n');` that was causing syntax highlighting issues.
+- Update source image to [1.8.1 tag](https://github.com/jdeathe/centos-ssh/releases/tag/1.8.1).
+- Adds a `src` directory for the image root files.
+- Adds `STARTUP_TIME` variable for the `logs-delayed` Makefile target.
+- Adds use of `/var/lock/subsys/` (subsystem lock directory) for bootstrap lock files.
+- Adds test case output with improved readability.
+- Adds a healthcheck.
 
 ### 1.9.1 - 2017-03-12
 
