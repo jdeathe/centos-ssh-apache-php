@@ -4,7 +4,7 @@
 # CentOS-6, Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1
 #
 # =============================================================================
-FROM jdeathe/centos-ssh:1.7.6
+FROM jdeathe/centos-ssh:1.8.1
 
 # Use the form ([{fqdn}-]{package-name}|[{fqdn}-]{provider-name})
 ARG PACKAGE_NAME="app"
@@ -159,21 +159,23 @@ RUN useradd -r -M -d /var/www/app -s /sbin/nologin app \
 # -----------------------------------------------------------------------------
 # Copy files into place
 # -----------------------------------------------------------------------------
-ADD usr/sbin/httpd-bootstrap \
-	usr/sbin/httpd-startup \
-	usr/sbin/httpd-wrapper \
+ADD src/usr/bin \
+	/usr/bin/
+ADD src/usr/sbin/httpd-bootstrap \
+	src/usr/sbin/httpd-startup \
+	src/usr/sbin/httpd-wrapper \
 	/usr/sbin/
-ADD opt/scmi \
+ADD src/opt/scmi \
 	/opt/scmi/
-ADD etc/profile.d \
+ADD src/etc/profile.d \
 	/etc/profile.d/
-ADD etc/systemd/system \
+ADD src/etc/systemd/system \
 	/etc/systemd/system/
-ADD etc/services-config/httpd/httpd-bootstrap.conf \
+ADD src/etc/services-config/httpd/httpd-bootstrap.conf \
 	/etc/services-config/httpd/
-ADD etc/services-config/httpd/conf.d/*.conf \
+ADD src/etc/services-config/httpd/conf.d/*.conf \
 	/etc/services-config/httpd/conf.d/
-ADD etc/services-config/supervisor/supervisord.d \
+ADD src/etc/services-config/supervisor/supervisord.d \
 	/etc/services-config/supervisor/supervisord.d/
 
 RUN mkdir -p \
@@ -298,6 +300,12 @@ jdeathe/centos-ssh-apache-php:${RELEASE_VERSION} \
 	org.deathe.license="MIT" \
 	org.deathe.vendor="jdeathe" \
 	org.deathe.url="https://github.com/jdeathe/centos-ssh-apache-php" \
-	org.deathe.description="CentOS-6 6.8 x86_64 - Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1."
+	org.deathe.description="CentOS-6 6.9 x86_64 - Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1."
+
+HEALTHCHECK \
+	--interval=1s \
+	--timeout=1s \
+	--retries=10 \
+	CMD ["/usr/bin/healthcheck"]
 
 CMD ["/usr/sbin/httpd-startup", "/usr/bin/supervisord", "--configuration=/etc/supervisord.conf"]
