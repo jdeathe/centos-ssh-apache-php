@@ -246,7 +246,7 @@ function main ()
 
 	# httpd-wrapper
 	if ! ps axo command \
-		| grep -qE '^/usr/sbin/httpd '
+		| grep -qE '^/usr/sbin/httpd(\.worker)? '
 	then
 		exit 1
 	fi

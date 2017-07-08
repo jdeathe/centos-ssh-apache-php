@@ -17,6 +17,7 @@ CentOS-6 6.9 x86_64, Apache 2.4, PHP-FPM 5.6, PHP memcached 2.2, Zend Opcache 7.
 - Adds use of `/var/lock/subsys/` (subsystem lock directory) for bootstrap lock files.
 - Adds test case output with improved readability.
 - Adds a healthcheck.
+- Removes healthcheck from functional tests of access log to prevent intermittent failures.
 
 ### 2.1.1 - 2017-03-12
 

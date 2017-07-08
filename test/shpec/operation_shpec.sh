@@ -200,7 +200,9 @@ ${other_required_apache_modules}
 		&> /dev/null
 
 		describe "Runs named container"
-			docker run -d \
+			docker run \
+				--detach \
+				--no-healthcheck \
 				--name apache-php.pool-1.1.1 \
 				--publish ${DOCKER_PORT_MAP_TCP_80}:80 \
 				jdeathe/centos-ssh-apache-php:latest \
@@ -228,7 +230,7 @@ ${other_required_apache_modules}
 
 		if ! __is_container_ready \
 			apache-php.pool-1.1.1 \
-			"/usr/sbin/httpd "; then
+			"/usr/sbin/httpd(\.worker)? "; then
 			exit 1
 		fi
 
@@ -543,7 +545,7 @@ ${other_required_apache_modules}
 					bash -c "apachectl -M 2>&1 \
 						| sed -r \
 							-e '/Loaded Modules:/d' \
-							-e 's~^ *([a-z_]+).*$~\1~g'"
+							-e 's~^ *([0-9a-z_]*).*~\1~g'"
 			)"
 
 			it "Has all required."
@@ -632,7 +634,9 @@ function test_custom_configuration ()
 					apache-php.pool-1.1.1 \
 				&> /dev/null
 
-				docker run -d \
+				docker run \
+					--detach \
+					--no-healthcheck \
 					--name apache-php.pool-1.1.1 \
 					--publish ${DOCKER_PORT_MAP_TCP_80}:80 \
 					--env APACHE_CUSTOM_LOG_FORMAT="common" \
@@ -642,7 +646,7 @@ function test_custom_configuration ()
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd "; then
+					"/usr/sbin/httpd(\.worker)? "; then
 					exit 1
 				fi
 
@@ -675,7 +679,9 @@ function test_custom_configuration ()
 					apache-php.pool-1.1.1 \
 				&> /dev/null
 
-				docker run -d \
+				docker run \
+					--detach \
+					--no-healthcheck \
 					--name apache-php.pool-1.1.1 \
 					--publish ${DOCKER_PORT_MAP_TCP_80}:80 \
 					--env APACHE_CUSTOM_LOG_LOCATION="var/log/access.log" \
@@ -685,7 +691,7 @@ function test_custom_configuration ()
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd "; then
+					"/usr/sbin/httpd(\.worker)? "; then
 					exit 1
 				fi
 
@@ -713,7 +719,9 @@ function test_custom_configuration ()
 					apache-php.pool-1.1.1 \
 				&> /dev/null
 
-				docker run -d \
+				docker run \
+					--detach \
+					--no-healthcheck \
 					--name apache-php.pool-1.1.1 \
 					--publish ${DOCKER_PORT_MAP_TCP_80}:80 \
 					--env APACHE_CUSTOM_LOG_LOCATION="/var/log/httpd/access.log" \
@@ -723,7 +731,7 @@ function test_custom_configuration ()
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd "; then
+					"/usr/sbin/httpd(\.worker)? "; then
 					exit 1
 				fi
 
@@ -753,7 +761,8 @@ function test_custom_configuration ()
 					apache-php.pool-1.1.1 \
 				&> /dev/null
 
-				docker run -d \
+				docker run \
+					--detach \
 					--name apache-php.pool-1.1.1 \
 					--publish ${DOCKER_PORT_MAP_TCP_80}:80 \
 					--env APACHE_ERROR_LOG_LOCATION="var/log/error.log" \
@@ -763,7 +772,7 @@ function test_custom_configuration ()
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd "; then
+					"/usr/sbin/httpd(\.worker)? "; then
 					exit 1
 				fi
 
@@ -788,7 +797,8 @@ function test_custom_configuration ()
 					apache-php.pool-1.1.1 \
 				&> /dev/null
 
-				docker run -d \
+				docker run \
+					--detach \
 					--name apache-php.pool-1.1.1 \
 					--publish ${DOCKER_PORT_MAP_TCP_80}:80 \
 					--env APACHE_ERROR_LOG_LOCATION="/var/log/httpd/error.log" \
@@ -797,7 +807,7 @@ function test_custom_configuration ()
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd "; then
+					"/usr/sbin/httpd(\.worker)? "; then
 					exit 1
 				fi
 
@@ -822,7 +832,8 @@ function test_custom_configuration ()
 					apache-php.pool-1.1.1 \
 				&> /dev/null
 
-				docker run -d \
+				docker run \
+					--detach \
 					--name apache-php.pool-1.1.1 \
 					--publish ${DOCKER_PORT_MAP_TCP_80}:80 \
 					--env APACHE_ERROR_LOG_LEVEL="debug" \
@@ -832,7 +843,7 @@ function test_custom_configuration ()
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd "; then
+					"/usr/sbin/httpd(\.worker)? "; then
 					exit 1
 				fi
 
@@ -846,7 +857,7 @@ function test_custom_configuration ()
 					tail -n 1 \
 					/var/www/app/var/log/apache_error_log \
 				| grep -qE \
-					' \[.+:debug\] ' \
+					' \[(.+:)?debug\] ' \
 				&> /dev/null
 
 				assert equal \
@@ -861,7 +872,8 @@ function test_custom_configuration ()
 					apache-php.pool-1.1.1 \
 				&> /dev/null
 
-				docker run -d \
+				docker run \
+					--detach \
 					--name apache-php.pool-1.1.1 \
 					--publish ${DOCKER_PORT_MAP_TCP_80}:80 \
 					--env APACHE_EXTENDED_STATUS_ENABLED="true" \
@@ -871,7 +883,7 @@ function test_custom_configuration ()
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd "; then
+					"/usr/sbin/httpd(\.worker)? "; then
 					exit 1
 				fi
 
@@ -925,7 +937,8 @@ function test_custom_configuration ()
 					apache-php.pool-1.1.1 \
 				&> /dev/null
 
-				docker run -d \
+				docker run \
+					--detach \
 					--name apache-php.pool-1.1.1 \
 					--publish ${DOCKER_PORT_MAP_TCP_80}:80 \
 					--env APACHE_HEADER_X_SERVICE_UID="host-name@1.2" \
@@ -935,7 +948,7 @@ function test_custom_configuration ()
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd "; then
+					"/usr/sbin/httpd(\.worker)? "; then
 					exit 1
 				fi
 
@@ -958,7 +971,8 @@ function test_custom_configuration ()
 					apache-php.pool-1.1.1 \
 				&> /dev/null
 
-				docker run -d \
+				docker run \
+					--detach \
 					--name apache-php.pool-1.1.1 \
 					--publish ${DOCKER_PORT_MAP_TCP_80}:80 \
 					--env APACHE_HEADER_X_SERVICE_UID="{{HOSTNAME}}:${DOCKER_PORT_MAP_TCP_80}" \
@@ -968,7 +982,7 @@ function test_custom_configuration ()
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd "; then
+					"/usr/sbin/httpd(\.worker)? "; then
 					exit 1
 				fi
 
@@ -993,7 +1007,8 @@ function test_custom_configuration ()
 					apache-php.pool-1.1.1 \
 				&> /dev/null
 
-				docker run -d \
+				docker run \
+					--detach \
 					--name apache-php.pool-1.1.1 \
 					--env APACHE_LOAD_MODULES="authz_core_module authz_user_module log_config_module expires_module deflate_module filter_module headers_module setenvif_module socache_shmcb_module mime_module status_module dir_module alias_module unixd_module version_module proxy_module proxy_fcgi_module rewrite_module" \
 					jdeathe/centos-ssh-apache-php:latest \
@@ -1001,7 +1016,7 @@ function test_custom_configuration ()
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd "; then
+					"/usr/sbin/httpd(\.worker)? "; then
 					exit 1
 				fi
 
@@ -1021,7 +1036,8 @@ function test_custom_configuration ()
 					apache-php.pool-1.1.1 \
 				&> /dev/null
 
-				docker run -d \
+				docker run \
+					--detach \
 					--name apache-php.pool-1.1.1 \
 					--env APACHE_MPM="event" \
 					--hostname app-1.local \
@@ -1030,7 +1046,7 @@ function test_custom_configuration ()
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd "; then
+					"/usr/sbin/httpd(\.worker)? "; then
 					exit 1
 				fi
 
@@ -1050,7 +1066,8 @@ function test_custom_configuration ()
 					apache-php.pool-1.1.1 \
 				&> /dev/null
 
-				docker run -d \
+				docker run \
+					--detach \
 					--name apache-php.pool-1.1.1 \
 					--publish ${DOCKER_PORT_MAP_TCP_80}:80 \
 					--env APACHE_OPERATING_MODE="development" \
@@ -1060,7 +1077,7 @@ function test_custom_configuration ()
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd "; then
+					"/usr/sbin/httpd(\.worker)? "; then
 					exit 1
 				fi
 
@@ -1085,7 +1102,8 @@ function test_custom_configuration ()
 					apache-php.pool-1.1.1 \
 				&> /dev/null
 
-				docker run -d \
+				docker run \
+					--detach \
 					--name apache-php.pool-1.1.1 \
 					--env APACHE_SYSTEM_USER="app-user" \
 					jdeathe/centos-ssh-apache-php:latest \
@@ -1093,7 +1111,7 @@ function test_custom_configuration ()
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd "; then
+					"/usr/sbin/httpd(\.worker)? "; then
 					exit 1
 				fi
 
@@ -1115,7 +1133,8 @@ function test_custom_configuration ()
 					apache-php.pool-1.1.1 \
 				&> /dev/null
 
-				docker run -d \
+				docker run \
+					--detach \
 					--name apache-php.pool-1.1.1 \
 					--env APACHE_RUN_USER="runner" \
 					jdeathe/centos-ssh-apache-php:latest \
@@ -1123,7 +1142,7 @@ function test_custom_configuration ()
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd "; then
+					"/usr/sbin/httpd(\.worker)? "; then
 					exit 1
 				fi
 
@@ -1146,7 +1165,8 @@ function test_custom_configuration ()
 					apache-php.pool-1.1.1 \
 				&> /dev/null
 
-				docker run -d \
+				docker run \
+					--detach \
 					--name apache-php.pool-1.1.1 \
 					--env APACHE_RUN_GROUP="runners" \
 					jdeathe/centos-ssh-apache-php:latest \
@@ -1154,7 +1174,7 @@ function test_custom_configuration ()
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd "; then
+					"/usr/sbin/httpd(\.worker)? "; then
 					exit 1
 				fi
 
@@ -1179,7 +1199,8 @@ function test_custom_configuration ()
 					apache-php.pool-1.1.1 \
 				&> /dev/null
 
-				docker run -d \
+				docker run \
+					--detach \
 					--name apache-php.pool-1.1.1 \
 					--publish ${DOCKER_PORT_MAP_TCP_80}:80 \
 					--env APACHE_SERVER_NAME="app-1.local" \
@@ -1213,7 +1234,7 @@ function test_custom_configuration ()
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd "; then
+					"/usr/sbin/httpd(\.worker)? "; then
 					exit 1
 				fi
 
@@ -1262,7 +1283,8 @@ function test_custom_configuration ()
 					apache-php.pool-1.1.1 \
 				&> /dev/null
 
-				docker run -d \
+				docker run \
+					--detach \
 					--name apache-php.pool-1.1.1 \
 					--publish ${DOCKER_PORT_MAP_TCP_80}:80 \
 					--hostname php-hello-world \
@@ -1295,7 +1317,7 @@ function test_custom_configuration ()
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd "; then
+					"/usr/sbin/httpd(\.worker)? "; then
 					exit 1
 				fi
 
@@ -1328,7 +1350,8 @@ function test_custom_configuration ()
 					apache-php.pool-1.1.1 \
 				&> /dev/null
 
-				docker run -d \
+				docker run \
+					--detach \
 					--name apache-php.pool-1.1.1 \
 					--publish ${DOCKER_PORT_MAP_TCP_80}:80 \
 					--hostname php-hello-world \
@@ -1362,7 +1385,7 @@ function test_custom_configuration ()
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd "; then
+					"/usr/sbin/httpd(\.worker)? "; then
 					exit 1
 				fi
 
@@ -1397,7 +1420,8 @@ function test_custom_configuration ()
 					apache-php.pool-1.1.1 \
 				&> /dev/null
 
-				docker run -d \
+				docker run \
+					--detach \
 					--name apache-php.pool-1.1.1 \
 					--publish ${DOCKER_PORT_MAP_TCP_80}:80 \
 					--hostname php-hello-world \
@@ -1432,7 +1456,7 @@ function test_custom_configuration ()
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd "; then
+					"/usr/sbin/httpd(\.worker)? "; then
 					exit 1
 				fi
 
@@ -1467,7 +1491,8 @@ function test_custom_configuration ()
 					apache-php.pool-1.1.1 \
 				&> /dev/null
 
-				docker run -d \
+				docker run \
+					--detach \
 					--name apache-php.pool-1.1.1 \
 					--publish ${DOCKER_PORT_MAP_TCP_80}:80 \
 					--env APACHE_PUBLIC_DIRECTORY="web" \
@@ -1487,7 +1512,7 @@ function test_custom_configuration ()
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd "; then
+					"/usr/sbin/httpd(\.worker)? "; then
 					exit 1
 				fi
 
@@ -1509,7 +1534,8 @@ function test_custom_configuration ()
 					apache-php.pool-1.1.1 \
 				&> /dev/null
 
-				docker run -d \
+				docker run \
+					--detach \
 					--name apache-php.pool-1.1.1 \
 					--publish ${DOCKER_PORT_MAP_TCP_80}:80 \
 					--env APACHE_SERVER_NAME="app-1.local" \
@@ -1557,7 +1583,7 @@ function test_custom_configuration ()
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd "; then
+					"/usr/sbin/httpd(\.worker)? "; then
 					exit 1
 				fi
 
@@ -1579,7 +1605,8 @@ function test_custom_configuration ()
 					apache-php.pool-1.1.1 \
 				&> /dev/null
 
-				docker run -d \
+				docker run \
+					--detach \
 					--name apache-php.pool-1.1.1 \
 					--publish ${DOCKER_PORT_MAP_TCP_443}:443 \
 					--env APACHE_MOD_SSL_ENABLED="true" \
@@ -1595,7 +1622,7 @@ function test_custom_configuration ()
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd "; then
+					"/usr/sbin/httpd(\.worker)? "; then
 					exit 1
 				fi
 
@@ -1645,7 +1672,8 @@ function test_custom_configuration ()
 					fi
 				fi
 
-				docker run -d \
+				docker run \
+					--detach \
 					--name apache-php.pool-1.1.1 \
 					--publish ${DOCKER_PORT_MAP_TCP_443}:443 \
 					--env APACHE_MOD_SSL_ENABLED="true" \
@@ -1662,7 +1690,7 @@ function test_custom_configuration ()
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd "; then
+					"/usr/sbin/httpd(\.worker)? "; then
 					exit 1
 				fi
 
@@ -1694,7 +1722,8 @@ function test_custom_configuration ()
 					apache-php.pool-1.1.1 \
 				&> /dev/null
 
-				docker run -d \
+				docker run \
+					--detach \
 					--name apache-php.pool-1.1.1 \
 					--publish ${DOCKER_PORT_MAP_TCP_443}:443 \
 					--env APACHE_MOD_SSL_ENABLED="true" \
@@ -1712,7 +1741,7 @@ function test_custom_configuration ()
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd "; then
+					"/usr/sbin/httpd(\.worker)? "; then
 					exit 1
 				fi
 
@@ -1748,7 +1777,8 @@ function test_custom_configuration ()
 					apache-php.pool-1.1.1 \
 				&> /dev/null
 
-				docker run -d \
+				docker run \
+					--detach \
 					--name apache-php.pool-1.1.1 \
 					--publish ${DOCKER_PORT_MAP_TCP_443}:443 \
 					--env APACHE_MOD_SSL_ENABLED="true" \
@@ -1767,7 +1797,7 @@ function test_custom_configuration ()
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd "; then
+					"/usr/sbin/httpd(\.worker)? "; then
 					exit 1
 				fi
 
@@ -1805,7 +1835,8 @@ function test_custom_configuration ()
 					apache-php.pool-1.1.1 \
 				&> /dev/null
 
-				docker run -d \
+				docker run \
+					--detach \
 					--name apache-php.pool-1.1.1 \
 					--publish ${DOCKER_PORT_MAP_TCP_80}:80 \
 					--env PHP_OPTIONS_DATE_TIMEZONE="Europe/London" \
@@ -1814,7 +1845,7 @@ function test_custom_configuration ()
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd "; then
+					"/usr/sbin/httpd(\.worker)? "; then
 					exit 1
 				fi
 
