@@ -19,6 +19,7 @@ CentOS-6 6.8 x86_64, Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1.
 - Adds test case output with improved readability.
 - Adds a healthcheck.
 - Removes healthcheck from functional tests of access log to prevent intermittent failures.
+- Fixes issue with local readonly variables being writable.
 
 ### 1.9.1 - 2017-03-12
 
