@@ -202,6 +202,7 @@ ${other_required_apache_modules}
 		describe "Runs named container"
 			docker run \
 				--detach \
+				--no-healthcheck \
 				--name apache-php.pool-1.1.1 \
 				--publish ${DOCKER_PORT_MAP_TCP_80}:80 \
 				jdeathe/centos-ssh-apache-php:latest \
@@ -635,6 +636,7 @@ function test_custom_configuration ()
 
 				docker run \
 					--detach \
+					--no-healthcheck \
 					--name apache-php.pool-1.1.1 \
 					--publish ${DOCKER_PORT_MAP_TCP_80}:80 \
 					--env APACHE_CUSTOM_LOG_FORMAT="common" \
@@ -679,6 +681,7 @@ function test_custom_configuration ()
 
 				docker run \
 					--detach \
+					--no-healthcheck \
 					--name apache-php.pool-1.1.1 \
 					--publish ${DOCKER_PORT_MAP_TCP_80}:80 \
 					--env APACHE_CUSTOM_LOG_LOCATION="var/log/access.log" \
@@ -718,6 +721,7 @@ function test_custom_configuration ()
 
 				docker run \
 					--detach \
+					--no-healthcheck \
 					--name apache-php.pool-1.1.1 \
 					--publish ${DOCKER_PORT_MAP_TCP_80}:80 \
 					--env APACHE_CUSTOM_LOG_LOCATION="/var/log/httpd/access.log" \
