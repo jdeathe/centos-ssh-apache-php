@@ -1,15 +1,15 @@
 
-# If gawk is available handle incrementing the docker host port for instances
+# Handle incrementing the docker host port for instances unless a port range is defined.
 DOCKER_PUBLISH=
 if [[ ${DOCKER_PORT_MAP_TCP_80} != NULL ]]; then
-	if command -v gawk &> /dev/null \
-		&& [[ -n $(gawk 'match($0, /^([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}:)?([0-9]+)$/, matches) { print matches[2]; }' <<< "${DOCKER_PORT_MAP_TCP_80}") ]]; then
+	if grep -qE '^([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}:)?[0-9]*$' <<< "${DOCKER_PORT_MAP_TCP_80}" \
+		&& grep -qE '^.+\.([0-9]+)\.([0-9]+)$' <<< "${DOCKER_NAME}"; then
 		printf -v \
 			DOCKER_PUBLISH \
 			-- '%s --publish %s%s:80' \
 			"${DOCKER_PUBLISH}" \
-			"$(gawk 'match($0, /^([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}:)?([0-9]+)$/, matches) { print matches[1]; }' <<< "${DOCKER_PORT_MAP_TCP_80}")" \
-			"$(( $(gawk 'match($0, /^([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}:)?([0-9]+)$/, matches) { print matches[2]; }' <<< "${DOCKER_PORT_MAP_TCP_80}") + $(gawk 'match($0, /^.+\.([0-9]+)\.([0-9]+)$/, matches) { print matches[1]; }' <<< "${DOCKER_NAME}") - 1 ))"
+			"$(grep -o '^[0-9\.]*:' <<< "${DOCKER_PORT_MAP_TCP_80}")" \
+			"$(( $(grep -o '[0-9]*$' <<< "${DOCKER_PORT_MAP_TCP_80}") + $(awk -F. '{ print $2; }' <<< "${DOCKER_NAME}") - 1 ))"
 	else
 		printf -v \
 			DOCKER_PUBLISH \
@@ -21,14 +21,14 @@ fi
 
 if [[ ${DOCKER_PORT_MAP_TCP_443} != NULL ]] \
 	&& [[ ${APACHE_MOD_SSL_ENABLED} == true ]]; then
-	if command -v gawk &> /dev/null \
-		&& [[ -n $(gawk 'match($0, /^([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}:)?([0-9]+)$/, matches) { print matches[2]; }' <<< "${DOCKER_PORT_MAP_TCP_443}") ]]; then
+	if grep -qE '^([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}:)?[0-9]*$' <<< "${DOCKER_PORT_MAP_TCP_443}" \
+		&& grep -qE '^.+\.([0-9]+)\.([0-9]+)$' <<< "${DOCKER_NAME}"; then
 		printf -v \
 			DOCKER_PUBLISH \
 			-- '%s --publish %s%s:443' \
 			"${DOCKER_PUBLISH}" \
-			"$(gawk 'match($0, /^([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}:)?([0-9]+)$/, matches) { print matches[1]; }' <<< "${DOCKER_PORT_MAP_TCP_443}")" \
-			"$(( $(gawk 'match($0, /^([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}:)?([0-9]+)$/, matches) { print matches[2]; }' <<< "${DOCKER_PORT_MAP_TCP_443}") + $(gawk 'match($0, /^.+\.([0-9]+)\.([0-9]+)$/, matches) { print matches[1]; }' <<< "${DOCKER_NAME}") - 1 ))"
+			"$(grep -o '^[0-9\.]*:' <<< "${DOCKER_PORT_MAP_TCP_443}")" \
+			"$(( $(grep -o '[0-9]*$' <<< "${DOCKER_PORT_MAP_TCP_443}") + $(awk -F. '{ print $2; }' <<< "${DOCKER_NAME}") - 1 ))"
 	else
 		printf -v \
 			DOCKER_PUBLISH \
@@ -39,14 +39,14 @@ if [[ ${DOCKER_PORT_MAP_TCP_443} != NULL ]] \
 fi
 
 if [[ ${DOCKER_PORT_MAP_TCP_8443} != NULL ]]; then
-	if command -v gawk &> /dev/null \
-		&& [[ -n $(gawk 'match($0, /^([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}:)?([0-9]+)$/, matches) { print matches[2]; }' <<< "${DOCKER_PORT_MAP_TCP_8443}") ]]; then
+	if grep -qE '^([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}:)?[0-9]*$' <<< "${DOCKER_PORT_MAP_TCP_8443}" \
+		&& grep -qE '^.+\.([0-9]+)\.([0-9]+)$' <<< "${DOCKER_NAME}"; then
 		printf -v \
 			DOCKER_PUBLISH \
 			-- '%s --publish %s%s:8443' \
 			"${DOCKER_PUBLISH}" \
-			"$(gawk 'match($0, /^([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}:)?([0-9]+)$/, matches) { print matches[1]; }' <<< "${DOCKER_PORT_MAP_TCP_8443}")" \
-			"$(( $(gawk 'match($0, /^([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}:)?([0-9]+)$/, matches) { print matches[2]; }' <<< "${DOCKER_PORT_MAP_TCP_8443}") + $(gawk 'match($0, /^.+\.([0-9]+)\.([0-9]+)$/, matches) { print matches[1]; }' <<< "${DOCKER_NAME}") - 1 ))"
+			"$(grep -o '^[0-9\.]*:' <<< "${DOCKER_PORT_MAP_TCP_8443}")" \
+			"$(( $(grep -o '[0-9]*$' <<< "${DOCKER_PORT_MAP_TCP_8443}") + $(awk -F. '{ print $2; }' <<< "${DOCKER_NAME}") - 1 ))"
 	else
 		printf -v \
 			DOCKER_PUBLISH \
