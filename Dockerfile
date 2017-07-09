@@ -220,14 +220,19 @@ ADD src/etc/services-config/httpd/httpd-bootstrap.conf \
 	/etc/services-config/httpd/
 ADD src/etc/services-config/httpd/conf.d/*.conf \
 	/etc/services-config/httpd/conf.d/
+ADD src/etc/services-config/httpd/conf.virtualhost.d/*.conf \
+	/etc/services-config/httpd/conf.virtualhost.d/
 ADD src/etc/services-config/supervisor/supervisord.d \
 	/etc/services-config/supervisor/supervisord.d/
 
 RUN mkdir -p \
-		/etc/services-config/{httpd/{conf,conf.d},ssl/{certs,private}} \
+		/etc/services-config/{httpd/{conf,conf.d,conf.virtualhost.d},ssl/{certs,private}} \
 	&& cp \
 		/etc/httpd/conf/httpd.conf \
 		/etc/services-config/httpd/conf/ \
+	&& ln -sf \
+		/etc/services-config/httpd/conf.virtualhost.d \
+		/etc/httpd/conf.virtualhost.d \
 	&& ln -sf \
 		/etc/services-config/httpd/httpd-bootstrap.conf \
 		/etc/httpd-bootstrap.conf \

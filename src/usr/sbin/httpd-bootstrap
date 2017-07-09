@@ -406,6 +406,15 @@ function load_httpd_conf_scan_files ()
 			> "/etc/services-config/httpd/conf.d/${FILE_PATH##*/}"
 		done
 	fi
+
+	if [[ -n ${PACKAGE_PATH} ]] \
+		&& [[ -d ${PACKAGE_PATH}/etc/httpd/conf.virtualhost.d ]]; then
+		for FILE_PATH in "${PACKAGE_PATH}"/etc/httpd/conf.virtualhost.d/*.conf; do
+			cat  \
+				"${FILE_PATH}" \
+			> "/etc/services-config/httpd/conf.virtualhost.d/${FILE_PATH##*/}"
+		done
+	fi
 }
 
 function load_php_ini_scan_files ()
