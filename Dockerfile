@@ -167,6 +167,18 @@ RUN cp -pf \
 		-e 's~^expose_php = On$~expose_php = Off~g' \
 		/etc/php.d/00-php.ini.default \
 		> /etc/php.d/00-php.ini \
+	&& sed \
+		-e 's~^; .*$~~' \
+		-e 's~^;*$~~' \
+		-e '/^$/d' \
+		-e 's~^\[~\n\[~g' \
+		/etc/php.d/10-opcache.ini \
+		> /etc/php.d/10-opcache.ini.default \
+	&& sed \
+		-e 's~^\(opcache.max_accelerated_files=\).*$~\132531~g' \
+		-e 's~^;\(opcache.validate_timestamps=\).*$~\10~g' \
+		/etc/php.d/10-opcache.ini.default \
+		> /etc/php.d/10-opcache.ini \
 	&& sed -i \
 		-e 's~^\[www\]$~[{{APACHE_RUN_USER}}]~' \
 		-e 's~^user = php-fpm$~user = {{APACHE_RUN_USER}}~' \
