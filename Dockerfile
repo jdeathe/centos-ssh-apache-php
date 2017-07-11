@@ -175,6 +175,7 @@ RUN cp -pf \
 		/etc/php.d/10-opcache.ini \
 		> /etc/php.d/10-opcache.ini.default \
 	&& sed \
+		-e 's~^;\(opcache.enable_cli=\).*$~\11~g' \
 		-e 's~^\(opcache.max_accelerated_files=\).*$~\132531~g' \
 		-e 's~^;\(opcache.validate_timestamps=\).*$~\10~g' \
 		/etc/php.d/10-opcache.ini.default \
