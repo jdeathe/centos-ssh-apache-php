@@ -161,12 +161,27 @@ RUN cp -pf \
 		/etc/php.ini \
 		> /etc/php.d/00-php.ini.default \
 	&& sed \
-		-e 's~^;user_ini.filename =$~user_ini.filename =~g' \
-		-e 's~^;cgi.fix_pathinfo=1$~cgi.fix_pathinfo=1~g' \
-		-e 's~^;date.timezone =$~date.timezone = UTC~g' \
-		-e 's~^expose_php = On$~expose_php = Off~g' \
+		-e 's~^;\(user_ini.filename =\)$~\1~g' \
+		-e 's~^;\(cgi.fix_pathinfo=1\)$~\1~g' \
+		-e 's~^;\(date.timezone =\)$~\1 UTC~g' \
+		-e 's~^\(expose_php = \)On$~\1Off~g' \
+		-e 's~^;\(realpath_cache_size = \).*$~\14096k~' \
+		-e 's~^;\(realpath_cache_ttl = \).*$~\1600~' \
 		/etc/php.d/00-php.ini.default \
 		> /etc/php.d/00-php.ini \
+	&& sed \
+		-e 's~^; .*$~~' \
+		-e 's~^;*$~~' \
+		-e '/^$/d' \
+		-e 's~^\[~\n\[~g' \
+		/etc/php.d/10-opcache.ini \
+		> /etc/php.d/10-opcache.ini.default \
+	&& sed \
+		-e 's~^;\(opcache.enable_cli=\).*$~\11~g' \
+		-e 's~^\(opcache.max_accelerated_files=\).*$~\132531~g' \
+		-e 's~^;\(opcache.validate_timestamps=\).*$~\10~g' \
+		/etc/php.d/10-opcache.ini.default \
+		> /etc/php.d/10-opcache.ini \
 	&& sed -i \
 		-e 's~^\[www\]$~[{{APACHE_RUN_USER}}]~' \
 		-e 's~^user = php-fpm$~user = {{APACHE_RUN_USER}}~' \
