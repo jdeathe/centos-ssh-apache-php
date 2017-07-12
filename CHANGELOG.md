@@ -22,6 +22,9 @@ CentOS-6 6.9 x86_64, Apache 2.4, PHP-FPM 5.6, PHP memcached 2.2, Zend Opcache 7.
 - Adds simplified port incrementation handling to systemd unit and make consistent with SCMI.
 - Adds configuration include directory (`conf.virtualhost.d/*.conf`) for VirtualHost partials.
 - Adds configuration for setting RewriteEngine on if the module is loaded.
+- Adds PHP configuration change; Opcache is enabled for the CLI.
+- Adds PHP configuration change; File changes will not invalidate opcache.
+- Adds PHP configuration change; Increased size and TTL of realpath_cache.
 
 ### 2.1.1 - 2017-03-12
 
