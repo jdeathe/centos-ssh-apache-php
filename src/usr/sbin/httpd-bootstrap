@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Create lock file
-touch /tmp/httpd-bootstrap.lock
+touch /var/lock/subsys/httpd-bootstrap.lock
 
 TIMER_START="$(
 	date +%s.%N
@@ -404,6 +404,15 @@ function load_httpd_conf_scan_files ()
 			cat  \
 				"${FILE_PATH}" \
 			> "/etc/services-config/httpd/conf.d/${FILE_PATH##*/}"
+		done
+	fi
+
+	if [[ -n ${PACKAGE_PATH} ]] \
+		&& [[ -d ${PACKAGE_PATH}/etc/httpd/conf.virtualhost.d ]]; then
+		for FILE_PATH in "${PACKAGE_PATH}"/etc/httpd/conf.virtualhost.d/*.conf; do
+			cat  \
+				"${FILE_PATH}" \
+			> "/etc/services-config/httpd/conf.virtualhost.d/${FILE_PATH##*/}"
 		done
 	fi
 }
@@ -948,6 +957,6 @@ cat <<-EOT
 EOT
 
 # Release lock file
-rm -f /tmp/httpd-bootstrap.lock
+rm -f /var/lock/subsys/httpd-bootstrap.lock
 
 exit 0

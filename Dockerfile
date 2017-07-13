@@ -4,9 +4,7 @@
 # CentOS-6, Apache 2.4, PHP-FPM 5.6, PHP memcached 2.2, Zend Opcache 7.0
 #
 # =============================================================================
-FROM jdeathe/centos-ssh:1.7.6
-
-MAINTAINER James Deathe <james.deathe@gmail.com>
+FROM jdeathe/centos-ssh:1.8.1
 
 # Use the form ([{fqdn}-]{package-name}|[{fqdn}-]{provider-name})
 ARG PACKAGE_NAME="app"
@@ -19,14 +17,14 @@ ARG PACKAGE_RELEASE_VERSION="0.4.0"
 RUN rpm --rebuilddb \
 	&& yum --setopt=tsflags=nodocs -y install \
 		elinks-0.12-0.21.pre5.el6_3 \
-		httpd24u-2.4.25-3.ius.centos6 \
-		httpd24u-tools-2.4.25-3.ius.centos6 \
-		httpd24u-mod_ssl-2.4.25-3.ius.centos6 \
-		php56u-fpm-5.6.30-1.ius.centos6 \
-		php56u-fpm-httpd-5.6.30-1.ius.centos6 \
-		php56u-cli-5.6.30-1.ius.centos6 \
-		php56u-opcache-5.6.30-1.ius.centos6 \
-		php56u-pecl-memcached-5.6.30-1.ius.centos6 \
+		httpd24u-2.4.26-1.ius.centos6 \
+		httpd24u-tools-2.4.26-1.ius.centos6 \
+		httpd24u-mod_ssl-2.4.26-1.ius.centos6 \
+		php56u-fpm-5.6.30-2.ius.centos6 \
+		php56u-fpm-httpd-5.6.30-2.ius.centos6 \
+		php56u-cli-5.6.30-2.ius.centos6 \
+		php56u-opcache-5.6.30-2.ius.centos6 \
+		php56u-pecl-memcached-2.2.0-6.ius.centos6 \
 	&& yum versionlock add \
 		elinks \
 		httpd24u* \
@@ -124,7 +122,7 @@ RUN sed -i \
 # Disable SSL + the default SSL Virtual Host
 # -----------------------------------------------------------------------------
 RUN sed -i \
-		-e '/<VirtualHost _default_:443>/,/#<\/VirtualHost>/ s~^~#~' \
+		-e '/<VirtualHost _default_:443>/,/<\/VirtualHost>/ s~^~#~' \
 		/etc/httpd/conf.d/ssl.conf \
 	&& cat \
 		/etc/httpd/conf.d/ssl.conf \
@@ -163,12 +161,27 @@ RUN cp -pf \
 		/etc/php.ini \
 		> /etc/php.d/00-php.ini.default \
 	&& sed \
-		-e 's~^;user_ini.filename =$~user_ini.filename =~g' \
-		-e 's~^;cgi.fix_pathinfo=1$~cgi.fix_pathinfo=1~g' \
-		-e 's~^;date.timezone =$~date.timezone = UTC~g' \
-		-e 's~^expose_php = On$~expose_php = Off~g' \
+		-e 's~^;\(user_ini.filename =\)$~\1~g' \
+		-e 's~^;\(cgi.fix_pathinfo=1\)$~\1~g' \
+		-e 's~^;\(date.timezone =\)$~\1 UTC~g' \
+		-e 's~^\(expose_php = \)On$~\1Off~g' \
+		-e 's~^;\(realpath_cache_size = \).*$~\14096k~' \
+		-e 's~^;\(realpath_cache_ttl = \).*$~\1600~' \
 		/etc/php.d/00-php.ini.default \
 		> /etc/php.d/00-php.ini \
+	&& sed \
+		-e 's~^; .*$~~' \
+		-e 's~^;*$~~' \
+		-e '/^$/d' \
+		-e 's~^\[~\n\[~g' \
+		/etc/php.d/10-opcache.ini \
+		> /etc/php.d/10-opcache.ini.default \
+	&& sed \
+		-e 's~^;\(opcache.enable_cli=\).*$~\11~g' \
+		-e 's~^\(opcache.max_accelerated_files=\).*$~\132531~g' \
+		-e 's~^;\(opcache.validate_timestamps=\).*$~\10~g' \
+		/etc/php.d/10-opcache.ini.default \
+		> /etc/php.d/10-opcache.ini \
 	&& sed -i \
 		-e 's~^\[www\]$~[{{APACHE_RUN_USER}}]~' \
 		-e 's~^user = php-fpm$~user = {{APACHE_RUN_USER}}~' \
@@ -205,29 +218,36 @@ RUN useradd -r -M -d /var/www/app -s /sbin/nologin app \
 # -----------------------------------------------------------------------------
 # Copy files into place
 # -----------------------------------------------------------------------------
-ADD usr/sbin/httpd-bootstrap \
-	usr/sbin/httpd-startup \
-	usr/sbin/httpd-wrapper \
-	usr/sbin/php-fpm-wrapper \
+ADD src/usr/bin \
+	/usr/bin/
+ADD src/usr/sbin/httpd-bootstrap \
+	src/usr/sbin/httpd-startup \
+	src/usr/sbin/httpd-wrapper \
+	src/usr/sbin/php-fpm-wrapper \
 	/usr/sbin/
-ADD opt/scmi \
+ADD src/opt/scmi \
 	/opt/scmi/
-ADD etc/profile.d \
+ADD src/etc/profile.d \
 	/etc/profile.d/
-ADD etc/systemd/system \
+ADD src/etc/systemd/system \
 	/etc/systemd/system/
-ADD etc/services-config/httpd/httpd-bootstrap.conf \
+ADD src/etc/services-config/httpd/httpd-bootstrap.conf \
 	/etc/services-config/httpd/
-ADD etc/services-config/httpd/conf.d/*.conf \
+ADD src/etc/services-config/httpd/conf.d/*.conf \
 	/etc/services-config/httpd/conf.d/
-ADD etc/services-config/supervisor/supervisord.d \
+ADD src/etc/services-config/httpd/conf.virtualhost.d/*.conf \
+	/etc/services-config/httpd/conf.virtualhost.d/
+ADD src/etc/services-config/supervisor/supervisord.d \
 	/etc/services-config/supervisor/supervisord.d/
 
 RUN mkdir -p \
-		/etc/services-config/{httpd/{conf,conf.d},ssl/{certs,private}} \
+		/etc/services-config/{httpd/{conf,conf.d,conf.virtualhost.d},ssl/{certs,private}} \
 	&& cp \
 		/etc/httpd/conf/httpd.conf \
 		/etc/services-config/httpd/conf/ \
+	&& ln -sf \
+		/etc/services-config/httpd/conf.virtualhost.d \
+		/etc/httpd/conf.virtualhost.d \
 	&& ln -sf \
 		/etc/services-config/httpd/httpd-bootstrap.conf \
 		/etc/httpd-bootstrap.conf \
@@ -317,8 +337,9 @@ ENV APACHE_CUSTOM_LOG_FORMAT="combined" \
 # -----------------------------------------------------------------------------
 # Set image metadata
 # -----------------------------------------------------------------------------
-ARG RELEASE_VERSION="2.1.1"
+ARG RELEASE_VERSION="2.2.0"
 LABEL \
+	maintainer="James Deathe <james.deathe@gmail.com>" \
 	install="docker run \
 --rm \
 --privileged \
@@ -347,6 +368,12 @@ jdeathe/centos-ssh-apache-php:${RELEASE_VERSION} \
 	org.deathe.license="MIT" \
 	org.deathe.vendor="jdeathe" \
 	org.deathe.url="https://github.com/jdeathe/centos-ssh-apache-php" \
-	org.deathe.description="CentOS-6 6.8 x86_64 - IUS Apache 2.4, IUS PHP-FPM 5.6, PHP memcached 2.2, Zend Opcache 7.0."
+	org.deathe.description="CentOS-6 6.9 x86_64 - IUS Apache 2.4, IUS PHP-FPM 5.6, PHP memcached 2.2, Zend Opcache 7.0."
+
+HEALTHCHECK \
+	--interval=1s \
+	--timeout=1s \
+	--retries=10 \
+	CMD ["/usr/bin/healthcheck"]
 
 CMD ["/usr/sbin/httpd-startup", "/usr/bin/supervisord", "--configuration=/etc/supervisord.conf"]
