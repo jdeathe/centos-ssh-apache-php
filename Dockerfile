@@ -131,12 +131,28 @@ RUN sed \
 		/etc/php.ini \
 		> /etc/php.d/00-php.ini.default \
 	&& sed \
-		-e 's~^;user_ini.filename =$~user_ini.filename =~g' \
-		-e 's~^;cgi.fix_pathinfo=1$~cgi.fix_pathinfo=1~g' \
-		-e 's~^;date.timezone =$~date.timezone = UTC~g' \
-		-e 's~^expose_php = On$~expose_php = Off~g' \
+		-e 's~^; .*$~~' \
+		-e 's~^;*$~~' \
+		-e '/^$/d' \
+		-e 's~^\[~\n\[~g' \
+		/etc/php.d/apc.ini \
+		> /etc/php.d/apc.ini.default \
+	&& sed \
+		-e 's~^;\(user_ini.filename =\)$~\1~g' \
+		-e 's~^;\(cgi.fix_pathinfo=1\)$~\1~g' \
+		-e 's~^;\(date.timezone =\)$~\1 UTC~g' \
+		-e 's~^\(expose_php = \)On$~\1Off~g' \
+		-e 's~^;\(realpath_cache_size = \).*$~\14096k~' \
+		-e 's~^;\(realpath_cache_ttl = \).*$~\1600~' \
 		/etc/php.d/00-php.ini.default \
-		> /etc/php.d/00-php.ini
+		> /etc/php.d/00-php.ini \
+	&& sed \
+		-e 's~^\(apc.stat=\).*$~\10~g' \
+		-e 's~^\(apc.shm_size=\).*$~\1128M~g' \
+		-e 's~^\(apc.enable_cli=\).*$~\11~g' \
+		-e 's~^\(apc.file_update_protection=\).*$~\10~g' \
+		/etc/php.d/apc.ini.default \
+		> /etc/php.d/apc.ini
 
 # -----------------------------------------------------------------------------
 # APC op-code cache stats
