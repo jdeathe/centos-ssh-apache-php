@@ -4,7 +4,29 @@
 
 Summary of release changes for Version 1.
 
-CentOS-6 6.8 x86_64, Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1.
+CentOS-6 6.9 x86_64, Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1.
+
+### 1.10.0 - 2017-07-13
+
+- Adds updated packages `httpd` (including `mod_ssl`) and `php` to 2.2.15-59 and 5.3.3-49.
+- Adds improvement to VirtualHost pattern match used to disable default SSL.
+- Replaces deprecated Dockerfile `MAINTAINER` with a `LABEL`.
+- Adds improvement to the sed pattern match for `php_uname('n');` that was causing syntax highlighting issues.
+- Update source image to [1.8.1 tag](https://github.com/jdeathe/centos-ssh/releases/tag/1.8.1).
+- Adds a `src` directory for the image root files.
+- Adds `STARTUP_TIME` variable for the `logs-delayed` Makefile target.
+- Adds use of `/var/lock/subsys/` (subsystem lock directory) for bootstrap lock files.
+- Adds test case output with improved readability.
+- Adds a healthcheck.
+- Removes healthcheck from functional tests of access log to prevent intermittent failures.
+- Fixes issue with local readonly variables being writable.
+- Adds simplified port incrementation handling to systemd unit and make consistent with SCMI.
+- Adds configuration include directory (`conf.virtualhost.d/*.conf`) for VirtualHost partials.
+- Adds configuration for setting RewriteEngine on if the module is loaded.
+- Adds PHP configuration change; ACP opcache is enabled for the CLI.
+- Adds PHP configuration change; File changes will not invalidate APC opcache.
+- Adds PHP configuration change; Disables APC file update protection.
+- Adds PHP configuration change; Increased size and TTL of realpath_cache.
 
 ### 1.9.1 - 2017-03-12
 
