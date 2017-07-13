@@ -23,6 +23,10 @@ CentOS-6 6.9 x86_64, Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1.
 - Adds simplified port incrementation handling to systemd unit and make consistent with SCMI.
 - Adds configuration include directory (`conf.virtualhost.d/*.conf`) for VirtualHost partials.
 - Adds configuration for setting RewriteEngine on if the module is loaded.
+- Adds PHP configuration change; ACP opcache is enabled for the CLI.
+- Adds PHP configuration change; File changes will not invalidate APC opcache.
+- Adds PHP configuration change; Disables APC file update protection.
+- Adds PHP configuration change; Increased size and TTL of realpath_cache.
 
 ### 1.9.1 - 2017-03-12
 
