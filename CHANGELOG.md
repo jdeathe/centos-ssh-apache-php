@@ -6,7 +6,7 @@ Summary of release changes for Version 1.
 
 CentOS-6 6.9 x86_64, Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1.
 
-### 1.10.0 - Unreleased
+### 1.10.0 - 2017-07-13
 
 - Adds updated packages `httpd` (including `mod_ssl`) and `php` to 2.2.15-59 and 5.3.3-49.
 - Adds improvement to VirtualHost pattern match used to disable default SSL.

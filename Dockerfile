@@ -290,7 +290,7 @@ ENV APACHE_CUSTOM_LOG_FORMAT="combined" \
 # -----------------------------------------------------------------------------
 # Set image metadata
 # -----------------------------------------------------------------------------
-ARG RELEASE_VERSION="1.9.1"
+ARG RELEASE_VERSION="1.10.0"
 LABEL \
 	maintainer="James Deathe <james.deathe@gmail.com>" \
 	install="docker run \
