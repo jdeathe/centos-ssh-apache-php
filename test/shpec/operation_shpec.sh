@@ -218,7 +218,7 @@ ${other_required_apache_modules}
 
 		if ! __is_container_ready \
 			apache-php.pool-1.1.1 \
-			"/usr/sbin/httpd(\.worker)? "; then
+			"/usr/sbin/httpd(\.worker|\.event)? "; then
 			exit 1
 		fi
 
@@ -634,7 +634,7 @@ function test_custom_configuration ()
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd(\.worker)? "; then
+					"/usr/sbin/httpd(\.worker|\.event)? "; then
 					exit 1
 				fi
 
@@ -679,7 +679,7 @@ function test_custom_configuration ()
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd(\.worker)? "; then
+					"/usr/sbin/httpd(\.worker|\.event)? "; then
 					exit 1
 				fi
 
@@ -719,7 +719,7 @@ function test_custom_configuration ()
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd(\.worker)? "; then
+					"/usr/sbin/httpd(\.worker|\.event)? "; then
 					exit 1
 				fi
 
@@ -760,7 +760,7 @@ function test_custom_configuration ()
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd(\.worker)? "; then
+					"/usr/sbin/httpd(\.worker|\.event)? "; then
 					exit 1
 				fi
 
@@ -795,7 +795,7 @@ function test_custom_configuration ()
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd(\.worker)? "; then
+					"/usr/sbin/httpd(\.worker|\.event)? "; then
 					exit 1
 				fi
 
@@ -831,7 +831,7 @@ function test_custom_configuration ()
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd(\.worker)? "; then
+					"/usr/sbin/httpd(\.worker|\.event)? "; then
 					exit 1
 				fi
 
@@ -871,7 +871,7 @@ function test_custom_configuration ()
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd(\.worker)? "; then
+					"/usr/sbin/httpd(\.worker|\.event)? "; then
 					exit 1
 				fi
 
@@ -936,7 +936,7 @@ function test_custom_configuration ()
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd(\.worker)? "; then
+					"/usr/sbin/httpd(\.worker|\.event)? "; then
 					exit 1
 				fi
 
@@ -970,7 +970,7 @@ function test_custom_configuration ()
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd(\.worker)? "; then
+					"/usr/sbin/httpd(\.worker|\.event)? "; then
 					exit 1
 				fi
 
@@ -1004,7 +1004,7 @@ function test_custom_configuration ()
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd(\.worker)? "; then
+					"/usr/sbin/httpd(\.worker|\.event)? "; then
 					exit 1
 				fi
 
@@ -1027,20 +1027,20 @@ function test_custom_configuration ()
 				docker run \
 					--detach \
 					--name apache-php.pool-1.1.1 \
-					--env APACHE_MPM="worker" \
+					--env APACHE_MPM="event" \
 					--hostname app-1.local \
 					jdeathe/centos-ssh-apache-php:latest \
 				&> /dev/null
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd(\.worker)? "; then
+					"/usr/sbin/httpd(\.worker|\.event)? "; then
 					exit 1
 				fi
 
 				docker exec \
 					apache-php.pool-1.1.1 \
-					bash -c "apachectl -V 2>&1 | grep -qiE '^Server MPM:[ ]+worker$'"
+					bash -c "apachectl -V 2>&1 | grep -qiE '^Server MPM:[ ]+event$'"
 
 				assert equal \
 					"${?}" \
@@ -1065,7 +1065,7 @@ function test_custom_configuration ()
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd(\.worker)? "; then
+					"/usr/sbin/httpd(\.worker|\.event)? "; then
 					exit 1
 				fi
 
@@ -1099,7 +1099,7 @@ function test_custom_configuration ()
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd(\.worker)? "; then
+					"/usr/sbin/httpd(\.worker|\.event)? "; then
 					exit 1
 				fi
 
@@ -1130,7 +1130,7 @@ function test_custom_configuration ()
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd(\.worker)? "; then
+					"/usr/sbin/httpd(\.worker|\.event)? "; then
 					exit 1
 				fi
 
@@ -1162,7 +1162,7 @@ function test_custom_configuration ()
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd(\.worker)? "; then
+					"/usr/sbin/httpd(\.worker|\.event)? "; then
 					exit 1
 				fi
 
@@ -1222,7 +1222,7 @@ function test_custom_configuration ()
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd(\.worker)? "; then
+					"/usr/sbin/httpd(\.worker|\.event)? "; then
 					exit 1
 				fi
 
@@ -1305,7 +1305,7 @@ function test_custom_configuration ()
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd(\.worker)? "; then
+					"/usr/sbin/httpd(\.worker|\.event)? "; then
 					exit 1
 				fi
 
@@ -1373,7 +1373,7 @@ function test_custom_configuration ()
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd(\.worker)? "; then
+					"/usr/sbin/httpd(\.worker|\.event)? "; then
 					exit 1
 				fi
 
@@ -1444,7 +1444,7 @@ function test_custom_configuration ()
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd(\.worker)? "; then
+					"/usr/sbin/httpd(\.worker|\.event)? "; then
 					exit 1
 				fi
 
@@ -1500,7 +1500,7 @@ function test_custom_configuration ()
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd(\.worker)? "; then
+					"/usr/sbin/httpd(\.worker|\.event)? "; then
 					exit 1
 				fi
 
@@ -1571,7 +1571,7 @@ function test_custom_configuration ()
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd(\.worker)? "; then
+					"/usr/sbin/httpd(\.worker|\.event)? "; then
 					exit 1
 				fi
 
@@ -1610,7 +1610,7 @@ function test_custom_configuration ()
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd(\.worker)? "; then
+					"/usr/sbin/httpd(\.worker|\.event)? "; then
 					exit 1
 				fi
 
@@ -1678,7 +1678,7 @@ function test_custom_configuration ()
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd(\.worker)? "; then
+					"/usr/sbin/httpd(\.worker|\.event)? "; then
 					exit 1
 				fi
 
@@ -1729,7 +1729,7 @@ function test_custom_configuration ()
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd(\.worker)? "; then
+					"/usr/sbin/httpd(\.worker|\.event)? "; then
 					exit 1
 				fi
 
@@ -1785,7 +1785,7 @@ function test_custom_configuration ()
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd(\.worker)? "; then
+					"/usr/sbin/httpd(\.worker|\.event)? "; then
 					exit 1
 				fi
 
@@ -1833,7 +1833,7 @@ function test_custom_configuration ()
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd(\.worker)? "; then
+					"/usr/sbin/httpd(\.worker|\.event)? "; then
 					exit 1
 				fi
 

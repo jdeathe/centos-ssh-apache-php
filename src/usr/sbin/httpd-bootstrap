@@ -447,6 +447,71 @@ function set_apache_header_x_service_uid ()
 	fi
 }
 
+function set_apache_mpm ()
+{
+	local MPM="${1:-APACHE_MPM}"
+
+	case "${MPM,,}" in
+		event)
+			if [[ -f /etc/httpd/conf.modules.d/00-mpm.conf ]]; then
+				sed -ri \
+					-e 's~^(LoadModule.*)$~#\1~g' \
+					-e 's~^#(LoadModule mpm_event_module.*)$~\1~' \
+					/etc/httpd/conf.modules.d/00-mpm.conf
+			elif [[ -f /usr/sbin/httpd.event ]]; then
+				sed -ri \
+					-e 's~^#?(HTTPD=/usr/sbin/httpd).*$~\1.event~' \
+					/etc/sysconfig/httpd
+			else
+				printf -- \
+					'ERROR: Invalid Apache Server MPM: %s\n' \
+					"${OPTS_APACHE_MPM}" >&2
+				exit 1
+			fi
+			;;
+		worker)
+			if [[ -f /etc/httpd/conf.modules.d/00-mpm.conf ]]; then
+				sed -ri \
+					-e 's~^(LoadModule.*)$~#\1~g' \
+					-e 's~^#(LoadModule mpm_worker_module.*)$~\1~' \
+					/etc/httpd/conf.modules.d/00-mpm.conf
+			elif [[ -f /usr/sbin/httpd.worker ]]; then
+				sed -ri \
+					-e 's~^#?(HTTPD=/usr/sbin/httpd).*$~\1.worker~' \
+					/etc/sysconfig/httpd
+			else
+				printf -- \
+					'ERROR: Invalid Apache Server MPM: %s\n' \
+					"${OPTS_APACHE_MPM}" >&2
+				exit 1
+			fi
+			;;
+		prefork)
+			if [[ -f /etc/httpd/conf.modules.d/00-mpm.conf ]]; then
+				sed -ri \
+					-e 's~^(LoadModule.*)$~#\1~g' \
+					-e 's~^#(LoadModule mpm_prefork_module.*)$~\1~' \
+					/etc/httpd/conf.modules.d/00-mpm.conf
+			elif [[ -f /usr/sbin/httpd ]]; then
+				sed -ri \
+					-e 's~^(HTTPD=/usr/sbin/httpd.*)$~#\1~g' \
+					/etc/sysconfig/httpd
+			else
+				printf -- \
+					'ERROR: Invalid Apache Server MPM: %s\n' \
+					"${OPTS_APACHE_MPM}" >&2
+				exit 1
+			fi
+			;;
+		*)
+			printf -- \
+				'ERROR: Invalid Apache Server MPM: %s\n' \
+				"${OPTS_APACHE_MPM}" >&2
+			exit 1
+			;;
+	esac
+}
+
 function set_apache_server_name ()
 {
 	local HOST_NAME="${1:-${APACHE_SERVER_NAME:-$(hostname)}}"
@@ -666,30 +731,10 @@ APACHE_DOCUMENT_ROOT_FILE_SYSTEM=$(
 )
 
 # Server MPM
-if [[ -f /usr/sbin/httpd.worker ]]; then
-	case "${OPTS_APACHE_MPM,,}" in
-		worker)
-			sed -i \
-				-e "s~^#HTTPD=/usr/sbin/httpd.worker~HTTPD=/usr/sbin/httpd.worker~g" \
-				/etc/sysconfig/httpd
-			;;
-		prefork)
-			sed -i \
-				-e "s~^HTTPD=/usr/sbin/httpd.worker~#HTTPD=/usr/sbin/httpd.worker~g" \
-				/etc/sysconfig/httpd
-			;;
-		*)
-			printf -- \
-				'ERROR: Invalid Apache Server MPM: %s\n' \
-				"${OPTS_APACHE_MPM}" >&2
-			exit 1
-			;;
-	esac
-
-	printf -- \
-		'Apache Server MPM: %s\n' \
-		"${OPTS_APACHE_MPM^}"
-fi
+set_apache_mpm "${OPTS_APACHE_MPM}"
+printf -- \
+	'Apache Server MPM: %s\n' \
+	"${OPTS_APACHE_MPM^}"
 
 # Add local hosts entries
 add_hosts_entry \
