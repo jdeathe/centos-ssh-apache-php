@@ -9,7 +9,7 @@ if [[ ${DOCKER_PORT_MAP_TCP_80} != NULL ]]; then
 			-- '%s --publish %s%s:80' \
 			"${DOCKER_PUBLISH}" \
 			"$(grep -o '^[0-9\.]*:' <<< "${DOCKER_PORT_MAP_TCP_80}")" \
-			"$(( $(grep -o '[0-9]*$' <<< "${DOCKER_PORT_MAP_TCP_80}") + $(awk -F. '{ print $2; }' <<< "${DOCKER_NAME}") - 1 ))"
+			"$(( $(grep -o '[0-9]*$' <<< "${DOCKER_PORT_MAP_TCP_80}") + $(sed 's~\.[0-9]*$~~' <<< "${DOCKER_NAME}" | awk -F. '{ print $NF; }') - 1 ))"
 	else
 		printf -v \
 			DOCKER_PUBLISH \
@@ -28,7 +28,7 @@ if [[ ${DOCKER_PORT_MAP_TCP_443} != NULL ]] \
 			-- '%s --publish %s%s:443' \
 			"${DOCKER_PUBLISH}" \
 			"$(grep -o '^[0-9\.]*:' <<< "${DOCKER_PORT_MAP_TCP_443}")" \
-			"$(( $(grep -o '[0-9]*$' <<< "${DOCKER_PORT_MAP_TCP_443}") + $(awk -F. '{ print $2; }' <<< "${DOCKER_NAME}") - 1 ))"
+			"$(( $(grep -o '[0-9]*$' <<< "${DOCKER_PORT_MAP_TCP_443}") + $(sed 's~\.[0-9]*$~~' <<< "${DOCKER_NAME}" | awk -F. '{ print $NF; }') - 1 ))"
 	else
 		printf -v \
 			DOCKER_PUBLISH \
@@ -46,7 +46,7 @@ if [[ ${DOCKER_PORT_MAP_TCP_8443} != NULL ]]; then
 			-- '%s --publish %s%s:8443' \
 			"${DOCKER_PUBLISH}" \
 			"$(grep -o '^[0-9\.]*:' <<< "${DOCKER_PORT_MAP_TCP_8443}")" \
-			"$(( $(grep -o '[0-9]*$' <<< "${DOCKER_PORT_MAP_TCP_8443}") + $(awk -F. '{ print $2; }' <<< "${DOCKER_NAME}") - 1 ))"
+			"$(( $(grep -o '[0-9]*$' <<< "${DOCKER_PORT_MAP_TCP_8443}") + $(sed 's~\.[0-9]*$~~' <<< "${DOCKER_NAME}" | awk -F. '{ print $NF; }') - 1 ))"
 	else
 		printf -v \
 			DOCKER_PUBLISH \

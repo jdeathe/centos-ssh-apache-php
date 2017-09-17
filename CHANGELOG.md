@@ -12,6 +12,7 @@ CentOS-6 6.9 x86_64, Apache 2.4, PHP-FPM 5.6, PHP memcached 2.2, Zend Opcache 7.
 - Fixes bootstrap lockfile name to match the one expected by the healthcheck.
 - Adds permissions to restrict access to the healthcheck script.
 - Removes scmi; it's maintained [upstream](https://github.com/jdeathe/centos-ssh/blob/centos-6/src/usr/sbin/scmi).
+- Fixes local port value in scmi install template.
 
 ### 2.2.0 - 2017-07-13
 
