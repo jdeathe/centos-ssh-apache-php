@@ -20,10 +20,10 @@ RUN rpm --rebuilddb \
 		httpd24u-2.4.27-1.ius.centos6 \
 		httpd24u-tools-2.4.27-1.ius.centos6 \
 		httpd24u-mod_ssl-2.4.27-1.ius.centos6 \
-		php56u-fpm-5.6.30-2.ius.centos6 \
-		php56u-fpm-httpd-5.6.30-2.ius.centos6 \
-		php56u-cli-5.6.30-2.ius.centos6 \
-		php56u-opcache-5.6.30-2.ius.centos6 \
+		php56u-fpm-5.6.31-1.ius.centos6 \
+		php56u-fpm-httpd-5.6.31-1.ius.centos6 \
+		php56u-cli-5.6.31-1.ius.centos6 \
+		php56u-opcache-5.6.31-1.ius.centos6 \
 		php56u-pecl-memcached-2.2.0-6.ius.centos6 \
 	&& yum versionlock add \
 		elinks \
