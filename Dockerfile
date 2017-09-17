@@ -273,7 +273,7 @@ RUN mkdir -p \
 		/etc/services-config/supervisor/supervisord.d/php-fpm-wrapper.conf \
 		/etc/supervisord.d/php-fpm-wrapper.conf \
 	&& chmod 700 \
-		/usr/sbin/{httpd-{bootstrap,startup,wrapper},php-fpm-wrapper}
+		/usr/{bin/healthcheck,sbin/{httpd-{bootstrap,startup,wrapper},php-fpm-wrapper}}
 
 # -----------------------------------------------------------------------------
 # Package installation

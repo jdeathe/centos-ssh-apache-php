@@ -10,6 +10,7 @@ CentOS-6 6.9 x86_64, Apache 2.4, PHP-FPM 5.6, PHP memcached 2.2, Zend Opcache 7.
 
 - Updates `php56u` packages to 5.6.31-1.
 - Fixes bootstrap lockfile name to match the one expected by the healthcheck.
+- Adds permissions to restrict access to the healthcheck script.
 
 ### 2.2.0 - 2017-07-13
 
