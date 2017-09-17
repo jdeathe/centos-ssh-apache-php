@@ -9,6 +9,7 @@ CentOS-6 6.9 x86_64, Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1.
 ### 1.10.1 - Unreleased
 
 - Fixes bootstrap lockfile name to match the one expected by the healthcheck.
+- Adds permissions to restrict access to the healthcheck script.
 
 ### 1.10.0 - 2017-07-13
 
