@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Create lock file
-touch /var/lock/subsys/httpd-bootstrap.lock
+touch /var/lock/subsys/httpd-bootstrap
 
 TIMER_START="$(
 	date +%s.%N
@@ -823,6 +823,6 @@ cat <<-EOT
 EOT
 
 # Release lock file
-rm -f /var/lock/subsys/httpd-bootstrap.lock
+rm -f /var/lock/subsys/httpd-bootstrap
 
 exit 0
