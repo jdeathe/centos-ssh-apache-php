@@ -177,9 +177,7 @@ RUN useradd -r -M -d /var/www/app -s /sbin/nologin app \
 # -----------------------------------------------------------------------------
 ADD src/usr/bin \
 	/usr/bin/
-ADD src/usr/sbin/httpd-bootstrap \
-	src/usr/sbin/httpd-startup \
-	src/usr/sbin/httpd-wrapper \
+ADD src/usr/sbin \
 	/usr/sbin/
 ADD src/opt/scmi \
 	/opt/scmi/
