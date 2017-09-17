@@ -226,7 +226,7 @@ RUN mkdir -p \
 		/etc/services-config/supervisor/supervisord.d/httpd-wrapper.conf \
 		/etc/supervisord.d/httpd-wrapper.conf \
 	&& chmod 700 \
-		/usr/sbin/httpd-{bootstrap,startup,wrapper}
+		/usr/{bin/healthcheck,sbin/httpd-{bootstrap,startup,wrapper}}
 
 # -----------------------------------------------------------------------------
 # Package installation
