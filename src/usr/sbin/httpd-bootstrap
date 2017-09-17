@@ -556,6 +556,11 @@ function set_apache_mpm ()
 					-e 's~^\(LoadModule.*\)$~#\1~g' \
 					-e 's~^#\(LoadModule mpm_event_module.*\)$~\1~' \
 					/etc/httpd/conf.modules.d/00-mpm.conf
+			elif [[ -f /usr/sbin/httpd.event ]]; then
+				sed -i \
+					-e 's~^\(HTTPD=.*\)$~#\1~g' \
+					-e 's~^#\(HTTPD=/usr/sbin/httpd\.event\)$~\1~' \
+					/etc/sysconfig/httpd
 			else
 				printf -- \
 					'ERROR: Invalid Apache Server MPM: %s\n' \
@@ -571,7 +576,8 @@ function set_apache_mpm ()
 					/etc/httpd/conf.modules.d/00-mpm.conf
 			elif [[ -f /usr/sbin/httpd.worker ]]; then
 				sed -i \
-					-e "s~^#HTTPD=/usr/sbin/httpd.worker~HTTPD=/usr/sbin/httpd.worker~g" \
+					-e 's~^\(HTTPD=.*\)$~#\1~g' \
+					-e 's~^#\(HTTPD=/usr/sbin/httpd\.worker\)$~\1~' \
 					/etc/sysconfig/httpd
 			else
 				printf -- \
@@ -586,10 +592,16 @@ function set_apache_mpm ()
 					-e 's~^\(LoadModule.*\)$~#\1~g' \
 					-e 's~^#\(LoadModule mpm_prefork_module.*\)$~\1~' \
 					/etc/httpd/conf.modules.d/00-mpm.conf
-			else
+			elif [[ -f /usr/sbin/httpd ]]; then
 				sed -i \
-					-e "s~^HTTPD=/usr/sbin/httpd.worker~#HTTPD=/usr/sbin/httpd.worker~g" \
+					-e 's~^\(HTTPD=.*\)$~#\1~g' \
+					-e 's~^#\(HTTPD=/usr/sbin/httpd\)$~\1~' \
 					/etc/sysconfig/httpd
+			else
+				printf -- \
+					'ERROR: Invalid Apache Server MPM: %s\n' \
+					"${OPTS_APACHE_MPM}" >&2
+				exit 1
 			fi
 			;;
 		*)
