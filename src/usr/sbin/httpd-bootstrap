@@ -830,9 +830,6 @@ APACHE_DOCUMENT_ROOT_FILE_SYSTEM=$(
 
 # Server MPM
 set_apache_mpm "${OPTS_APACHE_MPM}"
-printf -- \
-	'Apache Server MPM: %s\n' \
-	"${OPTS_APACHE_MPM^}"
 
 # Add local hosts entries
 add_hosts_entry \
@@ -958,6 +955,7 @@ cat <<-EOT
 	server alias : ${OPTS_APACHE_SERVER_ALIAS}
 	header x-service-uid : ${OPTS_APACHE_HEADER_X_SERVICE_UID:-unset}
 	document root : ${OPTS_APACHE_DOCUMENT_ROOT} (${APACHE_DOCUMENT_ROOT_FILE_SYSTEM})
+	server mpm : ${OPTS_APACHE_MPM,,}
 	modules enabled :
 	${APACHE_MODULES_ENABLED}${SSL_CRT_FINGERPRINT_DETAILS}
 	--------------------------------------------------------------------------------

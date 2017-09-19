@@ -15,6 +15,7 @@ CentOS-6 6.9 x86_64, Apache 2.4, PHP-FPM 5.6, PHP memcached 2.2, Zend Opcache 7.
 - Fixes local port value in scmi install template.
 - Adds use of readonly variables for constants.
 - Adds support for event server MPM in bootstrap.
+- Adds server mpm to the Apache Details logs output.
 
 ### 2.2.0 - 2017-07-13
 

@@ -395,15 +395,14 @@ ${other_required_apache_modules}
 						"/var/www/app/public_html"
 				end
 
-				# TODO This is included in the logs but not included in the Apache Details.
 				it "Has default server mpm."
 					apache_server_mpm="$(
 						docker logs \
 							apache-php.pool-1.1.1 \
-						| grep -o 'Apache Server MPM: .*$' \
-						| cut -c 20- \
-						| awk '{ print tolower($0) }' \
-						| tr -d '\r'
+						| grep '^server mpm : ' \
+						| cut -c 13- \
+						| tr -d '\r' \
+						| awk '{ print tolower($1) }'
 					)"
 
 					assert equal \
