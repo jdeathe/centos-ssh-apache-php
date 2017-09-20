@@ -49,6 +49,8 @@ SSH_USER_PASSWORD_HASHED ?= false
 SSH_USER_SHELL ?= /bin/bash
 SSH_USER_ID ?= 500:500
 # ------------------------------------------------------------------------------
+APACHE_AUTOSTART_HTTPD_BOOTSTRAP ?= true
+APACHE_AUTOSTART_HTTPD_WRAPPER ?= true
 APACHE_CONTENT_ROOT ?= /var/www/app
 APACHE_CUSTOM_LOG_FORMAT ?= combined
 APACHE_CUSTOM_LOG_LOCATION ?= var/log/apache_access_log

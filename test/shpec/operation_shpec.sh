@@ -1935,9 +1935,65 @@ function test_custom_configuration ()
 			end
 		end
 
-		__terminate_container \
-			apache-php.pool-1.1.1 \
-		&> /dev/null
+		describe "Configure autostart"
+			__terminate_container \
+				apache-php.pool-1.1.1 \
+			&> /dev/null
+
+			docker run \
+				--detach \
+				--name apache-php.pool-1.1.1 \
+				--env APACHE_AUTOSTART_HTTPD_BOOTSTRAP=false \
+				jdeathe/centos-ssh-apache-php:latest \
+			&> /dev/null
+
+			sleep ${STARTUP_TIME}
+
+			# Healthcheck should fail unless running PHP-FPM without Apache.
+			it "Can disable httpd-bootstrap."
+				docker ps \
+					--format "name=apache-php.pool-1.1.1" \
+				&> /dev/null \
+				&& docker top \
+					apache-php.pool-1.1.1 \
+				| grep -qE '/usr/sbin/httpd(\.worker|\.event)? '
+
+				assert equal \
+					"${?}" \
+					"1"
+			end
+
+			__terminate_container \
+				apache-php.pool-1.1.1 \
+			&> /dev/null
+
+			docker run \
+				--detach \
+				--name apache-php.pool-1.1.1 \
+				--env APACHE_AUTOSTART_HTTPD_WRAPPER=false \
+				jdeathe/centos-ssh-apache-php:latest \
+			&> /dev/null
+
+			sleep ${STARTUP_TIME}
+
+			it "Can disable httpd-wrapper."
+				docker ps \
+					--format "name=apache-php.pool-1.1.1" \
+					--format "health=healthy" \
+				&> /dev/null \
+				&& docker top \
+					apache-php.pool-1.1.1 \
+				| grep -qE '/usr/sbin/httpd(\.worker|\.event)? '
+
+				assert equal \
+					"${?}" \
+					"1"
+			end
+
+			__terminate_container \
+				memcached.pool-1.1.1 \
+			&> /dev/null
+		end
 
 		trap - \
 			INT TERM EXIT
