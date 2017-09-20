@@ -227,6 +227,12 @@ $ sudo -E atomic uninstall \
 
 #### Environment Variables
 
+There are environmental variables available which allows the operator to customise the running container.
+
+##### APACHE_AUTOSTART_HTTPD_BOOTSTRAP, APACHE_AUTOSTART_HTTPD_WRAPPER & APACHE_AUTOSTART_PHP_FPM_WRAPPER
+
+It may be desirable to prevent the startup of the httpd-bootstrap, httpd-wrapper, and/or, php-fpm-wrapper scripts. For example, when using an image built from this Dockerfile as the source for another Dockerfile you could disable services from startup by setting `APACHE_AUTOSTART_HTTPD_WRAPPER` and `APACHE_AUTOSTART_PHP_FPM_WRAPPER` to `false`. The benefit of this is to reduce the number of running processes in the final container. Another use for this would be to make use of the packages installed in the image such as `ab`, `curl`, `elinks`, `php-cli` etc.
+
 ##### APACHE_SERVER_NAME & APACHE_SERVER_ALIAS
 
 The `APACHE_SERVER_NAME` and `APACHE_SERVER_ALIAS` environmental variables are used to set the VirtualHost `ServerName` and `ServerAlias` values respectively. If the value contains the placeholder `{{HOSTNAME}}` it will be replaced with the system `hostname` value; by default this is the container id but the hostname can be modified using the `--hostname` docker create|run parameter.
