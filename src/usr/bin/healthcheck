@@ -239,20 +239,39 @@ function main ()
 		exit 1
 	fi
 
+	if [[ ${APACHE_AUTOSTART_HTTPD_BOOTSTRAP} == false ]] \
+		&& [[ ${APACHE_AUTOSTART_HTTPD_WRAPPER} == false ]] \
+		&& [[ ${APACHE_AUTOSTART_PHP_FPM_WRAPPER} == false ]]
+	then
+		exit 0
+	fi
+
 	# httpd-bootstrap
-	if [[ -e /var/lock/subsys/httpd-bootstrap ]]; then
+	if [[ ${APACHE_AUTOSTART_HTTPD_BOOTSTRAP} == true ]] \
+		&& [[ -e /var/lock/subsys/httpd-bootstrap ]]
+	then
 		exit 1
 	fi
 
 	# httpd-wrapper
-	if ! ps axo command \
-		| grep -qE '^/usr/sbin/httpd(\.worker)? '
+	if [[ ${APACHE_AUTOSTART_HTTPD_WRAPPER} == true ]] \
+		&& ! ps axo command \
+		| grep -qE '^/usr/sbin/httpd(\.worker|\.event)? '
+	then
+		exit 1
+	fi
+
+	# php-fpm-wrapper
+	if [[ ${APACHE_AUTOSTART_PHP_FPM_WRAPPER} == true ]] \
+		&& ! ps axo command \
+		| grep -q "^php-fpm: pool ${APACHE_RUN_USER}[ ]*$"
 	then
 		exit 1
 	fi
 
 	# Throttle CURL checks if last check passed.
-	if __last_check_passed \
+	if [[ ${APACHE_AUTOSTART_HTTPD_WRAPPER} == false ]] \
+		|| __last_check_passed \
 		&& ! __is_throttled_interval \
 			"${interval}"
 	then
