@@ -15,6 +15,8 @@ CentOS-6 6.9 x86_64, Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1.
 - Adds use of readonly variables for constants.
 - Adds support for event server MPM in bootstrap.
 - Adds server mpm to the Apache Details logs output.
+- Adds `APACHE_AUTOSTART_HTTPD_BOOTSTRAP` to optionally disable httpd bootstrap.
+- Adds `APACHE_AUTOSTART_HTTPD_WRAPPER` to optionally disable httpd process startup.
 
 ### 1.10.0 - 2017-07-13
 
