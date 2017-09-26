@@ -441,3 +441,14 @@ To set the timezone for the UK and account for British Summer Time you would use
   --env "PHP_OPTIONS_DATE_TIMEZONE=Europe/London" \
 ...
 ```
+
+##### PHP_OPTIONS_SESSION_SAVE_HANDLER & PHP_OPTIONS_SESSION_SAVE_PATH
+
+Using `PHP_OPTIONS_SESSION_SAVE_HANDLER` and `PHP_OPTIONS_SESSION_SAVE_PATH` together it's possible to configure PHP to use an alternative `session.save_handler` and `session.save_path`. For example if you have a Memcached server running on the host `memcached-server` on the default port `11211` the following configuration will allow session data to be stored in Memcached, allowing session data to be shared between multiple PHP containers.
+
+```
+...
+  --env "PHP_OPTIONS_SESSION_SAVE_HANDLER=memcached" \
+  --env "PHP_OPTIONS_SESSION_SAVE_PATH=memcached-server:11211" \
+...
+```
