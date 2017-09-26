@@ -11,7 +11,22 @@ DOCKER_PORT_MAP_TCP_8443="${DOCKER_PORT_MAP_TCP_8443:-NULL}"
 
 function __destroy ()
 {
-	:
+	local -r session_store_name="memcached.pool-1.1.1"
+	local -r session_store_network="bridge_internal_1"
+
+	# Destroy the session store container
+	__terminate_container \
+		${session_store_name} \
+	&> /dev/null
+
+	if [[ -n $(docker network ls -q -f name="${session_store_network}") ]]; then
+		docker network rm \
+			${session_store_network} \
+		&> /dev/null
+	fi
+
+	# Truncate cookie-jar
+	:> ~/.curl_cookies
 }
 
 function __get_container_port ()
@@ -71,6 +86,31 @@ function __is_container_ready ()
 
 function __setup ()
 {
+	local -r session_store_alias="memcached_1"
+	local -r session_store_name="memcached.pool-1.1.1"
+	local -r session_store_network="bridge_internal_1"
+	local -r session_store_release="1.1.1"
+
+	if [[ -z $(docker network ls -q -f name="${session_store_network}") ]]; then
+		docker network create \
+			--internal \
+			--driver bridge \
+			${session_store_network} \
+		&> /dev/null
+	fi
+
+	# Create the session store container
+	__terminate_container \
+		${session_store_name} \
+	&> /dev/null
+	docker run \
+		--detach \
+		--name ${session_store_name} \
+		--network ${session_store_network} \
+		--network-alias ${session_store_alias} \
+		jdeathe/centos-ssh-memcached:${session_store_release} \
+	&> /dev/null
+
 	# Generate a self-signed certificate
 	openssl req \
 		-x509 \
@@ -82,6 +122,9 @@ function __setup ()
 		-keyout /tmp/www.app-1.local.pem \
 		-out /tmp/www.app-1.local.pem \
 	&> /dev/null
+
+	# Truncate cookie-jar
+	:> ~/.curl_cookies
 }
 
 # Custom shpec matcher
@@ -609,6 +652,9 @@ ${other_required_apache_modules}
 
 function test_custom_configuration ()
 {
+	local -r session_store_alias="memcached_1"
+	local -r session_store_network="bridge_internal_1"
+
 	local apache_access_log_entry=""
 	local apache_access_log_entry=""
 	local apache_run_group=""
@@ -625,6 +671,8 @@ function test_custom_configuration ()
 	local curl_response_code_default=""
 	local curl_response_code_server_name=""
 	local curl_response_code_server_alias=""
+	local curl_session_data_write=""
+	local curl_session_data_read=""
 	local header_x_service_operating_mode=""
 	local header_x_service_uid=""
 	local php_date_timezone=""
@@ -2030,7 +2078,159 @@ function test_custom_configuration ()
 			end
 
 			__terminate_container \
-				memcached.pool-1.1.1 \
+				apache-php.pool-1.1.1 \
+			&> /dev/null
+		end
+
+		describe "PHP memcached session store"
+			__terminate_container \
+				apache-php.pool-1.1.1 \
+			&> /dev/null
+
+			docker run \
+				--detach \
+				--name apache-php.pool-1.1.1 \
+				--publish ${DOCKER_PORT_MAP_TCP_80}:80 \
+				--env PHP_OPTIONS_SESSION_SAVE_HANDLER="memcached" \
+				--env PHP_OPTIONS_SESSION_SAVE_PATH="${session_store_alias}:11211" \
+				jdeathe/centos-ssh-apache-php:latest \
+			&> /dev/null
+
+			docker network connect \
+				${session_store_network} \
+				apache-php.pool-1.1.1
+
+			if ! __is_container_ready \
+				apache-php.pool-1.1.1 \
+				${STARTUP_TIME} \
+				"/usr/sbin/httpd(\.worker|\.event)? " \
+				"[[ 000 != \$(curl -sI -o /dev/null -w %{http_code} localhost/) ]]"
+			then
+				exit 1
+			fi
+
+			# Create scripts that write / read session data.
+			docker exec \
+				apache-php.pool-1.1.1 \
+				mkdir -p -m 750 /opt/app/public_html/session
+
+			docker exec -i \
+				apache-php.pool-1.1.1 \
+				tee \
+					/opt/app/public_html/session/write.php \
+					1> /dev/null \
+					<<-EOT
+			<?php
+				session_start();
+				\$_SESSION['integer'] = 123;
+				\$_SESSION['float'] = 12345.67890;
+				\$_SESSION['string'] = '@memcached:#\$£';
+				session_write_close();
+				var_dump(\$_SESSION);
+			EOT
+
+			docker exec -i \
+				apache-php.pool-1.1.1 \
+				tee \
+					/opt/app/public_html/session/read.php \
+					1> /dev/null \
+					<<-EOT
+			<?php
+				session_start();
+				var_dump(\$_SESSION);
+			EOT
+
+			docker exec \
+				apache-php.pool-1.1.1 \
+				chown -R app:app-www /opt/app/public_html/session
+
+			docker exec \
+				apache-php.pool-1.1.1 \
+				find /opt/app/public_html/session -type d -exec chmod 750 {} +
+
+			docker exec \
+				apache-php.pool-1.1.1 \
+				find /opt/app/public_html/session -type f -exec chmod 640 {} +
+
+			docker restart \
+				apache-php.pool-1.1.1 \
+			&> /dev/null
+
+			if ! __is_container_ready \
+				apache-php.pool-1.1.1 \
+				${STARTUP_TIME} \
+				"/usr/sbin/httpd(\.worker|\.event)? " \
+				"[[ 000 != \$(curl -sI -o /dev/null -w %{http_code} localhost/) ]]"
+			then
+				exit 1
+			fi
+
+			container_port_80="$(
+				__get_container_port \
+					apache-php.pool-1.1.1 \
+					80/tcp
+			)"
+
+			describe "Session Cookies"
+				it "Start empty."
+					curl_session_data_read="$(
+						curl -s \
+							--header 'Host: localhost.localdomain' \
+							--cookie ~/.curl_cookies \
+							--cookie-jar ~/.curl_cookies \
+							http://127.0.0.1:${container_port_80}/session/read.php
+					)"
+
+					assert equal \
+						"${curl_session_data_read}" \
+						'array(0) {
+}'
+				end
+
+				it "Can write data."
+					curl_session_data_write="$(
+						curl -s \
+							--header 'Host: localhost.localdomain' \
+							--cookie ~/.curl_cookies \
+							--cookie-jar ~/.curl_cookies \
+							http://127.0.0.1:${container_port_80}/session/write.php
+					)"
+
+					assert unequal \
+						"${curl_session_data_write}" \
+						""
+				end
+
+				it "Can read data."
+					curl_session_data_read="$(
+						curl -s \
+							--header 'Host: localhost.localdomain' \
+							--cookie ~/.curl_cookies \
+							--cookie-jar ~/.curl_cookies \
+							http://127.0.0.1:${container_port_80}/session/read.php
+					)"
+
+					assert unequal \
+						"${curl_session_data_read}" \
+						""
+				end
+
+				it "Persists data."
+					assert equal \
+						"${curl_session_data_read}" \
+						'array(3) {
+  ["integer"]=>
+  int(123)
+  ["float"]=>
+  float(12345.6789)
+  ["string"]=>
+  string(15) "@memcached:#$£"
+}'
+				end
+			end
+
+			__terminate_container \
+				apache-php.pool-1.1.1 \
 			&> /dev/null
 		end
 

@@ -9,7 +9,7 @@ FROM jdeathe/centos-ssh:1.8.1
 # Use the form ([{fqdn}-]{package-name}|[{fqdn}-]{provider-name})
 ARG PACKAGE_NAME="app"
 ARG PACKAGE_PATH="/opt/${PACKAGE_NAME}"
-ARG PACKAGE_RELEASE_VERSION="0.4.0"
+ARG PACKAGE_RELEASE_VERSION="0.5.0"
 
 # -----------------------------------------------------------------------------
 # IUS Apache 2.4, PHP-FPM 5.6
@@ -160,13 +160,15 @@ RUN cp -pf \
 		-e 's~^\[~\n\[~g' \
 		/etc/php.ini \
 		> /etc/php.d/00-php.ini.default \
-	&& sed \
-		-e 's~^;\(user_ini.filename =\)$~\1~g' \
-		-e 's~^;\(cgi.fix_pathinfo=1\)$~\1~g' \
-		-e 's~^;\(date.timezone =\)$~\1 UTC~g' \
-		-e 's~^\(expose_php = \)On$~\1Off~g' \
-		-e 's~^;\(realpath_cache_size = \).*$~\14096k~' \
-		-e 's~^;\(realpath_cache_ttl = \).*$~\1600~' \
+	&& sed -r \
+		-e 's~^;(user_ini.filename =)$~\1~g' \
+		-e 's~^;(cgi.fix_pathinfo=1)$~\1~g' \
+		-e 's~^;(date.timezone =)$~\1 UTC~g' \
+		-e 's~^(expose_php = )On$~\1Off~g' \
+		-e 's~^;(realpath_cache_size = ).*$~\14096k~' \
+		-e 's~^;(realpath_cache_ttl = ).*$~\1600~' \
+		-e 's~^;?(session.save_handler = ).*$~\1"${PHP_OPTIONS_SESSION_SAVE_HANDLER:-files}"~' \
+		-e 's~^;?(session.save_path = ).*$~\1"${PHP_OPTIONS_SESSION_SAVE_PATH:-/var/lib/php/session}"~' \
 		/etc/php.d/00-php.ini.default \
 		> /etc/php.d/00-php.ini \
 	&& sed \
@@ -286,6 +288,10 @@ RUN mkdir -p -m 750 ${PACKAGE_PATH} \
 	&& sed -i \
 		-e 's~^description =.*$~description = "This CentOS / Apache / PHP-FPM (FastCGI) service is running in a container."~' \
 		${PACKAGE_PATH}/etc/views/index.ini \
+	&& sed -ri \
+		-e 's~^;?(session.save_handler = ).*$~\1"${PHP_OPTIONS_SESSION_SAVE_HANDLER:-files}"~' \
+		-e 's~^;?(session.save_path = ).*$~\1"${PHP_OPTIONS_SESSION_SAVE_PATH:-/var/lib/php/session}"~' \
+		${PACKAGE_PATH}/etc/php.d/50-php.ini \
 	&& $(\
 		if [[ -f /usr/share/php-pecl-apc/apc.php ]]; then \
 			cp \
@@ -331,6 +337,8 @@ ENV APACHE_AUTOSTART_HTTPD_BOOTSTRAP=true \
 	APACHE_SYSTEM_USER="app" \
 	PACKAGE_PATH="${PACKAGE_PATH}" \
 	PHP_OPTIONS_DATE_TIMEZONE="UTC" \
+	PHP_OPTIONS_SESSION_SAVE_HANDLER="files" \
+	PHP_OPTIONS_SESSION_SAVE_PATH="/var/lib/php/session" \
 	SSH_AUTOSTART_SSHD=false \
 	SSH_AUTOSTART_SSHD_BOOTSTRAP=false
 
