@@ -2127,7 +2127,7 @@ function test_custom_configuration ()
 				\$_SESSION['float'] = 12345.67890;
 				\$_SESSION['string'] = '@memcached:#\$£';
 				session_write_close();
-				var_dump(\$_SESSION);
+				echo serialize(\$_SESSION);
 			EOT
 
 			docker exec -i \
@@ -2138,7 +2138,7 @@ function test_custom_configuration ()
 					<<-EOT
 			<?php
 				session_start();
-				var_dump(\$_SESSION);
+				echo serialize(\$_SESSION);
 			EOT
 
 			docker exec \
@@ -2172,7 +2172,6 @@ function test_custom_configuration ()
 					80/tcp
 			)"
 
-			# Healthcheck should fail unless running PHP-FPM without Apache.
 			describe "Session Cookies"
 				it "Start empty."
 					curl_session_data_read="$(
@@ -2185,8 +2184,7 @@ function test_custom_configuration ()
 
 					assert equal \
 						"${curl_session_data_read}" \
-						"array(0) {
-}"
+						'a:0:{}'
 				end
 
 				it "Can write data."
@@ -2220,14 +2218,7 @@ function test_custom_configuration ()
 				it "Persists data."
 					assert equal \
 						"${curl_session_data_read}" \
-						'array(3) {
-  ["integer"]=>
-  int(123)
-  ["float"]=>
-  float(12345.6789)
-  ["string"]=>
-  string(15) "@memcached:#$£"
-}'
+						'a:3:{s:7:"integer";i:123;s:5:"float";d:12345.678900000001;s:6:"string";s:15:"@memcached:#$£";}'
 				end
 			end
 
