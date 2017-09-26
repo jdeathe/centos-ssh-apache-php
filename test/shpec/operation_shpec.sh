@@ -8,7 +8,6 @@ DOCKER_PORT_MAP_TCP_22="${DOCKER_PORT_MAP_TCP_22:-NULL}"
 DOCKER_PORT_MAP_TCP_80="${DOCKER_PORT_MAP_TCP_80:-8080}"
 DOCKER_PORT_MAP_TCP_443="${DOCKER_PORT_MAP_TCP_443:-9443}"
 DOCKER_PORT_MAP_TCP_8443="${DOCKER_PORT_MAP_TCP_8443:-NULL}"
-DOCKER_PORT_MAP_TCP_11211="${DOCKER_PORT_MAP_TCP_11211:-11211}"
 
 function __destroy ()
 {
@@ -2127,7 +2126,7 @@ function test_custom_configuration ()
 				\$_SESSION['float'] = 12345.67890;
 				\$_SESSION['string'] = '@memcached:#\$£';
 				session_write_close();
-				echo serialize(\$_SESSION);
+				var_dump(\$_SESSION);
 			EOT
 
 			docker exec -i \
@@ -2138,7 +2137,7 @@ function test_custom_configuration ()
 					<<-EOT
 			<?php
 				session_start();
-				echo serialize(\$_SESSION);
+				var_dump(\$_SESSION);
 			EOT
 
 			docker exec \
@@ -2184,7 +2183,8 @@ function test_custom_configuration ()
 
 					assert equal \
 						"${curl_session_data_read}" \
-						'a:0:{}'
+						'array(0) {
+}'
 				end
 
 				it "Can write data."
@@ -2218,7 +2218,14 @@ function test_custom_configuration ()
 				it "Persists data."
 					assert equal \
 						"${curl_session_data_read}" \
-						'a:3:{s:7:"integer";i:123;s:5:"float";d:12345.678900000001;s:6:"string";s:15:"@memcached:#$£";}'
+						'array(3) {
+  ["integer"]=>
+  int(123)
+  ["float"]=>
+  float(12345.6789)
+  ["string"]=>
+  string(15) "@memcached:#$£"
+}'
 				end
 			end
 
