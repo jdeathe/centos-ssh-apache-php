@@ -4,13 +4,15 @@ source /etc/httpd-bootstrap.conf
 
 function get_httpd_bin ()
 {
-	local HTTPD=/usr/sbin/httpd
+	local -r HTTPD=/usr/sbin/httpd
 
-	if [[ -n ${APACHE_MPM} && ${APACHE_MPM,,} == worker ]] \
-		&& [[ -f ${HTTPD}.worker ]]; then
+	if [[ -n ${APACHE_MPM} ]] \
+		&& [[ -f ${HTTPD}.${APACHE_MPM,,} ]]
+	then
 		printf -- \
-			'%s.worker' \
-			"${HTTPD}"
+			'%s.%s' \
+			"${HTTPD}" \
+			"${APACHE_MPM,,}"
 	else
 		printf -- \
 			'%s' \
