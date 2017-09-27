@@ -11,8 +11,8 @@ function get_httpd_bin ()
 	then
 		printf -- \
 			'%s.%s' \
-			"${APACHE_MPM,,}" \
-			"${HTTPD}"
+			"${HTTPD}" \
+			"${APACHE_MPM,,}"
 	else
 		printf -- \
 			'%s' \
