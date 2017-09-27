@@ -227,7 +227,9 @@ ${other_required_apache_modules}
 	local status=0
 
 	describe "Basic Apache PHP operations"
-		trap "__terminate_container apache-php.pool-1.1.1 &> /dev/null; exit 1" \
+		trap "__terminate_container apache-php.pool-1.1.1 &> /dev/null; \
+		__destroy; \
+		exit 1" \
 			INT TERM EXIT
 
 		__terminate_container \
@@ -667,7 +669,9 @@ function test_custom_configuration ()
 	local protocol=""
 
 	describe "Customised Apache PHP configuration"
-		trap "__terminate_container apache-php.pool-1.1.1 &> /dev/null; exit 1" \
+		trap "__terminate_container apache-php.pool-1.1.1 &> /dev/null; \
+			__destroy; \
+			exit 1" \
 			INT TERM EXIT
 
 		describe "Access log"
