@@ -6,7 +6,7 @@ Summary of release changes for Version 2.
 
 CentOS-6 6.9 x86_64, Apache 2.4, PHP-FPM 5.6, PHP memcached 2.2, Zend Opcache 7.0.
 
-### 2.2.1 - Unreleased
+### 2.2.1 - 2017-09-28
 
 - Updates `php56u` packages to 5.6.31-1.
 - Fixes bootstrap lockfile name to match the one expected by the healthcheck.
