@@ -4,12 +4,12 @@
 # CentOS-6, Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1
 #
 # =============================================================================
-FROM jdeathe/centos-ssh:1.8.1
+FROM jdeathe/centos-ssh:1.8.2
 
 # Use the form ([{fqdn}-]{package-name}|[{fqdn}-]{provider-name})
 ARG PACKAGE_NAME="app"
 ARG PACKAGE_PATH="/opt/${PACKAGE_NAME}"
-ARG PACKAGE_RELEASE_VERSION="0.4.0"
+ARG PACKAGE_RELEASE_VERSION="0.5.0"
 
 # -----------------------------------------------------------------------------
 # Base Apache, PHP
@@ -137,13 +137,15 @@ RUN sed \
 		-e 's~^\[~\n\[~g' \
 		/etc/php.d/apc.ini \
 		> /etc/php.d/apc.ini.default \
-	&& sed \
-		-e 's~^;\(user_ini.filename =\)$~\1~g' \
-		-e 's~^;\(cgi.fix_pathinfo=1\)$~\1~g' \
-		-e 's~^;\(date.timezone =\)$~\1 UTC~g' \
-		-e 's~^\(expose_php = \)On$~\1Off~g' \
-		-e 's~^;\(realpath_cache_size = \).*$~\14096k~' \
-		-e 's~^;\(realpath_cache_ttl = \).*$~\1600~' \
+	&& sed -r \
+		-e 's~^;(user_ini.filename =)$~\1~g' \
+		-e 's~^;(cgi.fix_pathinfo=1)$~\1~g' \
+		-e 's~^;(date.timezone =)$~\1 UTC~g' \
+		-e 's~^(expose_php = )On$~\1Off~g' \
+		-e 's~^;(realpath_cache_size = ).*$~\14096k~' \
+		-e 's~^;(realpath_cache_ttl = ).*$~\1600~' \
+		-e 's~^;?(session.save_handler = ).*$~\1"${PHP_OPTIONS_SESSION_SAVE_HANDLER:-files}"~' \
+		-e 's~^;?(session.save_path = ).*$~\1"${PHP_OPTIONS_SESSION_SAVE_PATH:-/var/lib/php/session}"~' \
 		/etc/php.d/00-php.ini.default \
 		> /etc/php.d/00-php.ini \
 	&& sed \
@@ -177,9 +179,7 @@ RUN useradd -r -M -d /var/www/app -s /sbin/nologin app \
 # -----------------------------------------------------------------------------
 ADD src/usr/bin \
 	/usr/bin/
-ADD src/usr/sbin/httpd-bootstrap \
-	src/usr/sbin/httpd-startup \
-	src/usr/sbin/httpd-wrapper \
+ADD src/usr/sbin \
 	/usr/sbin/
 ADD src/opt/scmi \
 	/opt/scmi/
@@ -226,7 +226,7 @@ RUN mkdir -p \
 		/etc/services-config/supervisor/supervisord.d/httpd-wrapper.conf \
 		/etc/supervisord.d/httpd-wrapper.conf \
 	&& chmod 700 \
-		/usr/sbin/httpd-{bootstrap,startup,wrapper}
+		/usr/{bin/healthcheck,sbin/httpd-{bootstrap,startup,wrapper}}
 
 # -----------------------------------------------------------------------------
 # Package installation
@@ -242,6 +242,10 @@ RUN mkdir -p -m 750 ${PACKAGE_PATH} \
 	&& sed -i \
 		-e 's~^description =.*$~description = "This CentOS / Apache / PHP (Standard) service is running in a container."~' \
 		${PACKAGE_PATH}/etc/views/index.ini \
+	&& sed -ri \
+		-e 's~^;?(session.save_handler = ).*$~\1"${PHP_OPTIONS_SESSION_SAVE_HANDLER:-files}"~' \
+		-e 's~^;?(session.save_path = ).*$~\1"${PHP_OPTIONS_SESSION_SAVE_PATH:-/var/lib/php/session}"~' \
+		${PACKAGE_PATH}/etc/php.d/50-php.ini \
 	&& $(\
 		if [[ -f /usr/share/php-pecl-apc/apc.php ]]; then \
 			cp \
@@ -263,14 +267,16 @@ EXPOSE 80 8443 443
 ENV APACHE_CONTENT_ROOT="/var/www/${PACKAGE_NAME}" \
 	BASH_ENV="/usr/sbin/httpd-startup" \
 	ENV="/usr/sbin/httpd-startup"
-ENV APACHE_CUSTOM_LOG_FORMAT="combined" \
+ENV APACHE_AUTOSTART_HTTPD_BOOTSTRAP=true \
+	APACHE_AUTOSTART_HTTPD_WRAPPER=true \
+	APACHE_CUSTOM_LOG_FORMAT="combined" \
 	APACHE_CUSTOM_LOG_LOCATION="var/log/apache_access_log" \
 	APACHE_ERROR_LOG_LOCATION="var/log/apache_error_log" \
 	APACHE_ERROR_LOG_LEVEL="warn" \
-	APACHE_EXTENDED_STATUS_ENABLED="false" \
+	APACHE_EXTENDED_STATUS_ENABLED=false \
 	APACHE_HEADER_X_SERVICE_UID="{{HOSTNAME}}" \
 	APACHE_LOAD_MODULES="authz_user_module log_config_module expires_module deflate_module headers_module setenvif_module mime_module status_module dir_module alias_module version_module" \
-	APACHE_MOD_SSL_ENABLED="false" \
+	APACHE_MOD_SSL_ENABLED=false \
 	APACHE_MPM="prefork" \
 	APACHE_OPERATING_MODE="production" \
 	APACHE_PUBLIC_DIRECTORY="public_html" \
@@ -284,13 +290,15 @@ ENV APACHE_CUSTOM_LOG_FORMAT="combined" \
 	APACHE_SYSTEM_USER="app" \
 	PACKAGE_PATH="${PACKAGE_PATH}" \
 	PHP_OPTIONS_DATE_TIMEZONE="UTC" \
+	PHP_OPTIONS_SESSION_SAVE_HANDLER="files" \
+	PHP_OPTIONS_SESSION_SAVE_PATH="/var/lib/php/session" \
 	SSH_AUTOSTART_SSHD=false \
 	SSH_AUTOSTART_SSHD_BOOTSTRAP=false
 
 # -----------------------------------------------------------------------------
 # Set image metadata
 # -----------------------------------------------------------------------------
-ARG RELEASE_VERSION="1.10.0"
+ARG RELEASE_VERSION="1.10.1"
 LABEL \
 	maintainer="James Deathe <james.deathe@gmail.com>" \
 	install="docker run \

@@ -6,6 +6,21 @@ Summary of release changes for Version 1.
 
 CentOS-6 6.9 x86_64, Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1.
 
+### 1.10.1 - 2017-09-28
+
+- Fixes bootstrap lockfile name to match the one expected by the healthcheck.
+- Adds permissions to restrict access to the healthcheck script.
+- Removes scmi; it's maintained [upstream](https://github.com/jdeathe/centos-ssh/blob/centos-6/src/usr/sbin/scmi).
+- Fixes local port value in scmi install template.
+- Adds use of readonly variables for constants.
+- Adds support for event server MPM in bootstrap.
+- Adds server mpm to the Apache Details logs output.
+- Adds `APACHE_AUTOSTART_HTTPD_BOOTSTRAP` to optionally disable httpd bootstrap.
+- Adds `APACHE_AUTOSTART_HTTPD_WRAPPER` to optionally disable httpd process startup.
+- Adds `PHP_OPTIONS_SESSION_SAVE_HANDLER` to allow for an external session store.
+- Adds `PHP_OPTIONS_SESSION_SAVE_PATH` to allow for an external session store.
+- Updates source image to [1.8.2 tag](https://github.com/jdeathe/centos-ssh/releases/tag/1.8.2).
+
 ### 1.10.0 - 2017-07-13
 
 - Adds updated packages `httpd` (including `mod_ssl`) and `php` to 2.2.15-59 and 5.3.3-49.
