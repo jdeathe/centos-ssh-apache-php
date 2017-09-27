@@ -21,6 +21,7 @@ CentOS-6 6.9 x86_64, Apache 2.4, PHP-FPM 5.6, PHP memcached 2.2, Zend Opcache 7.
 - Adds `APACHE_AUTOSTART_PHP_FPM_WRAPPER` to optionally disable PHP-FPM process startup.
 - Adds `PHP_OPTIONS_SESSION_SAVE_HANDLER` to allow for an external session store.
 - Adds `PHP_OPTIONS_SESSION_SAVE_PATH` to allow for an external session store.
+- Updates source image to [1.8.2 tag](https://github.com/jdeathe/centos-ssh/releases/tag/1.8.2).
 
 ### 2.2.0 - 2017-07-13
 
