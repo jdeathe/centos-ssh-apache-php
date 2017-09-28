@@ -1,12 +1,12 @@
 # -----------------------------------------------------------------------------
 # Constants
 # -----------------------------------------------------------------------------
-DOCKER_USER=jdeathe
-DOCKER_IMAGE_NAME=centos-ssh-apache-php
+readonly DOCKER_USER=jdeathe
+readonly DOCKER_IMAGE_NAME=centos-ssh-apache-php
 
 # Tag validation patterns
-DOCKER_IMAGE_TAG_PATTERN='^(latest|centos-[6-7]|centos-6-httpd24u-php56u|(([1-3]|centos-(6-1|6-httpd24u-php56u-2|7-3))\.[0-9]+\.[0-9]+))$'
-DOCKER_IMAGE_RELEASE_TAG_PATTERN='^(1|2|centos-(6-1|6-httpd24u-php56u-2))\.[0-9]+\.[0-9]+$'
+readonly DOCKER_IMAGE_TAG_PATTERN='^(latest|centos-[6-7]|centos-6-httpd24u-php56u|(([1-3]|centos-(6-1|6-httpd24u-php56u-2|7-3))\.[0-9]+\.[0-9]+))$'
+readonly DOCKER_IMAGE_RELEASE_TAG_PATTERN='^(1|2|centos-(6-1|6-httpd24u-php56u-2))\.[0-9]+\.[0-9]+$'
 
 # -----------------------------------------------------------------------------
 # Variables
@@ -53,6 +53,9 @@ SSH_USER_PASSWORD="${SSH_USER_PASSWORD:-}"
 SSH_USER_PASSWORD_HASHED="${SSH_USER_PASSWORD_HASHED:-false}"
 SSH_USER_SHELL="${SSH_USER_SHELL:-/bin/bash}"
 # -----------------------------------------------------------------------------
+APACHE_AUTOSTART_HTTPD_BOOTSTRAP="${APACHE_AUTOSTART_HTTPD_BOOTSTRAP:-true}"
+APACHE_AUTOSTART_HTTPD_WRAPPER="${APACHE_AUTOSTART_HTTPD_WRAPPER:-true}"
+APACHE_AUTOSTART_PHP_FPM_WRAPPER="${APACHE_AUTOSTART_PHP_FPM_WRAPPER:-true}"
 APACHE_CONTENT_ROOT="${APACHE_CONTENT_ROOT:-/var/www/app}"
 APACHE_CUSTOM_LOG_FORMAT="${APACHE_CUSTOM_LOG_FORMAT:-combined}"
 APACHE_CUSTOM_LOG_LOCATION="${APACHE_CUSTOM_LOG_LOCATION:-var/log/apache_access_log}"
@@ -74,3 +77,5 @@ APACHE_SSL_CIPHER_SUITE="${APACHE_SSL_CIPHER_SUITE:-"ECDHE-ECDSA-CHACHA20-POLY13
 APACHE_SSL_PROTOCOL="${APACHE_SSL_PROTOCOL:-All -SSLv2 -SSLv3}"
 APACHE_SYSTEM_USER="${APACHE_SYSTEM_USER:-app}"
 PHP_OPTIONS_DATE_TIMEZONE="${PHP_OPTIONS_DATE_TIMEZONE:-UTC}"
+PHP_OPTIONS_SESSION_SAVE_HANDLER="${PHP_OPTIONS_SESSION_SAVE_HANDLER:-files}"
+PHP_OPTIONS_SESSION_SAVE_PATH="${PHP_OPTIONS_SESSION_SAVE_PATH:-/var/lib/php/session}"

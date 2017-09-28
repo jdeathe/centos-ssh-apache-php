@@ -25,7 +25,7 @@ setup_php_fpm_pool
 
 while true; do
 	sleep 0.1
-	[[ -e /var/lock/subsys/httpd-bootstrap.lock ]] || break
+	[[ -e /var/lock/subsys/httpd-bootstrap ]] || break
 done
 
 exec ${NICE} \

@@ -9,7 +9,7 @@ if [[ ${DOCKER_PORT_MAP_TCP_80} != NULL ]]; then
 			-- '%s --publish %s%s:80' \
 			"${DOCKER_PUBLISH}" \
 			"$(grep -o '^[0-9\.]*:' <<< "${DOCKER_PORT_MAP_TCP_80}")" \
-			"$(( $(grep -o '[0-9]*$' <<< "${DOCKER_PORT_MAP_TCP_80}") + $(awk -F. '{ print $2; }' <<< "${DOCKER_NAME}") - 1 ))"
+			"$(( $(grep -o '[0-9]*$' <<< "${DOCKER_PORT_MAP_TCP_80}") + $(sed 's~\.[0-9]*$~~' <<< "${DOCKER_NAME}" | awk -F. '{ print $NF; }') - 1 ))"
 	else
 		printf -v \
 			DOCKER_PUBLISH \
@@ -28,7 +28,7 @@ if [[ ${DOCKER_PORT_MAP_TCP_443} != NULL ]] \
 			-- '%s --publish %s%s:443' \
 			"${DOCKER_PUBLISH}" \
 			"$(grep -o '^[0-9\.]*:' <<< "${DOCKER_PORT_MAP_TCP_443}")" \
-			"$(( $(grep -o '[0-9]*$' <<< "${DOCKER_PORT_MAP_TCP_443}") + $(awk -F. '{ print $2; }' <<< "${DOCKER_NAME}") - 1 ))"
+			"$(( $(grep -o '[0-9]*$' <<< "${DOCKER_PORT_MAP_TCP_443}") + $(sed 's~\.[0-9]*$~~' <<< "${DOCKER_NAME}" | awk -F. '{ print $NF; }') - 1 ))"
 	else
 		printf -v \
 			DOCKER_PUBLISH \
@@ -46,7 +46,7 @@ if [[ ${DOCKER_PORT_MAP_TCP_8443} != NULL ]]; then
 			-- '%s --publish %s%s:8443' \
 			"${DOCKER_PUBLISH}" \
 			"$(grep -o '^[0-9\.]*:' <<< "${DOCKER_PORT_MAP_TCP_8443}")" \
-			"$(( $(grep -o '[0-9]*$' <<< "${DOCKER_PORT_MAP_TCP_8443}") + $(awk -F. '{ print $2; }' <<< "${DOCKER_NAME}") - 1 ))"
+			"$(( $(grep -o '[0-9]*$' <<< "${DOCKER_PORT_MAP_TCP_8443}") + $(sed 's~\.[0-9]*$~~' <<< "${DOCKER_NAME}" | awk -F. '{ print $NF; }') - 1 ))"
 	else
 		printf -v \
 			DOCKER_PUBLISH \
@@ -59,6 +59,9 @@ fi
 # Common parameters of create and run targets
 DOCKER_CONTAINER_PARAMETERS="--name ${DOCKER_NAME} \
 --restart ${DOCKER_RESTART_POLICY} \
+--env \"APACHE_AUTOSTART_HTTPD_BOOTSTRAP=${APACHE_AUTOSTART_HTTPD_BOOTSTRAP}\" \
+--env \"APACHE_AUTOSTART_HTTPD_WRAPPER=${APACHE_AUTOSTART_HTTPD_WRAPPER}\" \
+--env \"APACHE_AUTOSTART_PHP_FPM_WRAPPER=${APACHE_AUTOSTART_PHP_FPM_WRAPPER}\" \
 --env \"APACHE_CONTENT_ROOT=${APACHE_CONTENT_ROOT}\" \
 --env \"APACHE_CUSTOM_LOG_FORMAT=${APACHE_CUSTOM_LOG_FORMAT}\" \
 --env \"APACHE_CUSTOM_LOG_LOCATION=${APACHE_CUSTOM_LOG_LOCATION}\" \
@@ -80,4 +83,6 @@ DOCKER_CONTAINER_PARAMETERS="--name ${DOCKER_NAME} \
 --env \"APACHE_SSL_PROTOCOL=${APACHE_SSL_PROTOCOL}\" \
 --env \"APACHE_SYSTEM_USER=${APACHE_SYSTEM_USER}\" \
 --env \"PHP_OPTIONS_DATE_TIMEZONE=${PHP_OPTIONS_DATE_TIMEZONE}\" \
+--env \"PHP_OPTIONS_SESSION_SAVE_HANDLER=${PHP_OPTIONS_SESSION_SAVE_HANDLER}\" \
+--env \"PHP_OPTIONS_SESSION_SAVE_PATH=${PHP_OPTIONS_SESSION_SAVE_PATH}\" \
 ${DOCKER_PUBLISH}"

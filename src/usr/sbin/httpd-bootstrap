@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Create lock file
-touch /var/lock/subsys/httpd-bootstrap.lock
+touch /var/lock/subsys/httpd-bootstrap
 
 TIMER_START="$(
 	date +%s.%N
@@ -426,7 +426,7 @@ function load_php_ini_scan_files ()
 	if [[ -n ${PACKAGE_PATH} ]] \
 		&& [[ -d ${PACKAGE_PATH}/etc/php.d ]]; then
 		# Replace environment variables to support fcgid php-wrapper
-		for FILE_PATH in "${PACKAGE_PATH}"/etc/php.d/*.ini; do
+		for FILE_PATH in /etc/php.d/*.ini "${PACKAGE_PATH}"/etc/php.d/*.ini; do
 			printf -- \
 				'%s' \
 				"$(
@@ -552,10 +552,14 @@ function set_apache_mpm ()
 	case "${MPM,,}" in
 		event)
 			if [[ -f /etc/httpd/conf.modules.d/00-mpm.conf ]]; then
-				sed -i \
-					-e 's~^\(LoadModule.*\)$~#\1~g' \
-					-e 's~^#\(LoadModule mpm_event_module.*\)$~\1~' \
+				sed -ri \
+					-e 's~^(LoadModule.*)$~#\1~g' \
+					-e 's~^#(LoadModule mpm_event_module.*)$~\1~' \
 					/etc/httpd/conf.modules.d/00-mpm.conf
+			elif [[ -f /usr/sbin/httpd.event ]]; then
+				sed -ri \
+					-e 's~^#?(HTTPD=/usr/sbin/httpd).*$~\1.event~' \
+					/etc/sysconfig/httpd
 			else
 				printf -- \
 					'ERROR: Invalid Apache Server MPM: %s\n' \
@@ -565,13 +569,13 @@ function set_apache_mpm ()
 			;;
 		worker)
 			if [[ -f /etc/httpd/conf.modules.d/00-mpm.conf ]]; then
-				sed -i \
-					-e 's~^\(LoadModule.*\)$~#\1~g' \
-					-e 's~^#\(LoadModule mpm_worker_module.*\)$~\1~' \
+				sed -ri \
+					-e 's~^(LoadModule.*)$~#\1~g' \
+					-e 's~^#(LoadModule mpm_worker_module.*)$~\1~' \
 					/etc/httpd/conf.modules.d/00-mpm.conf
 			elif [[ -f /usr/sbin/httpd.worker ]]; then
-				sed -i \
-					-e "s~^#HTTPD=/usr/sbin/httpd.worker~HTTPD=/usr/sbin/httpd.worker~g" \
+				sed -ri \
+					-e 's~^#?(HTTPD=/usr/sbin/httpd).*$~\1.worker~' \
 					/etc/sysconfig/httpd
 			else
 				printf -- \
@@ -582,14 +586,19 @@ function set_apache_mpm ()
 			;;
 		prefork)
 			if [[ -f /etc/httpd/conf.modules.d/00-mpm.conf ]]; then
-				sed -i \
-					-e 's~^\(LoadModule.*\)$~#\1~g' \
-					-e 's~^#\(LoadModule mpm_prefork_module.*\)$~\1~' \
+				sed -ri \
+					-e 's~^(LoadModule.*)$~#\1~g' \
+					-e 's~^#(LoadModule mpm_prefork_module.*)$~\1~' \
 					/etc/httpd/conf.modules.d/00-mpm.conf
-			else
-				sed -i \
-					-e "s~^HTTPD=/usr/sbin/httpd.worker~#HTTPD=/usr/sbin/httpd.worker~g" \
+			elif [[ -f /usr/sbin/httpd ]]; then
+				sed -ri \
+					-e 's~^(HTTPD=/usr/sbin/httpd.*)$~#\1~g' \
 					/etc/sysconfig/httpd
+			else
+				printf -- \
+					'ERROR: Invalid Apache Server MPM: %s\n' \
+					"${OPTS_APACHE_MPM}" >&2
+				exit 1
 			fi
 			;;
 		*)
@@ -821,9 +830,6 @@ APACHE_DOCUMENT_ROOT_FILE_SYSTEM=$(
 
 # Server MPM
 set_apache_mpm "${OPTS_APACHE_MPM}"
-printf -- \
-	'Apache Server MPM: %s\n' \
-	"${OPTS_APACHE_MPM^}"
 
 # Add local hosts entries
 add_hosts_entry \
@@ -949,6 +955,7 @@ cat <<-EOT
 	server alias : ${OPTS_APACHE_SERVER_ALIAS}
 	header x-service-uid : ${OPTS_APACHE_HEADER_X_SERVICE_UID:-unset}
 	document root : ${OPTS_APACHE_DOCUMENT_ROOT} (${APACHE_DOCUMENT_ROOT_FILE_SYSTEM})
+	server mpm : ${OPTS_APACHE_MPM,,}
 	modules enabled :
 	${APACHE_MODULES_ENABLED}${SSL_CRT_FINGERPRINT_DETAILS}
 	--------------------------------------------------------------------------------
@@ -957,6 +964,6 @@ cat <<-EOT
 EOT
 
 # Release lock file
-rm -f /var/lock/subsys/httpd-bootstrap.lock
+rm -f /var/lock/subsys/httpd-bootstrap
 
 exit 0

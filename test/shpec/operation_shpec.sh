@@ -11,7 +11,22 @@ DOCKER_PORT_MAP_TCP_8443="${DOCKER_PORT_MAP_TCP_8443:-NULL}"
 
 function __destroy ()
 {
-	:
+	local -r session_store_name="memcached.pool-1.1.1"
+	local -r session_store_network="bridge_internal_1"
+
+	# Destroy the session store container
+	__terminate_container \
+		${session_store_name} \
+	&> /dev/null
+
+	if [[ -n $(docker network ls -q -f name="${session_store_network}") ]]; then
+		docker network rm \
+			${session_store_network} \
+		&> /dev/null
+	fi
+
+	# Truncate cookie-jar
+	:> ~/.curl_cookies
 }
 
 function __get_container_port ()
@@ -32,25 +47,29 @@ function __get_container_port ()
 		"${value}"
 }
 
+# container - Docker container name.
+# counter - Timeout counter in seconds.
+# process_pattern - Regular expression pattern used to match running process.
+# ready_test - Command used to test if the service is ready.
 function __is_container_ready ()
 {
 	local container="${1:-}"
-	local process_pattern="${2:-}"
 	local counter=$(
 		awk \
-			-v seconds="${3:-10}" \
+			-v seconds="${2:-10}" \
 			'BEGIN { print 10 * seconds; }'
 	)
+	local process_pattern="${3:-}"
+	local ready_test="${4:-true}"
 
 	until (( counter == 0 )); do
 		sleep 0.1
 
 		if docker exec ${container} \
-			bash -c "ps axo command" \
-			| grep -qE "${process_pattern}" \
-			> /dev/null 2>&1 \
-			&& [[ 000 != $(docker exec ${container} \
-				bash -c "curl -sI -o /dev/null -w %{http_code} localhost/") ]]
+			bash -c "ps axo command \
+				| grep -qE \"${process_pattern}\" \
+				&& eval \"${ready_test}\"" \
+			&> /dev/null
 		then
 			break
 		fi
@@ -67,6 +86,31 @@ function __is_container_ready ()
 
 function __setup ()
 {
+	local -r session_store_alias="memcached_1"
+	local -r session_store_name="memcached.pool-1.1.1"
+	local -r session_store_network="bridge_internal_1"
+	local -r session_store_release="1.1.1"
+
+	if [[ -z $(docker network ls -q -f name="${session_store_network}") ]]; then
+		docker network create \
+			--internal \
+			--driver bridge \
+			${session_store_network} \
+		&> /dev/null
+	fi
+
+	# Create the session store container
+	__terminate_container \
+		${session_store_name} \
+	&> /dev/null
+	docker run \
+		--detach \
+		--name ${session_store_name} \
+		--network ${session_store_network} \
+		--network-alias ${session_store_alias} \
+		jdeathe/centos-ssh-memcached:${session_store_release} \
+	&> /dev/null
+
 	# Generate a self-signed certificate
 	openssl req \
 		-x509 \
@@ -78,6 +122,9 @@ function __setup ()
 		-keyout /tmp/www.app-1.local.pem \
 		-out /tmp/www.app-1.local.pem \
 	&> /dev/null
+
+	# Truncate cookie-jar
+	:> ~/.curl_cookies
 }
 
 # Custom shpec matcher
@@ -192,7 +239,9 @@ ${other_required_apache_modules}
 	local status=0
 
 	describe "Basic Apache PHP operations"
-		trap "__terminate_container apache-php.pool-1.1.1 &> /dev/null; exit 1" \
+		trap "__terminate_container apache-php.pool-1.1.1 &> /dev/null; \
+		__destroy; \
+		exit 1" \
 			INT TERM EXIT
 
 		__terminate_container \
@@ -230,7 +279,10 @@ ${other_required_apache_modules}
 
 		if ! __is_container_ready \
 			apache-php.pool-1.1.1 \
-			"/usr/sbin/httpd(\.worker)? "; then
+			${STARTUP_TIME} \
+			"/usr/sbin/httpd(\.worker|\.event)? " \
+			"[[ 000 != \$(curl -sI -o /dev/null -w %{http_code} localhost/) ]]"
+		then
 			exit 1
 		fi
 
@@ -388,15 +440,14 @@ ${other_required_apache_modules}
 						"/var/www/app/public_html"
 				end
 
-				# TODO This is included in the logs but not included in the Apache Details.
 				it "Has default server mpm."
 					apache_server_mpm="$(
 						docker logs \
 							apache-php.pool-1.1.1 \
-						| grep -o 'Apache Server MPM: .*$' \
-						| cut -c 20- \
-						| awk '{ print tolower($0) }' \
-						| tr -d '\r'
+						| grep '^server mpm : ' \
+						| cut -c 13- \
+						| tr -d '\r' \
+						| awk '{ print tolower($1) }'
 					)"
 
 					assert equal \
@@ -603,6 +654,9 @@ ${other_required_apache_modules}
 
 function test_custom_configuration ()
 {
+	local -r session_store_alias="memcached_1"
+	local -r session_store_network="bridge_internal_1"
+
 	local apache_access_log_entry=""
 	local apache_access_log_entry=""
 	local apache_run_group=""
@@ -619,13 +673,17 @@ function test_custom_configuration ()
 	local curl_response_code_default=""
 	local curl_response_code_server_name=""
 	local curl_response_code_server_alias=""
+	local curl_session_data_write=""
+	local curl_session_data_read=""
 	local header_x_service_operating_mode=""
 	local header_x_service_uid=""
 	local php_date_timezone=""
 	local protocol=""
 
 	describe "Customised Apache PHP configuration"
-		trap "__terminate_container apache-php.pool-1.1.1 &> /dev/null; exit 1" \
+		trap "__terminate_container apache-php.pool-1.1.1 &> /dev/null; \
+			__destroy; \
+			exit 1" \
 			INT TERM EXIT
 
 		describe "Access log"
@@ -646,7 +704,10 @@ function test_custom_configuration ()
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd(\.worker)? "; then
+					${STARTUP_TIME} \
+					"/usr/sbin/httpd(\.worker|\.event)? " \
+					"[[ 000 != \$(curl -sI -o /dev/null -w %{http_code} localhost/) ]]"
+				then
 					exit 1
 				fi
 
@@ -691,7 +752,10 @@ function test_custom_configuration ()
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd(\.worker)? "; then
+					${STARTUP_TIME} \
+					"/usr/sbin/httpd(\.worker|\.event)? " \
+					"[[ 000 != \$(curl -sI -o /dev/null -w %{http_code} localhost/) ]]"
+				then
 					exit 1
 				fi
 
@@ -731,7 +795,10 @@ function test_custom_configuration ()
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd(\.worker)? "; then
+					${STARTUP_TIME} \
+					"/usr/sbin/httpd(\.worker|\.event)? " \
+					"[[ 000 != \$(curl -sI -o /dev/null -w %{http_code} localhost/) ]]"
+				then
 					exit 1
 				fi
 
@@ -772,7 +839,10 @@ function test_custom_configuration ()
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd(\.worker)? "; then
+					${STARTUP_TIME} \
+					"/usr/sbin/httpd(\.worker|\.event)? " \
+					"[[ 000 != \$(curl -sI -o /dev/null -w %{http_code} localhost/) ]]"
+				then
 					exit 1
 				fi
 
@@ -807,7 +877,10 @@ function test_custom_configuration ()
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd(\.worker)? "; then
+					${STARTUP_TIME} \
+					"/usr/sbin/httpd(\.worker|\.event)? " \
+					"[[ 000 != \$(curl -sI -o /dev/null -w %{http_code} localhost/) ]]"
+				then
 					exit 1
 				fi
 
@@ -843,7 +916,10 @@ function test_custom_configuration ()
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd(\.worker)? "; then
+					${STARTUP_TIME} \
+					"/usr/sbin/httpd(\.worker|\.event)? " \
+					"[[ 000 != \$(curl -sI -o /dev/null -w %{http_code} localhost/) ]]"
+				then
 					exit 1
 				fi
 
@@ -883,7 +959,10 @@ function test_custom_configuration ()
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd(\.worker)? "; then
+					${STARTUP_TIME} \
+					"/usr/sbin/httpd(\.worker|\.event)? " \
+					"[[ 000 != \$(curl -sI -o /dev/null -w %{http_code} localhost/) ]]"
+				then
 					exit 1
 				fi
 
@@ -948,7 +1027,10 @@ function test_custom_configuration ()
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd(\.worker)? "; then
+					${STARTUP_TIME} \
+					"/usr/sbin/httpd(\.worker|\.event)? " \
+					"[[ 000 != \$(curl -sI -o /dev/null -w %{http_code} localhost/) ]]"
+				then
 					exit 1
 				fi
 
@@ -982,7 +1064,10 @@ function test_custom_configuration ()
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd(\.worker)? "; then
+					${STARTUP_TIME} \
+					"/usr/sbin/httpd(\.worker|\.event)? " \
+					"[[ 000 != \$(curl -sI -o /dev/null -w %{http_code} localhost/) ]]"
+				then
 					exit 1
 				fi
 
@@ -1016,7 +1101,10 @@ function test_custom_configuration ()
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd(\.worker)? "; then
+					${STARTUP_TIME} \
+					"/usr/sbin/httpd(\.worker|\.event)? " \
+					"[[ 000 != \$(curl -sI -o /dev/null -w %{http_code} localhost/) ]]"
+				then
 					exit 1
 				fi
 
@@ -1046,7 +1134,10 @@ function test_custom_configuration ()
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd(\.worker)? "; then
+					${STARTUP_TIME} \
+					"/usr/sbin/httpd(\.worker|\.event)? " \
+					"[[ 000 != \$(curl -sI -o /dev/null -w %{http_code} localhost/) ]]"
+				then
 					exit 1
 				fi
 
@@ -1077,7 +1168,10 @@ function test_custom_configuration ()
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd(\.worker)? "; then
+					${STARTUP_TIME} \
+					"/usr/sbin/httpd(\.worker|\.event)? " \
+					"[[ 000 != \$(curl -sI -o /dev/null -w %{http_code} localhost/) ]]"
+				then
 					exit 1
 				fi
 
@@ -1111,7 +1205,10 @@ function test_custom_configuration ()
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd(\.worker)? "; then
+					${STARTUP_TIME} \
+					"/usr/sbin/httpd(\.worker|\.event)? " \
+					"[[ 000 != \$(curl -sI -o /dev/null -w %{http_code} localhost/) ]]"
+				then
 					exit 1
 				fi
 
@@ -1142,7 +1239,10 @@ function test_custom_configuration ()
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd(\.worker)? "; then
+					${STARTUP_TIME} \
+					"/usr/sbin/httpd(\.worker|\.event)? " \
+					"[[ 000 != \$(curl -sI -o /dev/null -w %{http_code} localhost/) ]]"
+				then
 					exit 1
 				fi
 
@@ -1174,7 +1274,10 @@ function test_custom_configuration ()
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd(\.worker)? "; then
+					${STARTUP_TIME} \
+					"/usr/sbin/httpd(\.worker|\.event)? " \
+					"[[ 000 != \$(curl -sI -o /dev/null -w %{http_code} localhost/) ]]"
+				then
 					exit 1
 				fi
 
@@ -1234,7 +1337,10 @@ function test_custom_configuration ()
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd(\.worker)? "; then
+					${STARTUP_TIME} \
+					"/usr/sbin/httpd(\.worker|\.event)? " \
+					"[[ 000 != \$(curl -sI -o /dev/null -w %{http_code} localhost/) ]]"
+				then
 					exit 1
 				fi
 
@@ -1317,7 +1423,10 @@ function test_custom_configuration ()
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd(\.worker)? "; then
+					${STARTUP_TIME} \
+					"/usr/sbin/httpd(\.worker|\.event)? " \
+					"[[ 000 != \$(curl -sI -o /dev/null -w %{http_code} localhost/) ]]"
+				then
 					exit 1
 				fi
 
@@ -1385,7 +1494,10 @@ function test_custom_configuration ()
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd(\.worker)? "; then
+					${STARTUP_TIME} \
+					"/usr/sbin/httpd(\.worker|\.event)? " \
+					"[[ 000 != \$(curl -sI -o /dev/null -w %{http_code} localhost/) ]]"
+				then
 					exit 1
 				fi
 
@@ -1456,7 +1568,10 @@ function test_custom_configuration ()
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd(\.worker)? "; then
+					${STARTUP_TIME} \
+					"/usr/sbin/httpd(\.worker|\.event)? " \
+					"[[ 000 != \$(curl -sI -o /dev/null -w %{http_code} localhost/) ]]"
+				then
 					exit 1
 				fi
 
@@ -1512,7 +1627,10 @@ function test_custom_configuration ()
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd(\.worker)? "; then
+					${STARTUP_TIME} \
+					"/usr/sbin/httpd(\.worker|\.event)? " \
+					"[[ 000 != \$(curl -sI -o /dev/null -w %{http_code} localhost/) ]]"
+				then
 					exit 1
 				fi
 
@@ -1583,7 +1701,10 @@ function test_custom_configuration ()
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd(\.worker)? "; then
+					${STARTUP_TIME} \
+					"/usr/sbin/httpd(\.worker|\.event)? " \
+					"[[ 000 != \$(curl -sI -o /dev/null -w %{http_code} localhost/) ]]"
+				then
 					exit 1
 				fi
 
@@ -1622,7 +1743,10 @@ function test_custom_configuration ()
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd(\.worker)? "; then
+					${STARTUP_TIME} \
+					"/usr/sbin/httpd(\.worker|\.event)? " \
+					"[[ 000 != \$(curl -sI -o /dev/null -w %{http_code} localhost/) ]]"
+				then
 					exit 1
 				fi
 
@@ -1690,7 +1814,10 @@ function test_custom_configuration ()
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd(\.worker)? "; then
+					${STARTUP_TIME} \
+					"/usr/sbin/httpd(\.worker|\.event)? " \
+					"[[ 000 != \$(curl -sI -o /dev/null -w %{http_code} localhost/) ]]"
+				then
 					exit 1
 				fi
 
@@ -1741,7 +1868,10 @@ function test_custom_configuration ()
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd(\.worker)? "; then
+					${STARTUP_TIME} \
+					"/usr/sbin/httpd(\.worker|\.event)? " \
+					"[[ 000 != \$(curl -sI -o /dev/null -w %{http_code} localhost/) ]]"
+				then
 					exit 1
 				fi
 
@@ -1797,7 +1927,10 @@ function test_custom_configuration ()
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd(\.worker)? "; then
+					${STARTUP_TIME} \
+					"/usr/sbin/httpd(\.worker|\.event)? " \
+					"[[ 000 != \$(curl -sI -o /dev/null -w %{http_code} localhost/) ]]"
+				then
 					exit 1
 				fi
 
@@ -1845,7 +1978,10 @@ function test_custom_configuration ()
 
 				if ! __is_container_ready \
 					apache-php.pool-1.1.1 \
-					"/usr/sbin/httpd(\.worker)? "; then
+					${STARTUP_TIME} \
+					"/usr/sbin/httpd(\.worker|\.event)? " \
+					"[[ 000 != \$(curl -sI -o /dev/null -w %{http_code} localhost/) ]]"
+				then
 					exit 1
 				fi
 
@@ -1863,9 +1999,244 @@ function test_custom_configuration ()
 			end
 		end
 
-		__terminate_container \
-			apache-php.pool-1.1.1 \
-		&> /dev/null
+		describe "Configure autostart"
+			__terminate_container \
+				apache-php.pool-1.1.1 \
+			&> /dev/null
+
+			docker run \
+				--detach \
+				--name apache-php.pool-1.1.1 \
+				--env APACHE_AUTOSTART_HTTPD_BOOTSTRAP=false \
+				jdeathe/centos-ssh-apache-php:latest \
+			&> /dev/null
+
+			sleep ${STARTUP_TIME}
+
+			# Healthcheck should fail unless running PHP-FPM without Apache.
+			it "Can disable httpd-bootstrap."
+				docker ps \
+					--format "name=apache-php.pool-1.1.1" \
+				&> /dev/null \
+				&& docker top \
+					apache-php.pool-1.1.1 \
+				| grep -qE '/usr/sbin/httpd(\.worker|\.event)? '
+
+				assert equal \
+					"${?}" \
+					"1"
+			end
+
+			__terminate_container \
+				apache-php.pool-1.1.1 \
+			&> /dev/null
+
+			docker run \
+				--detach \
+				--name apache-php.pool-1.1.1 \
+				--env APACHE_AUTOSTART_HTTPD_WRAPPER=false \
+				jdeathe/centos-ssh-apache-php:latest \
+			&> /dev/null
+
+			sleep ${STARTUP_TIME}
+
+			it "Can disable httpd-wrapper."
+				docker ps \
+					--format "name=apache-php.pool-1.1.1" \
+					--format "health=healthy" \
+				&> /dev/null \
+				&& docker top \
+					apache-php.pool-1.1.1 \
+				| grep -qE '/usr/sbin/httpd(\.worker|\.event)? '
+
+				assert equal \
+					"${?}" \
+					"1"
+			end
+
+			__terminate_container \
+				apache-php.pool-1.1.1 \
+			&> /dev/null
+
+			docker run \
+				--detach \
+				--name apache-php.pool-1.1.1 \
+				--env APACHE_AUTOSTART_PHP_FPM_WRAPPER=false \
+				jdeathe/centos-ssh-apache-php:latest \
+			&> /dev/null
+
+			sleep ${STARTUP_TIME}
+
+			# Healthcheck should fail unless there's a static HTML file to serve up.
+			it "Can disable php-fpm-wrapper."
+				docker ps \
+					--format "name=apache-php.pool-1.1.1" \
+				&> /dev/null \
+				&& docker top \
+					apache-php.pool-1.1.1 \
+				| grep -qE 'php-fpm: pool app-www[ ]*$'
+
+				assert equal \
+					"${?}" \
+					"1"
+			end
+
+			__terminate_container \
+				apache-php.pool-1.1.1 \
+			&> /dev/null
+		end
+
+		describe "PHP memcached session store"
+			__terminate_container \
+				apache-php.pool-1.1.1 \
+			&> /dev/null
+
+			docker run \
+				--detach \
+				--name apache-php.pool-1.1.1 \
+				--publish ${DOCKER_PORT_MAP_TCP_80}:80 \
+				--env PHP_OPTIONS_SESSION_SAVE_HANDLER="memcached" \
+				--env PHP_OPTIONS_SESSION_SAVE_PATH="${session_store_alias}:11211" \
+				jdeathe/centos-ssh-apache-php:latest \
+			&> /dev/null
+
+			docker network connect \
+				${session_store_network} \
+				apache-php.pool-1.1.1
+
+			if ! __is_container_ready \
+				apache-php.pool-1.1.1 \
+				${STARTUP_TIME} \
+				"/usr/sbin/httpd(\.worker|\.event)? " \
+				"[[ 000 != \$(curl -sI -o /dev/null -w %{http_code} localhost/) ]]"
+			then
+				exit 1
+			fi
+
+			# Create scripts that write / read session data.
+			docker exec \
+				apache-php.pool-1.1.1 \
+				mkdir -p -m 750 /opt/app/public_html/session
+
+			docker exec -i \
+				apache-php.pool-1.1.1 \
+				tee \
+					/opt/app/public_html/session/write.php \
+					1> /dev/null \
+					<<-EOT
+			<?php
+				session_start();
+				\$_SESSION['integer'] = 123;
+				\$_SESSION['float'] = 12345.67890;
+				\$_SESSION['string'] = '@memcached:#\$£';
+				session_write_close();
+				var_dump(\$_SESSION);
+			EOT
+
+			docker exec -i \
+				apache-php.pool-1.1.1 \
+				tee \
+					/opt/app/public_html/session/read.php \
+					1> /dev/null \
+					<<-EOT
+			<?php
+				session_start();
+				var_dump(\$_SESSION);
+			EOT
+
+			docker exec \
+				apache-php.pool-1.1.1 \
+				chown -R app:app-www /opt/app/public_html/session
+
+			docker exec \
+				apache-php.pool-1.1.1 \
+				find /opt/app/public_html/session -type d -exec chmod 750 {} +
+
+			docker exec \
+				apache-php.pool-1.1.1 \
+				find /opt/app/public_html/session -type f -exec chmod 640 {} +
+
+			docker restart \
+				apache-php.pool-1.1.1 \
+			&> /dev/null
+
+			if ! __is_container_ready \
+				apache-php.pool-1.1.1 \
+				${STARTUP_TIME} \
+				"/usr/sbin/httpd(\.worker|\.event)? " \
+				"[[ 000 != \$(curl -sI -o /dev/null -w %{http_code} localhost/) ]]"
+			then
+				exit 1
+			fi
+
+			container_port_80="$(
+				__get_container_port \
+					apache-php.pool-1.1.1 \
+					80/tcp
+			)"
+
+			describe "Session Cookies"
+				it "Start empty."
+					curl_session_data_read="$(
+						curl -s \
+							--header 'Host: localhost.localdomain' \
+							--cookie ~/.curl_cookies \
+							--cookie-jar ~/.curl_cookies \
+							http://127.0.0.1:${container_port_80}/session/read.php
+					)"
+
+					assert equal \
+						"${curl_session_data_read}" \
+						'array(0) {
+}'
+				end
+
+				it "Can write data."
+					curl_session_data_write="$(
+						curl -s \
+							--header 'Host: localhost.localdomain' \
+							--cookie ~/.curl_cookies \
+							--cookie-jar ~/.curl_cookies \
+							http://127.0.0.1:${container_port_80}/session/write.php
+					)"
+
+					assert unequal \
+						"${curl_session_data_write}" \
+						""
+				end
+
+				it "Can read data."
+					curl_session_data_read="$(
+						curl -s \
+							--header 'Host: localhost.localdomain' \
+							--cookie ~/.curl_cookies \
+							--cookie-jar ~/.curl_cookies \
+							http://127.0.0.1:${container_port_80}/session/read.php
+					)"
+
+					assert unequal \
+						"${curl_session_data_read}" \
+						""
+				end
+
+				it "Persists data."
+					assert equal \
+						"${curl_session_data_read}" \
+						'array(3) {
+  ["integer"]=>
+  int(123)
+  ["float"]=>
+  float(12345.6789)
+  ["string"]=>
+  string(15) "@memcached:#$£"
+}'
+				end
+			end
+
+			__terminate_container \
+				apache-php.pool-1.1.1 \
+			&> /dev/null
+		end
 
 		trap - \
 			INT TERM EXIT
@@ -1911,7 +2282,7 @@ function test_healthcheck ()
 				awk \
 					-v interval_seconds="${interval_seconds}" \
 					-v startup_time="${STARTUP_TIME}" \
-					'BEGIN { print interval_seconds + startup_time; }'
+					'BEGIN { print 1 + interval_seconds + startup_time; }'
 			)
 
 			it "Returns healthy after startup."

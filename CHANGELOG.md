@@ -6,6 +6,23 @@ Summary of release changes for Version 2.
 
 CentOS-6 6.9 x86_64, Apache 2.4, PHP-FPM 5.6, PHP memcached 2.2, Zend Opcache 7.0.
 
+### 2.2.1 - 2017-09-28
+
+- Updates `php56u` packages to 5.6.31-1.
+- Fixes bootstrap lockfile name to match the one expected by the healthcheck.
+- Adds permissions to restrict access to the healthcheck script.
+- Removes scmi; it's maintained [upstream](https://github.com/jdeathe/centos-ssh/blob/centos-6/src/usr/sbin/scmi).
+- Fixes local port value in scmi install template.
+- Adds use of readonly variables for constants.
+- Adds support for event server MPM in bootstrap.
+- Adds server mpm to the Apache Details logs output.
+- Adds `APACHE_AUTOSTART_HTTPD_BOOTSTRAP` to optionally disable httpd bootstrap.
+- Adds `APACHE_AUTOSTART_HTTPD_WRAPPER` to optionally disable httpd process startup.
+- Adds `APACHE_AUTOSTART_PHP_FPM_WRAPPER` to optionally disable PHP-FPM process startup.
+- Adds `PHP_OPTIONS_SESSION_SAVE_HANDLER` to allow for an external session store.
+- Adds `PHP_OPTIONS_SESSION_SAVE_PATH` to allow for an external session store.
+- Updates source image to [1.8.2 tag](https://github.com/jdeathe/centos-ssh/releases/tag/1.8.2).
+
 ### 2.2.0 - 2017-07-13
 
 - Adds updated `httpd24u` and `php56u` packages to 2.4.27-1 and 5.6.30-2.
