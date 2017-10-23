@@ -6,6 +6,10 @@ Summary of release changes for Version 1.
 
 CentOS-6 6.9 x86_64, Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1.
 
+### 1.10.2 - Unreleased
+
+- Updates `httpd` and `mod_ssl` packages to 2.2.15-60.
+
 ### 1.10.1 - 2017-09-28
 
 - Fixes bootstrap lockfile name to match the one expected by the healthcheck.
