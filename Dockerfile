@@ -15,10 +15,12 @@ ARG PACKAGE_RELEASE_VERSION="0.5.0"
 # Base Apache, PHP
 # -----------------------------------------------------------------------------
 RUN rpm --rebuilddb \
-	&& yum --setopt=tsflags=nodocs -y install \
+	&& yum -y install \
+		--setopt=tsflags=nodocs \
+		--disableplugin=fastestmirror \
 		elinks-0.12-0.21.pre5.el6_3 \
-		httpd-2.2.15-59.el6.centos \
-		mod_ssl-2.2.15-59.el6.centos \
+		httpd-2.2.15-60.el6.centos.6 \
+		mod_ssl-2.2.15-60.el6.centos.6 \
 		php-5.3.3-49.el6 \
 		php-cli-5.3.3-49.el6 \
 		php-zts-5.3.3-49.el6 \
