@@ -19,9 +19,9 @@ RUN rpm --rebuilddb \
 		--setopt=tsflags=nodocs \
 		--disableplugin=fastestmirror \
 		elinks-0.12-0.21.pre5.el6_3 \
-		httpd24u-2.4.27-1.ius.centos6 \
-		httpd24u-tools-2.4.27-1.ius.centos6 \
-		httpd24u-mod_ssl-2.4.27-1.ius.centos6 \
+		httpd24u-2.4.29-1.ius.centos6 \
+		httpd24u-tools-2.4.29-1.ius.centos6 \
+		httpd24u-mod_ssl-2.4.29-1.ius.centos6 \
 		php56u-fpm-5.6.32-2.ius.centos6 \
 		php56u-fpm-httpd-5.6.32-2.ius.centos6 \
 		php56u-cli-5.6.32-2.ius.centos6 \
