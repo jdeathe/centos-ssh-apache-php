@@ -9,6 +9,7 @@ CentOS-6 6.9 x86_64, Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1.
 ### 1.10.2 - Unreleased
 
 - Updates `httpd` and `mod_ssl` packages to 2.2.15-60.
+- Adds a .dockerignore file.
 
 ### 1.10.1 - 2017-09-28
 
