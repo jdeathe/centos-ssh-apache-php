@@ -6,6 +6,13 @@ Summary of release changes for Version 2.
 
 CentOS-6 6.9 x86_64, Apache 2.4, PHP-FPM 5.6, PHP memcached 2.2, Zend Opcache 7.0.
 
+### 2.2.2 - 2017-12-25
+
+- Updates `php56u` packages to 5.6.32-2.
+- Updates `httpd24u` packages to 2.4.29-1.
+- Adds a .dockerignore file.
+- Adds httpoxy mitigation.
+
 ### 2.2.1 - 2017-09-28
 
 - Updates `php56u` packages to 5.6.31-1.
