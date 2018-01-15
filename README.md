@@ -315,7 +315,7 @@ The variable `APACHE_LOAD_MODULES` defines all Apache modules to be loaded from 
 
 ```
 ...
-  --env "APACHE_LOAD_MODULES=authz_user_module log_config_module expires_module deflate_module headers_module setenvif_module mime_module status_module dir_module alias_module rewrite_module"
+  --env "APACHE_LOAD_MODULES=authz_core_module authz_user_module log_config_module expires_module deflate_module filter_module headers_module setenvif_module socache_shmcb_module mime_module status_module dir_module alias_module unixd_module version_module proxy_module proxy_fcgi_module rewrite_module"
 ...
 ```
 
