@@ -11,6 +11,7 @@ CentOS-6 6.9 x86_64, Apache 2.4, PHP-FPM 5.6, PHP memcached 2.2, Zend Opcache 7.
 - Updates `php56u` packages to 5.6.33-1.
 - Updates source image to [1.8.3 tag](https://github.com/jdeathe/centos-ssh/releases/tag/1.8.3).
 - Updates php-hello-world to [0.6.0](https://github.com/jdeathe/php-hello-world/releases/tag/0.6.0).
+- Adds correction to usage instructions for `APACHE_LOAD_MODULES`; the required modules were incorrect in the example.
 
 ### 2.2.2 - 2017-12-25
 
