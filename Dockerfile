@@ -146,6 +146,7 @@ RUN sed \
 		-e 's~^(expose_php = )On$~\1Off~g' \
 		-e 's~^;(realpath_cache_size = ).*$~\14096k~' \
 		-e 's~^;(realpath_cache_ttl = ).*$~\1600~' \
+		-e 's~^;?(session.name = ).*$~\1"${PHP_OPTIONS_SESSION_NAME:-PHPSESSID}"~' \
 		-e 's~^;?(session.save_handler = ).*$~\1"${PHP_OPTIONS_SESSION_SAVE_HANDLER:-files}"~' \
 		-e 's~^;?(session.save_path = ).*$~\1"${PHP_OPTIONS_SESSION_SAVE_PATH:-/var/lib/php/session}"~' \
 		/etc/php.d/00-php.ini.default \
@@ -290,6 +291,7 @@ ENV APACHE_AUTOSTART_HTTPD_BOOTSTRAP=true \
 	APACHE_SYSTEM_USER="app" \
 	PACKAGE_PATH="${PACKAGE_PATH}" \
 	PHP_OPTIONS_DATE_TIMEZONE="UTC" \
+	PHP_OPTIONS_SESSION_NAME="PHPSESSID" \
 	PHP_OPTIONS_SESSION_SAVE_HANDLER="files" \
 	PHP_OPTIONS_SESSION_SAVE_PATH="/var/lib/php/session" \
 	SSH_AUTOSTART_SSHD=false \
