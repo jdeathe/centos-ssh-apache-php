@@ -12,16 +12,16 @@ Apache PHP web server, loading only a minimal set of Apache modules by default. 
 
 ### Tags and respective `Dockerfile` links
 
-- `centos-6-httpd24u-php56u`, `centos-6-httpd24u-php56u-2.2.2`, `2.2.2` [(centos-6-httpd24u-php56u/Dockerfile)](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6-httpd24u-php56u/Dockerfile)
-- `centos-6`, `centos-6-1.10.2`, `1.10.2` [(centos-6/Dockerfile)](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6/Dockerfile)
+- `centos-6-httpd24u-php56u`, `centos-6-httpd24u-php56u-2.2.3`, `2.2.3` [(centos-6-httpd24u-php56u/Dockerfile)](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6-httpd24u-php56u/Dockerfile)
+- `centos-6`, `centos-6-1.10.3`, `1.10.3` [(centos-6/Dockerfile)](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6/Dockerfile)
 
 #### centos-6
 
-The latest CentOS-6 Standard Package based release can be pulled from the `centos-6` Docker tag. It is recommended to select a specific release tag - the convention is `centos-6-1.10.2` or `1.10.2` for the [1.10.2](https://github.com/jdeathe/centos-ssh-apache-php/tree/1.10.2) release tag. This build of [Apache](https://httpd.apache.org/), (httpd CentOS package), uses the mpm_prefork_module and php5_module modules for handling [PHP](http://php.net/).
+The latest CentOS-6 Standard Package based release can be pulled from the `centos-6` Docker tag. It is recommended to select a specific release tag - the convention is `centos-6-1.10.3` or `1.10.3` for the [1.10.3](https://github.com/jdeathe/centos-ssh-apache-php/tree/1.10.3) release tag. This build of [Apache](https://httpd.apache.org/), (httpd CentOS package), uses the mpm_prefork_module and php5_module modules for handling [PHP](http://php.net/).
 
 #### centos-6-httpd24u-php56u
 
-The latest CentOS-6 [IUS](https://ius.io) Apache 2.4, PHP-FPM 5.6 based release can be pulled from the `centos-6-httpd24u-php56u` Docker tag. It is recommended to select a specific release tag - the convention is `centos-6-httpd24u-php56u-2.2.2` or `2.2.2` for the [2.2.2](https://github.com/jdeathe/centos-ssh-apache-php/tree/2.2.2) release tag. This build of [Apache](https://httpd.apache.org/), (httpd24u package), uses the mpm_prefork_module and php-fpm for handling [PHP](http://php.net/). This version has the option of using the worker or event MPM.
+The latest CentOS-6 [IUS](https://ius.io) Apache 2.4, PHP-FPM 5.6 based release can be pulled from the `centos-6-httpd24u-php56u` Docker tag. It is recommended to select a specific release tag - the convention is `centos-6-httpd24u-php56u-2.2.3` or `2.2.3` for the [2.2.3](https://github.com/jdeathe/centos-ssh-apache-php/tree/2.2.3) release tag. This build of [Apache](https://httpd.apache.org/), (httpd24u package), uses the mpm_prefork_module and php-fpm for handling [PHP](http://php.net/). This version has the option of using the worker or event MPM.
 
 Included in the build are the [SCL](https://www.softwarecollections.org/), [EPEL](http://fedoraproject.org/wiki/EPEL) and [IUS](https://ius.io) repositories. Installed packages include [OpenSSH](http://www.openssh.com/portable.html) secure shell, [vim-minimal](http://www.vim.org/), [elinks](http://elinks.or.cz) (for fullstatus support), PHP [Memcached](http://pecl.php.net/package/memcached) are installed along with python-setuptools, [supervisor](http://supervisord.org/) and [supervisor-stdout](https://github.com/coderanger/supervisor-stdout). The `centos-6` "Standard" PHP 5.3 build includes PHP [APC](http://pecl.php.net/package/APC) where Zend Opcache is bundled in  PHP 5.6.
 
@@ -97,10 +97,10 @@ $ docker run \
   --volume /:/media/root \
   --env BASH_ENV="" \
   --env ENV="" \
-  jdeathe/centos-ssh-apache-php:1.10.2 \
+  jdeathe/centos-ssh-apache-php:1.10.3 \
   /usr/sbin/scmi install \
     --chroot=/media/root \
-    --tag=1.10.2 \
+    --tag=1.10.3 \
     --name=apache-php.pool-1.1.1
 ```
 
@@ -115,10 +115,10 @@ $ docker run \
   --volume /:/media/root \
   --env BASH_ENV="" \
   --env ENV="" \
-  jdeathe/centos-ssh-apache-php:1.10.2 \
+  jdeathe/centos-ssh-apache-php:1.10.3 \
   /usr/sbin/scmi uninstall \
     --chroot=/media/root \
-    --tag=1.10.2 \
+    --tag=1.10.3 \
     --name=apache-php.pool-1.1.1
 ```
 
@@ -133,10 +133,10 @@ $ docker run \
   --volume /:/media/root \
   --env BASH_ENV="" \
   --env ENV="" \
-  jdeathe/centos-ssh-apache-php:1.10.2 \
+  jdeathe/centos-ssh-apache-php:1.10.3 \
   /usr/sbin/scmi install \
     --chroot=/media/root \
-    --tag=1.10.2 \
+    --tag=1.10.3 \
     --name=apache-php.pool-1.1.1 \
     --manager=systemd \
     --register \
@@ -145,6 +145,8 @@ $ docker run \
 ```
 
 ##### SCMI Fleet Support
+
+**_Deprecation Notice:_** The fleet project is no longer maintained. The fleet `--manager` option has been deprecated in `scmi`.
 
 If your docker host has systemd, fleetd (and optionally etcd) installed then `scmi` provides a method to schedule the container  to run on the cluster. This provides some additional features for managing a group of instances on a [fleet](https://github.com/coreos/fleet) cluster and has the option to use an etcd backed service registry. To use the fleet method of installation use the `-m` or `--manager` option of `scmi` and to include the optional etcd register companion unit use the `--register` option.
 
@@ -155,7 +157,7 @@ Since release `centos-6-1.7.2` the install template has been added to the image 
 _NOTE:_ A prerequisite of the following examples is that the image has been pulled (or loaded from the release package).
 
 ```
-$ docker pull jdeathe/centos-ssh-apache-php:1.10.2
+$ docker pull jdeathe/centos-ssh-apache-php:1.10.3
 ```
 
 To see detailed information about the image run `scmi` with the `--info` option. To see all available `scmi` options run with the `--help` option.
@@ -164,7 +166,7 @@ To see detailed information about the image run `scmi` with the `--info` option.
 $ eval "sudo -E $(
     docker inspect \
     -f "{{.ContainerConfig.Labels.install}}" \
-    jdeathe/centos-ssh-apache-php:1.10.2
+    jdeathe/centos-ssh-apache-php:1.10.3
   ) --info"
 ```
 
@@ -174,7 +176,7 @@ To perform an installation using the docker name `apache-php.pool-1.2.1` simply 
 $ eval "sudo -E $(
     docker inspect \
     -f "{{.ContainerConfig.Labels.install}}" \
-    jdeathe/centos-ssh-apache-php:1.10.2
+    jdeathe/centos-ssh-apache-php:1.10.3
   ) --name=apache-php.pool-1.2.1"
 ```
 
@@ -184,7 +186,7 @@ To uninstall use the *same command* that was used to install but with the `unins
 $ eval "sudo -E $(
     docker inspect \
     -f "{{.ContainerConfig.Labels.uninstall}}" \
-    jdeathe/centos-ssh-apache-php:1.10.2
+    jdeathe/centos-ssh-apache-php:1.10.3
   ) --name=apache-php.pool-1.2.1"
 ```
 
@@ -197,7 +199,7 @@ To see detailed information about the image run `scmi` with the `--info` option.
 ```
 $ sudo -E atomic install \
   -n apache-php.pool-1.3.1 \
-  jdeathe/centos-ssh-apache-php:1.10.2 \
+  jdeathe/centos-ssh-apache-php:1.10.3 \
   --info
 ```
 
@@ -206,14 +208,14 @@ To perform an installation using the docker name `apache-php.pool-1.3.1` simply 
 ```
 $ sudo -E atomic install \
   -n apache-php.pool-1.3.1 \
-  jdeathe/centos-ssh-apache-php:1.10.2
+  jdeathe/centos-ssh-apache-php:1.10.3
 ```
 
 Alternatively, you could use the `scmi` options `--name` or `-n` for naming the container.
 
 ```
 $ sudo -E atomic install \
-  jdeathe/centos-ssh-apache-php:1.10.2 \
+  jdeathe/centos-ssh-apache-php:1.10.3 \
   --name apache-php.pool-1.3.1
 ```
 
@@ -222,7 +224,7 @@ To uninstall use the *same command* that was used to install but with the `unins
 ```
 $ sudo -E atomic uninstall \
   -n apache-php.pool-1.3.1 \
-  jdeathe/centos-ssh-apache-php:1.10.2
+  jdeathe/centos-ssh-apache-php:1.10.3
 ```
 
 #### Environment Variables
@@ -442,12 +444,15 @@ To set the timezone for the UK and account for British Summer Time you would use
 ...
 ```
 
-##### PHP_OPTIONS_SESSION_SAVE_HANDLER & PHP_OPTIONS_SESSION_SAVE_PATH
+##### PHP_OPTIONS_SESSION_NAME, PHP_OPTIONS_SESSION_SAVE_HANDLER & PHP_OPTIONS_SESSION_SAVE_PATH
 
 Using `PHP_OPTIONS_SESSION_SAVE_HANDLER` and `PHP_OPTIONS_SESSION_SAVE_PATH` together it's possible to configure PHP to use an alternative `session.save_handler` and `session.save_path`. For example if you have a Memcached server running on the host `memcached-server` on the default port `11211` the following configuration will allow session data to be stored in Memcached, allowing session data to be shared between multiple PHP containers.
 
+Using `PHP_OPTIONS_SESSION_NAME` a session name can be defined - otherwise the default name "PHPSESSID" is used. 
+
 ```
 ...
+  --env "PHP_OPTIONS_SESSION_NAME=app-session" \
   --env "PHP_OPTIONS_SESSION_SAVE_HANDLER=memcached" \
   --env "PHP_OPTIONS_SESSION_SAVE_PATH=memcached-server:11211" \
 ...

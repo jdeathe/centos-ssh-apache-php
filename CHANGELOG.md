@@ -6,6 +6,13 @@ Summary of release changes for Version 1.
 
 CentOS-6 6.9 x86_64, Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1.
 
+### 1.10.3 - 2018-01-16
+
+- Updates source image to [1.8.3 tag](https://github.com/jdeathe/centos-ssh/releases/tag/1.8.3).
+- Updates php-hello-world to [0.6.0](https://github.com/jdeathe/php-hello-world/releases/tag/0.6.0).
+- Adds `PHP_OPTIONS_SESSION_NAME` to optionally set PHP session.name.
+- Deprecates use of the fleet `--manager` option in the `scmi` installer.
+
 ### 1.10.2 - 2017-12-25
 
 - Updates `httpd` and `mod_ssl` packages to 2.2.15-60.

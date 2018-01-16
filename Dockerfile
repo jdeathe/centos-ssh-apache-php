@@ -4,12 +4,12 @@
 # CentOS-6, Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1
 #
 # =============================================================================
-FROM jdeathe/centos-ssh:1.8.2
+FROM jdeathe/centos-ssh:1.8.3
 
 # Use the form ([{fqdn}-]{package-name}|[{fqdn}-]{provider-name})
 ARG PACKAGE_NAME="app"
 ARG PACKAGE_PATH="/opt/${PACKAGE_NAME}"
-ARG PACKAGE_RELEASE_VERSION="0.5.0"
+ARG PACKAGE_RELEASE_VERSION="0.6.0"
 
 # -----------------------------------------------------------------------------
 # Base Apache, PHP
@@ -146,6 +146,7 @@ RUN sed \
 		-e 's~^(expose_php = )On$~\1Off~g' \
 		-e 's~^;(realpath_cache_size = ).*$~\14096k~' \
 		-e 's~^;(realpath_cache_ttl = ).*$~\1600~' \
+		-e 's~^;?(session.name = ).*$~\1"${PHP_OPTIONS_SESSION_NAME:-PHPSESSID}"~' \
 		-e 's~^;?(session.save_handler = ).*$~\1"${PHP_OPTIONS_SESSION_SAVE_HANDLER:-files}"~' \
 		-e 's~^;?(session.save_path = ).*$~\1"${PHP_OPTIONS_SESSION_SAVE_PATH:-/var/lib/php/session}"~' \
 		/etc/php.d/00-php.ini.default \
@@ -234,20 +235,18 @@ RUN mkdir -p \
 # Package installation
 # -----------------------------------------------------------------------------
 RUN mkdir -p -m 750 ${PACKAGE_PATH} \
-	&& curl -Lso /tmp/${PACKAGE_NAME}.tar.gz \
-		https://github.com/jdeathe/php-hello-world/archive/${PACKAGE_RELEASE_VERSION}.tar.gz \
-	&& tar -xzpf /tmp/${PACKAGE_NAME}.tar.gz \
-		--strip-components=1 \
-		--exclude="*.gitkeep" \
-		-C ${PACKAGE_PATH} \
-	&& rm -f /tmp/${PACKAGE_NAME}.tar.gz \
+	&& curl -Ls \
+			https://github.com/jdeathe/php-hello-world/archive/${PACKAGE_RELEASE_VERSION}.tar.gz \
+	| tar -xzpf - \
+			--strip-components=1 \
+			--exclude="*.gitkeep" \
+			-C ${PACKAGE_PATH} \
 	&& sed -i \
 		-e 's~^description =.*$~description = "This CentOS / Apache / PHP (Standard) service is running in a container."~' \
 		${PACKAGE_PATH}/etc/views/index.ini \
-	&& sed -ri \
-		-e 's~^;?(session.save_handler = ).*$~\1"${PHP_OPTIONS_SESSION_SAVE_HANDLER:-files}"~' \
-		-e 's~^;?(session.save_path = ).*$~\1"${PHP_OPTIONS_SESSION_SAVE_PATH:-/var/lib/php/session}"~' \
-		${PACKAGE_PATH}/etc/php.d/50-php.ini \
+	&& mv \
+		${PACKAGE_PATH}/public \
+		${PACKAGE_PATH}/public_html \
 	&& $(\
 		if [[ -f /usr/share/php-pecl-apc/apc.php ]]; then \
 			cp \
@@ -292,6 +291,7 @@ ENV APACHE_AUTOSTART_HTTPD_BOOTSTRAP=true \
 	APACHE_SYSTEM_USER="app" \
 	PACKAGE_PATH="${PACKAGE_PATH}" \
 	PHP_OPTIONS_DATE_TIMEZONE="UTC" \
+	PHP_OPTIONS_SESSION_NAME="PHPSESSID" \
 	PHP_OPTIONS_SESSION_SAVE_HANDLER="files" \
 	PHP_OPTIONS_SESSION_SAVE_PATH="/var/lib/php/session" \
 	SSH_AUTOSTART_SSHD=false \
@@ -300,7 +300,7 @@ ENV APACHE_AUTOSTART_HTTPD_BOOTSTRAP=true \
 # -----------------------------------------------------------------------------
 # Set image metadata
 # -----------------------------------------------------------------------------
-ARG RELEASE_VERSION="1.10.2"
+ARG RELEASE_VERSION="1.10.3"
 LABEL \
 	maintainer="James Deathe <james.deathe@gmail.com>" \
 	install="docker run \
