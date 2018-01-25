@@ -9,6 +9,7 @@ CentOS-6 6.9 x86_64, Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1.
 ### 1.10.4 - Unreleased
 
 - Fixes issue with unusable healthcheck error messages.
+- Adds correction to README.md example for usage of `APACHE_ERROR_LOG_LOCATION` and `APACHE_ERROR_LOG_LEVEL`.
 
 ### 1.10.3 - 2018-01-16
 
