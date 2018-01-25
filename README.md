@@ -277,8 +277,8 @@ The Apache ErrorLog can be defined using `APACHE_ERROR_LOG_LOCATION` to set a fi
 
 ```
 ...
-  --env "APACHE_CUSTOM_LOG_LOCATION=/var/log/httpd/error_log" \
-  --env "APACHE_CUSTOM_LOG_FORMAT=error" \
+  --env "APACHE_ERROR_LOG_LOCATION=/var/log/httpd/error_log" \
+  --env "APACHE_ERROR_LOG_LEVEL=error" \
 ...
 ```
 
