@@ -41,9 +41,9 @@ function __last_check_passed ()
 
 function __print_message ()
 {
-	local -r message="${2:-}"
 	local -r type="${1:-}"
 	local -r quiet=${QUIET:-false}
+	local message="${2:-}"
 	local prefix=""
 
 	case "${type}" in
