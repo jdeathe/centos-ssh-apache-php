@@ -6,6 +6,10 @@ Summary of release changes for Version 1.
 
 CentOS-6 6.9 x86_64, Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1.
 
+### 1.10.4 - Unreleased
+
+- Fixes issue with unusable healthcheck error messages.
+
 ### 1.10.3 - 2018-01-16
 
 - Updates source image to [1.8.3 tag](https://github.com/jdeathe/centos-ssh/releases/tag/1.8.3).
