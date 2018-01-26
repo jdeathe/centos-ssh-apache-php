@@ -10,6 +10,7 @@ CentOS-6 6.9 x86_64, Apache 2.4, PHP-FPM 5.6, PHP memcached 2.2, Zend Opcache 7.
 
 - Fixes issue with unusable healthcheck error messages.
 - Adds correction to README.md example for usage of `APACHE_ERROR_LOG_LOCATION` and `APACHE_ERROR_LOG_LEVEL`.
+- Fixes issue with environment variables not getting replaced within PHP files in the default scan directory when a app package is installed that contains no custom PHP drop-in configuration files.
 
 ### 2.2.3 - 2018-01-16
 
