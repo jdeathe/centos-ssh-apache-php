@@ -417,25 +417,49 @@ function load_httpd_conf_scan_files ()
 	fi
 }
 
+function load_php_ini_scan_file ()
+{
+	local FILE_PATH="${1:-}"
+	local SCAN_DIRECTORY="${2:-}"
+
+	if [[ -n ${SCAN_DIRECTORY} ]] \
+		&& [[ -n ${FILE_PATH} ]] \
+		&& [[ -s ${FILE_PATH} ]]
+	then
+		# Replace environment variables
+		printf -- \
+			'%s' \
+			"$(
+				eval \
+					"cat <<-EOF
+						$(<"${FILE_PATH}")
+					EOF" 2> /dev/null
+			)" \
+		> "${SCAN_DIRECTORY}/${FILE_PATH##*/}"
+	fi
+}
+
 function load_php_ini_scan_files ()
 {
 	local FILE_PATH
 	local PACKAGE_PATH="${1:-}"
 	local SCAN_DIRECTORY="/etc/php.d"
 
+	for FILE_PATH in "${SCAN_DIRECTORY}"/*.ini
+	do
+		load_php_ini_scan_file \
+			"${FILE_PATH}" \
+			"${SCAN_DIRECTORY}"
+	done
+
 	if [[ -n ${PACKAGE_PATH} ]] \
-		&& [[ -d ${PACKAGE_PATH}/etc/php.d ]]; then
-		# Replace environment variables to support fcgid php-wrapper
-		for FILE_PATH in /etc/php.d/*.ini "${PACKAGE_PATH}"/etc/php.d/*.ini; do
-			printf -- \
-				'%s' \
-				"$(
-					eval \
-						"cat <<-EOF
-							$(<"${FILE_PATH}")
-						EOF" 2> /dev/null
-				)" \
-			> "${SCAN_DIRECTORY}/${FILE_PATH##*/}"
+		&& [[ -d ${PACKAGE_PATH}/etc/php.d ]]
+	then
+		for FILE_PATH in "${PACKAGE_PATH}/${SCAN_DIRECTORY}"/*.ini
+		do
+			load_php_ini_scan_file \
+				"${FILE_PATH}" \
+				"${SCAN_DIRECTORY}"
 		done
 	fi
 }
