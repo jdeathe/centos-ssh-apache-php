@@ -6,6 +6,14 @@ Summary of release changes for Version 1.
 
 CentOS-6 6.9 x86_64, Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1.
 
+### 1.10.4 - 2018-01-27
+
+- Fixes issue with unusable healthcheck error messages.
+- Adds correction to README.md example for usage of `APACHE_ERROR_LOG_LOCATION` and `APACHE_ERROR_LOG_LEVEL`.
+- Fixes issue with environment variables not getting replaced within PHP files in the default scan directory when a app package is installed that contains no custom PHP drop-in configuration files.
+- Fixes prerequisite test when testing disable wrapper features.
+- Adds exclusion of internal "Docker-Healthcheck" requests from the access log.
+
 ### 1.10.3 - 2018-01-16
 
 - Updates source image to [1.8.3 tag](https://github.com/jdeathe/centos-ssh/releases/tag/1.8.3).
