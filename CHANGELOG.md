@@ -6,7 +6,7 @@ Summary of release changes for Version 2.
 
 CentOS-6 6.9 x86_64, Apache 2.4, PHP-FPM 5.6, PHP memcached 2.2, Zend Opcache 7.0.
 
-### 2.2.4 - Unreleased
+### 2.2.4 - 2018-01-27
 
 - Fixes issue with unusable healthcheck error messages.
 - Adds correction to README.md example for usage of `APACHE_ERROR_LOG_LOCATION` and `APACHE_ERROR_LOG_LEVEL`.
