@@ -123,8 +123,9 @@ RUN sed -i \
 # -----------------------------------------------------------------------------
 # Disable SSL + the default SSL Virtual Host
 # -----------------------------------------------------------------------------
-RUN sed -i \
+RUN sed -ri \
 		-e '/<VirtualHost _default_:443>/,/<\/VirtualHost>/ s~^~#~' \
+		-e 's~(SSLSessionCacheTimeout.*)$~\1\n\nSSLUseStapling on\nSSLStaplingCache shmcb:/var/run/httpd/sslstaplingcache(512000)\nSSLStaplingResponderTimeout 5\nSSLStaplingReturnResponderErrors off~' \
 		/etc/httpd/conf.d/ssl.conf \
 	&& cat \
 		/etc/httpd/conf.d/ssl.conf \
