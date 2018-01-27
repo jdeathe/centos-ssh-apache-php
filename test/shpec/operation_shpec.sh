@@ -698,6 +698,7 @@ function test_custom_configuration ()
 	local curl_session_name=""
 	local header_x_service_operating_mode=""
 	local header_x_service_uid=""
+	local is_up=""
 	local php_date_timezone=""
 	local protocol=""
 
@@ -1999,16 +2000,23 @@ function test_custom_configuration ()
 
 			# Healthcheck should fail unless running PHP-FPM without Apache.
 			it "Can disable httpd-bootstrap."
+				is_up="1"
+
 				docker ps \
-					--format "name=apache-php.pool-1.1.1" \
-				&> /dev/null \
-				&& docker top \
+					--quiet \
+					--filter "name=apache-php.pool-1.1.1" \
+					--filter "health=unhealthy" \
+				&> /dev/null
+				is_up="${?}"
+
+				docker top \
 					apache-php.pool-1.1.1 \
+				&> /dev/null \
 				| grep -qE '/usr/sbin/httpd(\.worker|\.event)? '
 
 				assert equal \
-					"${?}" \
-					"1"
+					"${is_up}:${?}" \
+					"0:1"
 			end
 
 			__terminate_container \
@@ -2025,17 +2033,22 @@ function test_custom_configuration ()
 			sleep ${STARTUP_TIME}
 
 			it "Can disable httpd-wrapper."
+				is_up="1"
+
 				docker ps \
-					--format "name=apache-php.pool-1.1.1" \
-					--format "health=healthy" \
-				&> /dev/null \
-				&& docker top \
+					--filter "name=apache-php.pool-1.1.1" \
+					--filter "health=healthy" \
+				&> /dev/null
+				is_up="${?}"
+
+				docker top \
 					apache-php.pool-1.1.1 \
+				&> /dev/null \
 				| grep -qE '/usr/sbin/httpd(\.worker|\.event)? '
 
 				assert equal \
-					"${?}" \
-					"1"
+					"${is_up}:${?}" \
+					"0:1"
 			end
 
 			__terminate_container \
@@ -2053,16 +2066,22 @@ function test_custom_configuration ()
 
 			# Healthcheck should fail unless there's a static HTML file to serve up.
 			it "Can disable php-fpm-wrapper."
+				is_up="1"
+
 				docker ps \
-					--format "name=apache-php.pool-1.1.1" \
-				&> /dev/null \
-				&& docker top \
+					--filter "name=apache-php.pool-1.1.1" \
+					--filter "health=unhealthy" \
+				&> /dev/null
+				is_up="${?}"
+
+				docker top \
 					apache-php.pool-1.1.1 \
+				&> /dev/null \
 				| grep -qE 'php-fpm: pool app-www[ ]*$'
 
 				assert equal \
-					"${?}" \
-					"1"
+					"${is_up}:${?}" \
+					"0:1"
 			end
 
 			__terminate_container \
