@@ -6,6 +6,11 @@ Summary of release changes for Version 2.
 
 CentOS-6 6.9 x86_64, Apache 2.4, PHP-FPM 5.6, PHP memcached 2.2, Zend Opcache 7.0.
 
+### 2.2.5 - Unreleased
+
+- Updates `httpd24u` packages to 2.4.33-3.
+- Updates `php56u` packages to 5.6.36-1.
+
 ### 2.2.4 - 2018-01-27
 
 - Fixes issue with unusable healthcheck error messages.
