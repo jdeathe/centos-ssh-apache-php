@@ -9,6 +9,7 @@ CentOS-6 6.9 x86_64, Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1.
 ### 1.10.5 - Unreleased
 
 - Updates source image to [1.8.4 tag](https://github.com/jdeathe/centos-ssh/releases/tag/1.8.4).
+- Adds feature to set `APACHE_SSL_CERTIFICATE` via a file path. e.g. Docker Swarm secrets.
 
 ### 1.10.4 - 2018-01-27
 
