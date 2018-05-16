@@ -305,8 +305,8 @@ function get_password ()
 
 function get_ssl_certificate_fingerprint ()
 {
-	local DIGEST="${1:-sha1}"
-	local FILE_PATH="${2:-/etc/services-config/ssl/certs/localhost.crt}"
+	local -r DIGEST="${1:-sha1}"
+	local -r FILE_PATH="${2:-/etc/pki/tls/certs/localhost.crt}"
 	local VALUE
 
 	VALUE="$(
@@ -321,7 +321,6 @@ function get_ssl_certificate_fingerprint ()
 
 	printf -- "%s" "${VALUE}"
 }
-
 
 function is_valid_apache_content_root ()
 {
@@ -363,8 +362,8 @@ function is_valid_apache_public_directory ()
 
 function is_valid_apache_ssl_certificate ()
 {
-	local FILE_PATH="${1:-/etc/services-config/ssl/certs/localhost.crt}"
-	local VALID_PATTERN='^SHA1 Fingerprint='
+	local -r FILE_PATH="${1:-/etc/pki/tls/certs/localhost.crt}"
+	local -r VALID_PATTERN='^SHA1 Fingerprint='
 	local SHA1_FINGERPRINT
 
 	SHA1_FINGERPRINT="$(
@@ -497,7 +496,7 @@ function make_self_signed_san_certificate ()
 	cat \
 		/etc/pki/tls/openssl.cnf \
 		- \
-		<<-CONFIG > /etc/services-config/ssl/certs/localhost.cnf
+		<<-CONFIG > /etc/pki/tls/certs/localhost.cnf
 
 	[ san ]
 	subjectAltName="${SAN:-root@localhost.localdomain}"
@@ -513,9 +512,9 @@ function make_self_signed_san_certificate ()
 		-reqexts san \
 		-extensions san \
 		-subj "/CN=${CN}" \
-		-config /etc/services-config/ssl/certs/localhost.cnf \
-		-keyout /etc/services-config/ssl/certs/localhost.crt \
-		-out /etc/services-config/ssl/certs/localhost.crt
+		-config /etc/pki/tls/certs/localhost.cnf \
+		-keyout /etc/pki/tls/certs/localhost.crt \
+		-out /etc/pki/tls/certs/localhost.crt
 
 }
 
@@ -648,10 +647,9 @@ function set_apache_server_name ()
 
 function set_apache_ssl_certificate ()
 {
-	local -r APACHE_SSL_CERTIFICATE_FILE='/etc/pki/tls/certs/localhost.crt'
+	local -r FILE_PATH='/etc/pki/tls/certs/localhost.crt'
 	local -r BASE64_PATTERN='^[A-Za-z0-9/+=]*$'
 	local -r PLAIN_TEXT_PATTERN='^-----BEGIN '
-	local -r SSL_CERTIFICATE_PATH='/etc/services-config/ssl/certs/localhost.crt'
 	local SSL_CERTIFICATE="${1:-}"
 
 	if [[ -n ${SSL_CERTIFICATE} ]]; then
@@ -663,15 +661,11 @@ function set_apache_ssl_certificate ()
 		fi
 
 		if [[ -s ${SSL_CERTIFICATE} ]] \
-			&& [[ ${SSL_CERTIFICATE} != ${APACHE_SSL_CERTIFICATE_FILE} ]]
+			&& [[ ${SSL_CERTIFICATE} != ${FILE_PATH} ]]
 		then
-			unlink "${APACHE_SSL_CERTIFICATE_FILE}"
 			ln -sf \
 				"${SSL_CERTIFICATE}" \
-				"${APACHE_SSL_CERTIFICATE_FILE}"
-			ln -sf \
-				"${SSL_CERTIFICATE}" \
-				"${SSL_CERTIFICATE_PATH}"
+				"${FILE_PATH}"
 		else
 			if [[ ! ${SSL_CERTIFICATE} =~ ${PLAIN_TEXT_PATTERN} ]]; then
 				printf -- \
@@ -684,11 +678,11 @@ function set_apache_ssl_certificate ()
 			printf \
 				-- '%s' \
 				"${SSL_CERTIFICATE}" \
-			> "${SSL_CERTIFICATE_PATH}"
+			> "${FILE_PATH}"
 		fi
 
 		if ! is_valid_apache_ssl_certificate \
-			"${APACHE_SSL_CERTIFICATE_FILE}"
+			"${FILE_PATH}"
 		then
 			printf -- \
 				'ERROR: Invalid APACHE_SSL_CERTIFICATE\n' \
@@ -796,13 +790,13 @@ load_php_ini_scan_files "${PACKAGE_PATH}"
 
 # Populate SSL certificate file.
 if [[ ${OPTS_APACHE_MOD_SSL_ENABLED} == true ]] \
-	&& [[ -n ${OPTS_APACHE_SSL_CERTIFICATE} ]]; then
-	set_apache_ssl_certificate "${OPTS_APACHE_SSL_CERTIFICATE}"
-fi
-
-# Generate SSL certificate.
-if [[ ${OPTS_APACHE_MOD_SSL_ENABLED} == true ]] \
-	&& [[ ! -f /etc/services-config/ssl/certs/localhost.crt ]]; then
+	&& [[ -n ${OPTS_APACHE_SSL_CERTIFICATE} ]]
+then
+	set_apache_ssl_certificate \
+		"${OPTS_APACHE_SSL_CERTIFICATE}"
+elif [[ ${OPTS_APACHE_MOD_SSL_ENABLED} == true ]] \
+	&& [[ -z ${OPTS_APACHE_SSL_CERTIFICATE} ]]
+then
 	make_self_signed_san_certificate \
 		"${OPTS_APACHE_SERVER_NAME}" \
 		"${OPTS_APACHE_SERVER_ALIAS}" \
