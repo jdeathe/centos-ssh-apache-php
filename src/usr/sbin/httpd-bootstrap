@@ -306,12 +306,13 @@ function get_password ()
 function get_ssl_certificate_fingerprint ()
 {
 	local DIGEST="${1:-sha1}"
+	local FILE_PATH="${2:-/etc/services-config/ssl/certs/localhost.crt}"
 	local VALUE
 
 	VALUE="$(
 		openssl x509 \
 			-"${DIGEST,,}" \
-			-in /etc/services-config/ssl/certs/localhost.crt \
+			-in "${FILE_PATH}" \
 			-noout \
 			-fingerprint
 	)"
@@ -362,6 +363,7 @@ function is_valid_apache_public_directory ()
 
 function is_valid_apache_ssl_certificate ()
 {
+	local FILE_PATH="${1:-/etc/services-config/ssl/certs/localhost.crt}"
 	local VALID_PATTERN='^SHA1 Fingerprint='
 	local SHA1_FINGERPRINT
 
@@ -369,7 +371,7 @@ function is_valid_apache_ssl_certificate ()
 		openssl \
 			x509 \
 			-sha1 \
-			-in /etc/services-config/ssl/certs/localhost.crt \
+			-in "${FILE_PATH}" \
 			-noout \
 			-fingerprint
 	)"
@@ -646,9 +648,11 @@ function set_apache_server_name ()
 
 function set_apache_ssl_certificate ()
 {
+	local -r APACHE_SSL_CERTIFICATE_FILE='/etc/pki/tls/certs/localhost.crt'
+	local -r BASE64_PATTERN='^[A-Za-z0-9/+=]*$'
+	local -r PLAIN_TEXT_PATTERN='^-----BEGIN '
+	local -r SSL_CERTIFICATE_PATH='/etc/services-config/ssl/certs/localhost.crt'
 	local SSL_CERTIFICATE="${1:-}"
-	local PLAIN_TEXT_PATTERN='^-----BEGIN '
-	local BASE64_PATTERN='^[A-Za-z0-9/+=]*$'
 
 	if [[ -n ${SSL_CERTIFICATE} ]]; then
 		# Decode base64 encoded values
@@ -658,21 +662,34 @@ function set_apache_ssl_certificate ()
 			)"
 		fi
 
-		if [[ ! ${SSL_CERTIFICATE} =~ ${PLAIN_TEXT_PATTERN} ]]; then
-			printf -- \
-				'ERROR: Invalid APACHE_SSL_CERTIFICATE\n' \
-				>&2
-			sleep 0.1
-			exit 1
+		if [[ -s ${SSL_CERTIFICATE} ]] \
+			&& [[ ${SSL_CERTIFICATE} != ${APACHE_SSL_CERTIFICATE_FILE} ]]
+		then
+			unlink "${APACHE_SSL_CERTIFICATE_FILE}"
+			ln -sf \
+				"${SSL_CERTIFICATE}" \
+				"${APACHE_SSL_CERTIFICATE_FILE}"
+			ln -sf \
+				"${SSL_CERTIFICATE}" \
+				"${SSL_CERTIFICATE_PATH}"
+		else
+			if [[ ! ${SSL_CERTIFICATE} =~ ${PLAIN_TEXT_PATTERN} ]]; then
+				printf -- \
+					'ERROR: Invalid APACHE_SSL_CERTIFICATE\n' \
+					>&2
+				sleep 0.1
+				exit 1
+			fi
+
+			printf \
+				-- '%s' \
+				"${SSL_CERTIFICATE}" \
+			> "${SSL_CERTIFICATE_PATH}"
 		fi
 
-		printf \
-			-- '%s' \
-			"${SSL_CERTIFICATE}" \
-		> /etc/services-config/ssl/certs/localhost.crt
-
-		if [[ -s /etc/services-config/ssl/certs/localhost.crt ]] \
-			&& ! is_valid_apache_ssl_certificate; then
+		if ! is_valid_apache_ssl_certificate \
+			"${APACHE_SSL_CERTIFICATE_FILE}"
+		then
 			printf -- \
 				'ERROR: Invalid APACHE_SSL_CERTIFICATE\n' \
 				>&2
@@ -750,13 +767,6 @@ else
 fi
 PACKAGE_PATH="${PACKAGE_PATH:-/opt/app}"
 PASSWORD_LENGTH=16
-
-# Get certificate from file if applicable
-if [[ -n ${APACHE_SSL_CERTIFICATE} ]] \
-	&& [[ -s ${APACHE_SSL_CERTIFICATE} ]]
-then
-	APACHE_SSL_CERTIFICATE="$(< "${APACHE_SSL_CERTIFICATE}")"
-fi
 
 OPTS_APACHE_CONTENT_ROOT="$(
 	get_apache_content_root
@@ -952,7 +962,8 @@ if [[ ${OPTS_APACHE_MOD_SSL_ENABLED} == true ]]; then
 	DIGEST=sha1
 	FINGERPRINT="$(
 		get_ssl_certificate_fingerprint \
-			"${DIGEST}"
+			"${DIGEST}" \
+			"/etc/pki/tls/certs/localhost.crt"
 	)"
 
 	printf -v \
