@@ -372,7 +372,7 @@ The public directory is relative to the `APACHE_CONTENT_ROOT` and together they 
 
 ##### APACHE_SSL_CERTIFICATE
 
-The `APACHE_SSL_CERTIFICATE` environment variable is used to define a PEM, (and optionally base64), encoded certificate bundle. Base64 encoding of the PEM file contents is recommended. To make a compatible certificate bundle use the `cat` command to combine the certificate files together.
+The `APACHE_SSL_CERTIFICATE` environment variable is used to define a PEM encoded certificate bundle. To make a compatible certificate bundle use the `cat` command to combine the certificate files together.
 
 ```
 $ cat /usr/share/private/server-key.pem \
@@ -381,6 +381,8 @@ $ cat /usr/share/private/server-key.pem \
   > /usr/share/certs/server-bundle.pem
 ```
 
+Base64 encoding of the PEM file contents is recommended if not using the file path method.
+
 *Note:* The `base64` command on Mac OSX will encode a file without line breaks by default but if using the command on Linux you need to include use the `-w` option to prevent wrapping lines at 80 characters. i.e. `base64 -w 0 -i {certificate-path}`.
 
 ```
@@ -388,6 +390,14 @@ $ cat /usr/share/private/server-key.pem \
   --env "APACHE_SSL_CERTIFICATE=$(
     base64 -i "/usr/share/certs/server-bundle.pem"
   )" \
+...
+```
+
+If set to a valid container file path the value will be read from the file - this allows for setting the value securely when combined with an orchestration feature such as Docker Swarm secrets.
+
+```
+...
+  --env "APACHE_SSL_CERTIFICATE=/run/secrets/apache_ssl_certificate" \
 ...
 ```
 
