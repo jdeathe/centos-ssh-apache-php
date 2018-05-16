@@ -751,6 +751,13 @@ fi
 PACKAGE_PATH="${PACKAGE_PATH:-/opt/app}"
 PASSWORD_LENGTH=16
 
+# Get certificate from file if applicable
+if [[ -n ${APACHE_SSL_CERTIFICATE} ]] \
+	&& [[ -s ${APACHE_SSL_CERTIFICATE} ]]
+then
+	APACHE_SSL_CERTIFICATE="$(< "${APACHE_SSL_CERTIFICATE}")"
+fi
+
 OPTS_APACHE_CONTENT_ROOT="$(
 	get_apache_content_root
 )"

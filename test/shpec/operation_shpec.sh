@@ -1785,11 +1785,7 @@ function test_custom_configuration ()
 					"200"
 			end
 
-			it "Sets static certificate."
-				__terminate_container \
-					apache-php.pool-1.1.1 \
-				&> /dev/null
-
+			describe "Static certificate."
 				if [[ -s /tmp/www.app-1.local.pem ]]; then
 					certificate_fingerprint_file="$(
 						cat \
@@ -1818,52 +1814,112 @@ function test_custom_configuration ()
 					fi
 				fi
 
-				docker run \
-					--detach \
-					--name apache-php.pool-1.1.1 \
-					--publish ${DOCKER_PORT_MAP_TCP_443}:443 \
-					--env APACHE_MOD_SSL_ENABLED="true" \
-					--env APACHE_SERVER_NAME="www.app-1.local" \
-					--env APACHE_SSL_CERTIFICATE="${certificate_pem_base64}" \
-					jdeathe/centos-ssh-apache-php:latest \
-				&> /dev/null
-
-				container_port_443="$(
-					__get_container_port \
+				it "Sets from base64 encoded value."
+					__terminate_container \
 						apache-php.pool-1.1.1 \
-						443/tcp
-				)"
+					&> /dev/null
 
-				if ! __is_container_ready \
-					apache-php.pool-1.1.1 \
-					${STARTUP_TIME} \
-					"/usr/sbin/httpd(\.worker|\.event)? " \
-					"[[ 000 != \$(curl -sI -o /dev/null -w %{http_code} localhost/) ]]"
-				then
-					exit 1
-				fi
+					docker run \
+						--detach \
+						--name apache-php.pool-1.1.1 \
+						--publish ${DOCKER_PORT_MAP_TCP_443}:443 \
+						--env APACHE_MOD_SSL_ENABLED="true" \
+						--env APACHE_SERVER_NAME="www.app-1.local" \
+						--env APACHE_SSL_CERTIFICATE="${certificate_pem_base64}" \
+						jdeathe/centos-ssh-apache-php:latest \
+					&> /dev/null
 
-				certificate_fingerprint_server="$(
-					echo -n \
-					| openssl s_client \
-						-connect 127.0.0.1:${container_port_443} \
-						-CAfile /tmp/www.app-1.local.pem \
-						-nbio \
-						2>&1 \
-					| sed \
-						-n \
-						-e '/^-----BEGIN CERTIFICATE-----$/,/^-----END CERTIFICATE-----$/p' \
-					| openssl \
-						x509 \
-						-fingerprint \
-						-noout \
-					| sed \
-						-e 's~SHA1 Fingerprint=~~'
-				)"
+					container_port_443="$(
+						__get_container_port \
+							apache-php.pool-1.1.1 \
+							443/tcp
+					)"
 
-				assert equal \
-					"${certificate_fingerprint_server}" \
-					"${certificate_fingerprint_file}"
+					if ! __is_container_ready \
+						apache-php.pool-1.1.1 \
+						${STARTUP_TIME} \
+						"/usr/sbin/httpd(\.worker|\.event)? " \
+						"[[ 000 != \$(curl -sI -o /dev/null -w %{http_code} localhost/) ]]"
+					then
+						exit 1
+					fi
+
+					certificate_fingerprint_server="$(
+						echo -n \
+						| openssl s_client \
+							-connect 127.0.0.1:${container_port_443} \
+							-CAfile /tmp/www.app-1.local.pem \
+							-nbio \
+							2>&1 \
+						| sed \
+							-n \
+							-e '/^-----BEGIN CERTIFICATE-----$/,/^-----END CERTIFICATE-----$/p' \
+						| openssl \
+							x509 \
+							-fingerprint \
+							-noout \
+						| sed \
+							-e 's~SHA1 Fingerprint=~~'
+					)"
+
+					assert equal \
+						"${certificate_fingerprint_server}" \
+						"${certificate_fingerprint_file}"
+				end
+
+				it "Sets from file path value."
+					__terminate_container \
+						apache-php.pool-1.1.1 \
+					&> /dev/null
+
+					docker run \
+						--detach \
+						--name apache-php.pool-1.1.1 \
+						--publish ${DOCKER_PORT_MAP_TCP_443}:443 \
+						--env APACHE_MOD_SSL_ENABLED="true" \
+						--env APACHE_SERVER_NAME="www.app-1.local" \
+						--env APACHE_SSL_CERTIFICATE="/var/run/tmp/www.app-1.local.pem" \
+						--volume /tmp:/var/run/tmp:ro \
+						jdeathe/centos-ssh-apache-php:latest \
+					&> /dev/null
+
+					container_port_443="$(
+						__get_container_port \
+							apache-php.pool-1.1.1 \
+							443/tcp
+					)"
+
+					if ! __is_container_ready \
+						apache-php.pool-1.1.1 \
+						${STARTUP_TIME} \
+						"/usr/sbin/httpd(\.worker|\.event)? " \
+						"[[ 000 != \$(curl -sI -o /dev/null -w %{http_code} localhost/) ]]"
+					then
+						exit 1
+					fi
+
+					certificate_fingerprint_server="$(
+						echo -n \
+						| openssl s_client \
+							-connect 127.0.0.1:${container_port_443} \
+							-CAfile /tmp/www.app-1.local.pem \
+							-nbio \
+							2>&1 \
+						| sed \
+							-n \
+							-e '/^-----BEGIN CERTIFICATE-----$/,/^-----END CERTIFICATE-----$/p' \
+						| openssl \
+							x509 \
+							-fingerprint \
+							-noout \
+						| sed \
+							-e 's~SHA1 Fingerprint=~~'
+					)"
+
+					assert equal \
+						"${certificate_fingerprint_server}" \
+						"${certificate_fingerprint_file}"
+				end
 			end
 
 			it "Sets cipher suite."
