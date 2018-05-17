@@ -37,7 +37,7 @@ SSH is not required in order to access a terminal for the running container. The
 $ docker exec -it {docker-name-or-id} bash
 ```
 
-For cases where access to docker exec is not possible the preferred method is to use Command Keys and the nsenter command. See [command-keys.md](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6/command-keys.md) for details on how to set this up.
+For cases where access to docker exec is not possible the preferred method is to use Command Keys and the nsenter command. See [command-keys.md](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6-httpd24u-php56u/command-keys.md) for details on how to set this up.
 
 ## Quick Example
 
@@ -48,12 +48,12 @@ $ docker run -d \
   --name apache-php.pool-1.1.1 \
   -p 8080:80 \
   -e "APACHE_SERVER_NAME=app-1.local" \
-  jdeathe/centos-ssh-apache-php:centos-6
+  jdeathe/centos-ssh-apache-php:centos-6-httpd24u-php56u
 ```
 
 Now point your browser to `http://{docker-host}:8080` where `{docker-host}` is the host name of your docker server and, if all went well, you should see the "Hello, world!" page.
 
-![PHP "Hello, world!" - Chrome screenshot](https://raw.github.com/jdeathe/centos-ssh-apache-php/centos-6/images/php-hello-world-chrome.png)
+![PHP "Hello, world!" - Chrome screenshot](https://raw.github.com/jdeathe/centos-ssh-apache-php/centos-6-httpd24u-php56u/images/php-hello-world-chrome.png)
 
 To be able to access the server using the "app-1.local" domain name you need to add a hosts file entry locally; such that the IP address of the Docker host resolves to the name "app-1.local". Alternatively, you can use the elinks browser installed in the container. Note that because you are using the browser from the container you access the site over port 80.
 
@@ -62,7 +62,7 @@ $ docker exec -it apache-php.pool-1.1.1 \
   elinks http://app-1.local
 ```
 
-![PHP "Hello, world!" - eLinks screenshot](https://raw.github.com/jdeathe/centos-ssh-apache-php/centos-6/images/php-hello-world-elinks.png)
+![PHP "Hello, world!" - eLinks screenshot](https://raw.github.com/jdeathe/centos-ssh-apache-php/centos-6-httpd24u-php56u/images/php-hello-world-elinks.png)
 
 To verify the container is initialised and running successfully by inspecting the container's logs.
 
@@ -70,7 +70,7 @@ To verify the container is initialised and running successfully by inspecting th
 $ docker logs apache-php.pool-1.1.1
 ```
 
-On first run, the bootstrap script, ([/usr/sbin/httpd-bootstrap](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6/usr/sbin/httpd-bootstrap)), will check if the DocumentRoot directory is empty and, if so, will populate it with the example app scripts and app specific configuration files.
+On first run, the bootstrap script, ([/usr/sbin/httpd-bootstrap](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6-httpd24u-php56u/src/usr/sbin/httpd-bootstrap)), will check if the DocumentRoot directory is empty and, if so, will populate it with the example app scripts and app specific configuration files.
 
 The `apachectl` command can be accessed as follows.
 
@@ -82,7 +82,7 @@ $ docker exec -it apache-php.pool-1.1.1 apachectl -h
 
 ### Running
 
-To run the a docker container from this image you can use the standard docker commands. Alternatively, you can use the embedded (Service Container Manager Interface) [scmi](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6/usr/sbin/scmi) that is included in the image since `centos-6-1.7.2` or, if you have a checkout of the [source repository](https://github.com/jdeathe/centos-ssh-apache-php), and have make installed the Makefile provides targets to build, install, start, stop etc. where environment variables can be used to configure the container options and set custom docker run parameters.
+To run the a docker container from this image you can use the standard docker commands. Alternatively, you can use the embedded (Service Container Manager Interface) [scmi](https://github.com/jdeathe/centos-ssh/blob/centos-6/src/usr/sbin/scmi) that is included in the image since `centos-6-1.7.2` or, if you have a checkout of the [source repository](https://github.com/jdeathe/centos-ssh-apache-php), and have make installed the Makefile provides targets to build, install, start, stop etc. where environment variables can be used to configure the container options and set custom docker run parameters.
 
 #### SCMI Installation Examples
 
