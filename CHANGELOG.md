@@ -6,6 +6,14 @@ Summary of release changes for Version 1.
 
 CentOS-6 6.9 x86_64, Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1.
 
+### 1.10.5 - 2018-05-20
+
+- Updates source image to [1.8.4 tag](https://github.com/jdeathe/centos-ssh/releases/tag/1.8.4).
+- Adds feature to set `APACHE_SSL_CERTIFICATE` via a file path. e.g. Docker Swarm secrets.
+- Updates php-hello-world to [0.8.0](https://github.com/jdeathe/php-hello-world/releases/tag/0.8.0).
+- Adds feature to allow `PHP_OPTIONS_SESSION_SAVE_PATH` to be set relative to `APACHE_CONTENT_ROOT` for the files handler.
+- Adds method of setting additional modules with `APACHE_LOAD_MODULES`.
+
 ### 1.10.4 - 2018-01-27
 
 - Fixes issue with unusable healthcheck error messages.

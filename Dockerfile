@@ -4,12 +4,12 @@
 # CentOS-6, Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1
 #
 # =============================================================================
-FROM jdeathe/centos-ssh:1.8.3
+FROM jdeathe/centos-ssh:1.8.4
 
 # Use the form ([{fqdn}-]{package-name}|[{fqdn}-]{provider-name})
 ARG PACKAGE_NAME="app"
 ARG PACKAGE_PATH="/opt/${PACKAGE_NAME}"
-ARG PACKAGE_RELEASE_VERSION="0.6.0"
+ARG PACKAGE_RELEASE_VERSION="0.8.0"
 
 # -----------------------------------------------------------------------------
 # Base Apache, PHP
@@ -217,9 +217,6 @@ RUN mkdir -p \
 		/etc/services-config/ssl/certs/localhost.crt \
 		/etc/pki/tls/certs/localhost.crt \
 	&& ln -sf \
-		/etc/services-config/ssl/private/localhost.key \
-		/etc/pki/tls/private/localhost.key \
-	&& ln -sf \
 		/etc/services-config/supervisor/supervisord.conf \
 		/etc/supervisord.conf \
 	&& ln -sf \
@@ -276,7 +273,7 @@ ENV APACHE_AUTOSTART_HTTPD_BOOTSTRAP=true \
 	APACHE_ERROR_LOG_LEVEL="warn" \
 	APACHE_EXTENDED_STATUS_ENABLED=false \
 	APACHE_HEADER_X_SERVICE_UID="{{HOSTNAME}}" \
-	APACHE_LOAD_MODULES="authz_user_module log_config_module expires_module deflate_module headers_module setenvif_module mime_module status_module dir_module alias_module version_module" \
+	APACHE_LOAD_MODULES="" \
 	APACHE_MOD_SSL_ENABLED=false \
 	APACHE_MPM="prefork" \
 	APACHE_OPERATING_MODE="production" \
@@ -293,14 +290,14 @@ ENV APACHE_AUTOSTART_HTTPD_BOOTSTRAP=true \
 	PHP_OPTIONS_DATE_TIMEZONE="UTC" \
 	PHP_OPTIONS_SESSION_NAME="PHPSESSID" \
 	PHP_OPTIONS_SESSION_SAVE_HANDLER="files" \
-	PHP_OPTIONS_SESSION_SAVE_PATH="/var/lib/php/session" \
+	PHP_OPTIONS_SESSION_SAVE_PATH="var/session" \
 	SSH_AUTOSTART_SSHD=false \
 	SSH_AUTOSTART_SSHD_BOOTSTRAP=false
 
 # -----------------------------------------------------------------------------
 # Set image metadata
 # -----------------------------------------------------------------------------
-ARG RELEASE_VERSION="1.10.4"
+ARG RELEASE_VERSION="1.10.5"
 LABEL \
 	maintainer="James Deathe <james.deathe@gmail.com>" \
 	install="docker run \

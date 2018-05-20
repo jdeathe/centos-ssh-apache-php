@@ -54,6 +54,44 @@ function enable_apache_modules ()
 	local MODULES_ENABLED=""
 	local SED_COMMAND=""
 
+	if [[ -f /etc/httpd/conf.modules.d/00-base.conf ]]; then
+		# Default Apache 2.4 DSO Modules
+		declare -a DEFAULT_MODULE_IDENTIFIERS=(
+			'authz_core_module'
+			'authz_user_module'
+			'log_config_module'
+			'expires_module'
+			'deflate_module'
+			'filter_module'
+			'headers_module'
+			'setenvif_module'
+			'socache_shmcb_module'
+			'mime_module'
+			'status_module'
+			'dir_module'
+			'alias_module'
+			'unixd_module'
+			'version_module'
+			'proxy_module'
+			'proxy_fcgi_module'
+		)
+	else
+		# Default Apache 2.2 DSO Modules
+		declare -a DEFAULT_MODULE_IDENTIFIERS=(
+			'authz_user_module'
+			'log_config_module'
+			'expires_module'
+			'deflate_module'
+			'headers_module'
+			'setenvif_module'
+			'mime_module'
+			'status_module'
+			'dir_module'
+			'alias_module'
+			'version_module'
+		)
+	fi
+
 	# Available DSO Modules
 	declare -a MODULE_IDENTFIERS=(
 		'auth_basic_module'
@@ -121,10 +159,25 @@ function enable_apache_modules ()
 		'unique_id_module'
 	)
 
+	for MODULE_IDENTFIER in "${DEFAULT_MODULE_IDENTIFIERS[@]}"; do
+		# Prevent invalid or unavailable module identifiers
+		if [[ " ${MODULE_IDENTFIERS[@]} " =~ " ${MODULE_IDENTFIER} " ]]; then
+			MODULES_ENABLED+=" - ${MODULE_IDENTFIER}\n"
+			SED_COMMAND+="$(
+				printf -- \
+					" -e 's~^#LoadModule %s ~LoadModule %s ~g'" \
+					"${MODULE_IDENTFIER}" \
+					"${MODULE_IDENTFIER}"
+			)"
+		fi
+	done
+
 	if [[ -n ${MODULES} ]]; then
 		for MODULE_IDENTFIER in ${MODULES}; do
-			# Prevent invalid or unavailable module identifiers
-			if [[ " ${MODULE_IDENTFIERS[@]} " =~ " ${MODULE_IDENTFIER} " ]]; then
+			# Prevent invalid, unavailable or duplicate module identifiers
+			if [[ " ${MODULE_IDENTFIERS[@]} " =~ " ${MODULE_IDENTFIER} " ]] \
+				&& ! [[ " ${DEFAULT_MODULE_IDENTIFIERS[@]} " =~ " ${MODULE_IDENTFIER} " ]]
+			then
 				MODULES_ENABLED+=" - ${MODULE_IDENTFIER}\n"
 				SED_COMMAND+="$(
 					printf -- \
@@ -134,17 +187,17 @@ function enable_apache_modules ()
 				)"
 			fi
 		done
-
-		if [[ -n ${SED_COMMAND} ]]; then
-			eval "$(
-				printf -- \
-					'sed -i %s /etc/httpd/conf/httpd.conf' \
-					"${SED_COMMAND}"
-			)"
-		fi
-
-		printf -- "%b" "${MODULES_ENABLED}"
 	fi
+
+	if [[ -n ${SED_COMMAND} ]]; then
+		eval "$(
+			printf -- \
+				'sed -i %s /etc/httpd/conf/httpd.conf' \
+				"${SED_COMMAND}"
+		)"
+	fi
+
+	printf -- "%b" "${MODULES_ENABLED}"
 }
 
 function get_apache_content_root ()
@@ -208,13 +261,14 @@ function get_password ()
 
 function get_ssl_certificate_fingerprint ()
 {
-	local DIGEST="${1:-sha1}"
+	local -r DIGEST="${1:-sha1}"
+	local -r FILE_PATH="${2:-/etc/pki/tls/certs/localhost.crt}"
 	local VALUE
 
 	VALUE="$(
 		openssl x509 \
 			-"${DIGEST,,}" \
-			-in /etc/services-config/ssl/certs/localhost.crt \
+			-in "${FILE_PATH}" \
 			-noout \
 			-fingerprint
 	)"
@@ -223,7 +277,6 @@ function get_ssl_certificate_fingerprint ()
 
 	printf -- "%s" "${VALUE}"
 }
-
 
 function is_valid_apache_content_root ()
 {
@@ -265,14 +318,15 @@ function is_valid_apache_public_directory ()
 
 function is_valid_apache_ssl_certificate ()
 {
-	local VALID_PATTERN='^SHA1 Fingerprint='
+	local -r FILE_PATH="${1:-/etc/pki/tls/certs/localhost.crt}"
+	local -r VALID_PATTERN='^SHA1 Fingerprint='
 	local SHA1_FINGERPRINT
 
 	SHA1_FINGERPRINT="$(
 		openssl \
 			x509 \
 			-sha1 \
-			-in /etc/services-config/ssl/certs/localhost.crt \
+			-in "${FILE_PATH}" \
 			-noout \
 			-fingerprint
 	)"
@@ -398,7 +452,7 @@ function make_self_signed_san_certificate ()
 	cat \
 		/etc/pki/tls/openssl.cnf \
 		- \
-		<<-CONFIG > /etc/services-config/ssl/certs/localhost.cnf
+		<<-CONFIG > /etc/pki/tls/certs/localhost.cnf
 
 	[ san ]
 	subjectAltName="${SAN:-root@localhost.localdomain}"
@@ -414,9 +468,9 @@ function make_self_signed_san_certificate ()
 		-reqexts san \
 		-extensions san \
 		-subj "/CN=${CN}" \
-		-config /etc/services-config/ssl/certs/localhost.cnf \
-		-keyout /etc/services-config/ssl/certs/localhost.crt \
-		-out /etc/services-config/ssl/certs/localhost.crt
+		-config /etc/pki/tls/certs/localhost.cnf \
+		-keyout /etc/pki/tls/certs/localhost.crt \
+		-out /etc/pki/tls/certs/localhost.crt
 
 }
 
@@ -549,9 +603,10 @@ function set_apache_server_name ()
 
 function set_apache_ssl_certificate ()
 {
+	local -r FILE_PATH='/etc/pki/tls/certs/localhost.crt'
+	local -r BASE64_PATTERN='^[A-Za-z0-9/+=]*$'
+	local -r PLAIN_TEXT_PATTERN='^-----BEGIN '
 	local SSL_CERTIFICATE="${1:-}"
-	local PLAIN_TEXT_PATTERN='^-----BEGIN '
-	local BASE64_PATTERN='^[A-Za-z0-9/+=]*$'
 
 	if [[ -n ${SSL_CERTIFICATE} ]]; then
 		# Decode base64 encoded values
@@ -561,21 +616,30 @@ function set_apache_ssl_certificate ()
 			)"
 		fi
 
-		if [[ ! ${SSL_CERTIFICATE} =~ ${PLAIN_TEXT_PATTERN} ]]; then
-			printf -- \
-				'ERROR: Invalid APACHE_SSL_CERTIFICATE\n' \
-				>&2
-			sleep 0.1
-			exit 1
+		if [[ -s ${SSL_CERTIFICATE} ]] \
+			&& [[ ${SSL_CERTIFICATE} != ${FILE_PATH} ]]
+		then
+			ln -sf \
+				"${SSL_CERTIFICATE}" \
+				"${FILE_PATH}"
+		else
+			if [[ ! ${SSL_CERTIFICATE} =~ ${PLAIN_TEXT_PATTERN} ]]; then
+				printf -- \
+					'ERROR: Invalid APACHE_SSL_CERTIFICATE\n' \
+					>&2
+				sleep 0.1
+				exit 1
+			fi
+
+			printf \
+				-- '%s' \
+				"${SSL_CERTIFICATE}" \
+			> "${FILE_PATH}"
 		fi
 
-		printf \
-			-- '%s' \
-			"${SSL_CERTIFICATE}" \
-		> /etc/services-config/ssl/certs/localhost.crt
-
-		if [[ -s /etc/services-config/ssl/certs/localhost.crt ]] \
-			&& ! is_valid_apache_ssl_certificate; then
+		if ! is_valid_apache_ssl_certificate \
+			"${FILE_PATH}"
+		then
 			printf -- \
 				'ERROR: Invalid APACHE_SSL_CERTIFICATE\n' \
 				>&2
@@ -614,43 +678,6 @@ function update_user_login ()
 
 DEFAULT_SYSTEM_USER=app
 DEFAULT_APACHE_USER=app-www
-if [[ -f /etc/httpd/conf.modules.d/00-base.conf ]]; then
-	# Default Apache 2.4 DSO Modules
-	DEFAULT_APACHE_LOAD_MODULES="
-	 authz_core_module
-	 authz_user_module
-	 log_config_module
-	 expires_module
-	 deflate_module
-	 filter_module
-	 headers_module
-	 setenvif_module
-	 socache_shmcb_module
-	 mime_module
-	 status_module
-	 dir_module
-	 alias_module
-	 unixd_module
-	 version_module
-	 proxy_module
-	 proxy_fcgi_module
-	"
-else
-	# Default Apache 2.2 DSO Modules
-	DEFAULT_APACHE_LOAD_MODULES="
-	 authz_user_module
-	 log_config_module
-	 expires_module
-	 deflate_module
-	 headers_module
-	 setenvif_module
-	 mime_module
-	 status_module
-	 dir_module
-	 alias_module
-	 version_module
-	"
-fi
 PACKAGE_PATH="${PACKAGE_PATH:-/opt/app}"
 PASSWORD_LENGTH=16
 
@@ -664,7 +691,6 @@ OPTS_APACHE_EXTENDED_STATUS_ENABLED="${APACHE_EXTENDED_STATUS_ENABLED:-false}"
 OPTS_APACHE_HEADER_X_SERVICE_UID="$(
 	get_apache_header_x_service_uid
 )"
-OPTS_APACHE_LOAD_MODULES="${APACHE_LOAD_MODULES:-${DEFAULT_APACHE_LOAD_MODULES}}"
 OPTS_APACHE_MOD_SSL_ENABLED="${APACHE_MOD_SSL_ENABLED:-false}"
 OPTS_APACHE_MPM="${APACHE_MPM:-prefork}"
 OPTS_APACHE_RUN_GROUP="${APACHE_RUN_GROUP:-${DEFAULT_APACHE_USER}}"
@@ -682,13 +708,13 @@ load_php_ini_scan_files "${PACKAGE_PATH}"
 
 # Populate SSL certificate file.
 if [[ ${OPTS_APACHE_MOD_SSL_ENABLED} == true ]] \
-	&& [[ -n ${OPTS_APACHE_SSL_CERTIFICATE} ]]; then
-	set_apache_ssl_certificate "${OPTS_APACHE_SSL_CERTIFICATE}"
-fi
-
-# Generate SSL certificate.
-if [[ ${OPTS_APACHE_MOD_SSL_ENABLED} == true ]] \
-	&& [[ ! -f /etc/services-config/ssl/certs/localhost.crt ]]; then
+	&& [[ -n ${OPTS_APACHE_SSL_CERTIFICATE} ]]
+then
+	set_apache_ssl_certificate \
+		"${OPTS_APACHE_SSL_CERTIFICATE}"
+elif [[ ${OPTS_APACHE_MOD_SSL_ENABLED} == true ]] \
+	&& [[ -z ${OPTS_APACHE_SSL_CERTIFICATE} ]]
+then
 	make_self_signed_san_certificate \
 		"${OPTS_APACHE_SERVER_NAME}" \
 		"${OPTS_APACHE_SERVER_ALIAS}" \
@@ -787,7 +813,8 @@ set_apache_server_name "${OPTS_APACHE_SERVER_NAME}" 80
 
 # Enable Apache modules
 APACHE_MODULES_ENABLED=$(
-	enable_apache_modules "${OPTS_APACHE_LOAD_MODULES}" \
+	enable_apache_modules \
+		"${APACHE_LOAD_MODULES}" \
 	| sort
 )
 
@@ -848,7 +875,8 @@ if [[ ${OPTS_APACHE_MOD_SSL_ENABLED} == true ]]; then
 	DIGEST=sha1
 	FINGERPRINT="$(
 		get_ssl_certificate_fingerprint \
-			"${DIGEST}"
+			"${DIGEST}" \
+			"/etc/pki/tls/certs/localhost.crt"
 	)"
 
 	printf -v \
