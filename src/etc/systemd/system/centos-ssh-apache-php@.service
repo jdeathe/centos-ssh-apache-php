@@ -82,7 +82,7 @@ Environment="APACHE_SYSTEM_USER=app"
 Environment="PHP_OPTIONS_DATE_TIMEZONE=UTC"
 Environment="PHP_OPTIONS_SESSION_NAME=PHPSESSID"
 Environment="PHP_OPTIONS_SESSION_SAVE_HANDLER=files"
-Environment="PHP_OPTIONS_SESSION_SAVE_PATH=/var/lib/php/session"
+Environment="PHP_OPTIONS_SESSION_SAVE_PATH=var/session"
 
 # Initialisation: Load image from local storage if available, otherwise pull.
 ExecStartPre=/bin/bash -c \

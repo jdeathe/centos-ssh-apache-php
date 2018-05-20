@@ -262,7 +262,7 @@ from your browser you can then access it with `http://app-1.local:8080` assuming
 
 ##### APACHE_CUSTOM_LOG_LOCATION & APACHE_CUSTOM_LOG_FORMAT
 
-The Apache CustomLog can be defined using `APACHE_CUSTOM_LOG_LOCATION` to set a file | pipe location and `APACHE_CUSTOM_LOG_FORMAT` to specify the required LogFormat nickname.
+The Apache CustomLog can be defined using `APACHE_CUSTOM_LOG_LOCATION` to set a file, (or pipe), location and `APACHE_CUSTOM_LOG_FORMAT` to specify the required LogFormat nickname.
 
 ```
 ...
@@ -271,14 +271,30 @@ The Apache CustomLog can be defined using `APACHE_CUSTOM_LOG_LOCATION` to set a 
 ...
 ```
 
+To set a file path relative to `APACHE_CONTENT_ROOT` the path value should exclude a leading `/`.
+
+```
+...
+  --env "APACHE_CUSTOM_LOG_LOCATION=var/log/httpd_access_log" \
+...
+```
+
 ##### APACHE_ERROR_LOG_LOCATION & APACHE_ERROR_LOG_LEVEL
 
-The Apache ErrorLog can be defined using `APACHE_ERROR_LOG_LOCATION` to set a file | pipe location and `APACHE_ERROR_LOG_LEVEL` to specify the required LogLevel value.
+The Apache ErrorLog can be defined using `APACHE_ERROR_LOG_LOCATION` to set a file, (or pipe), location and `APACHE_ERROR_LOG_LEVEL` to specify the required LogLevel value.
 
 ```
 ...
   --env "APACHE_ERROR_LOG_LOCATION=/var/log/httpd/error_log" \
   --env "APACHE_ERROR_LOG_LEVEL=error" \
+...
+```
+
+To set a file path relative to `APACHE_CONTENT_ROOT` the path value should exclude a leading `/`.
+
+```
+...
+  --env "APACHE_ERROR_LOG_LOCATION=var/log/httpd_error_log" \
 ...
 ```
 
@@ -465,5 +481,14 @@ Using `PHP_OPTIONS_SESSION_NAME` a session name can be defined - otherwise the d
   --env "PHP_OPTIONS_SESSION_NAME=app-session" \
   --env "PHP_OPTIONS_SESSION_SAVE_HANDLER=memcached" \
   --env "PHP_OPTIONS_SESSION_SAVE_PATH=memcached-server:11211" \
+...
+```
+
+If using the files handler, to set a save path relative to `APACHE_CONTENT_ROOT` the path value should exclude a leading `/`.
+
+```
+...
+  --env "PHP_OPTIONS_SESSION_SAVE_HANDLER=files" \
+  --env "PHP_OPTIONS_SESSION_SAVE_PATH=var/session" \
 ...
 ```
