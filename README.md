@@ -329,11 +329,11 @@ The `APACHE_HEADER_X_SERVICE_UID` environmental variable is used to set a respon
 
 ##### APACHE_LOAD_MODULES
 
-The variable `APACHE_LOAD_MODULES` defines all Apache modules to be loaded from `/etc/httpd/conf/http.conf`. The default is the minimum required so you may need to add more as necessary. To add the "mod\_rewrite" Apache Module you would add it's identifier `rewrite_module` to the array as follows.
+By default, the image loads a minimal set of required Apache modules. To load additional modules the `APACHE_LOAD_MODULES` can be used. To load both the `mod_env` and `mod_rewrite` Apache Modules use the respective module identifiers. i.e. `env_module` and `rewrite_module`.
 
 ```
 ...
-  --env "APACHE_LOAD_MODULES=authz_user_module log_config_module expires_module deflate_module headers_module setenvif_module mime_module status_module dir_module alias_module rewrite_module"
+  --env "APACHE_LOAD_MODULES=env_module rewrite_module"
 ...
 ```
 
