@@ -36,8 +36,9 @@ function get_absolute_apache_custom_log_location ()
 	local CONTENT_ROOT
 	local VALUE="${APACHE_CUSTOM_LOG_LOCATION:-}"
 
-	# Set path as absolute relative to content root
-	if [[ -n ${VALUE} ]] && [[ ! ${VALUE} =~ ^[\.]{,2}/ ]]; then
+	if [[ -n ${VALUE} ]] \
+		&& [[ ! ${VALUE} =~ ^[\.]{,2}/ ]]
+	then
 		CONTENT_ROOT="$(
 			get_apache_content_root
 		)"
@@ -59,8 +60,34 @@ function get_absolute_apache_error_log_location ()
 	local CONTENT_ROOT
 	local VALUE="${APACHE_ERROR_LOG_LOCATION:-}"
 
-	# Set path as absolute relative to content root
-	if [[ -n ${VALUE} ]] && [[ ! ${VALUE} =~ ^[\.]{,2}/ ]]; then
+	if [[ -n ${VALUE} ]] \
+		&& [[ ! ${VALUE} =~ ^[\.]{,2}/ ]]
+	then
+		CONTENT_ROOT="$(
+			get_apache_content_root
+		)"
+
+		printf -v \
+			VALUE \
+			-- '%s/%s' \
+			"${CONTENT_ROOT}" \
+			"${VALUE}"
+	fi
+
+	printf -- \
+		'%s' \
+		"${VALUE}"
+}
+
+function get_absolute_php_options_session_save_path ()
+{
+	local CONTENT_ROOT
+	local VALUE="${PHP_OPTIONS_SESSION_SAVE_PATH:-}"
+
+	if [[ ${PHP_OPTIONS_SESSION_SAVE_HANDLER} == files ]] \
+		&& [[ -n ${VALUE} ]] \
+		&& [[ ! ${VALUE} =~ ^[\.]{,2}/ ]]
+	then
 		CONTENT_ROOT="$(
 			get_apache_content_root
 		)"
@@ -82,7 +109,9 @@ function get_apache_content_root ()
 	local DEFAULT_VALUE="${1:-/var/www/app}"
 	local VALUE="${APACHE_CONTENT_ROOT:-}"
 
-	if [[ -z ${VALUE} ]] || ! is_valid_apache_content_root "${VALUE}"; then
+	if [[ -z ${VALUE} ]] \
+		|| ! is_valid_apache_content_root "${VALUE}"
+	then
 		VALUE="${DEFAULT_VALUE}"
 	fi
 
@@ -169,6 +198,9 @@ export APACHE_SERVER_ALIAS="$(
 )"
 export APACHE_SERVER_NAME="$(
 	get_apache_server_name
+)"
+export PHP_OPTIONS_SESSION_SAVE_PATH="$(
+	get_absolute_php_options_session_save_path
 )"
 
 if [[ -n ${@} ]]; then
