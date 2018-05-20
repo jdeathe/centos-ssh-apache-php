@@ -14,6 +14,7 @@ CentOS-6 6.9 x86_64, Apache 2.4, PHP-FPM 5.6, PHP memcached 2.2, Zend Opcache 7.
 - Adds feature to set `APACHE_SSL_CERTIFICATE` via a file path. e.g. Docker Swarm secrets.
 - Updates php-hello-world to [0.8.0](https://github.com/jdeathe/php-hello-world/releases/tag/0.8.0).
 - Adds feature to allow `PHP_OPTIONS_SESSION_SAVE_PATH` to be set relative to `APACHE_CONTENT_ROOT` for the files handler.
+- Adds method of setting additional modules with `APACHE_LOAD_MODULES`.
 
 ### 2.2.4 - 2018-01-27
 
