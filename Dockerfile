@@ -4,12 +4,12 @@
 # CentOS-6, Apache 2.4, PHP-FPM 5.6, PHP memcached 2.2, Zend Opcache 7.0
 #
 # =============================================================================
-FROM jdeathe/centos-ssh:1.8.3
+FROM jdeathe/centos-ssh:1.8.4
 
 # Use the form ([{fqdn}-]{package-name}|[{fqdn}-]{provider-name})
 ARG PACKAGE_NAME="app"
 ARG PACKAGE_PATH="/opt/${PACKAGE_NAME}"
-ARG PACKAGE_RELEASE_VERSION="0.6.0"
+ARG PACKAGE_RELEASE_VERSION="0.8.0"
 
 # -----------------------------------------------------------------------------
 # IUS Apache 2.4, PHP-FPM 5.6
@@ -19,13 +19,13 @@ RUN rpm --rebuilddb \
 		--setopt=tsflags=nodocs \
 		--disableplugin=fastestmirror \
 		elinks-0.12-0.21.pre5.el6_3 \
-		httpd24u-2.4.29-1.ius.centos6 \
-		httpd24u-tools-2.4.29-1.ius.centos6 \
-		httpd24u-mod_ssl-2.4.29-1.ius.centos6 \
-		php56u-fpm-5.6.33-1.ius.centos6 \
-		php56u-fpm-httpd-5.6.33-1.ius.centos6 \
-		php56u-cli-5.6.33-1.ius.centos6 \
-		php56u-opcache-5.6.33-1.ius.centos6 \
+		httpd24u-2.4.33-3.ius.centos6 \
+		httpd24u-tools-2.4.33-3.ius.centos6 \
+		httpd24u-mod_ssl-2.4.33-3.ius.centos6 \
+		php56u-fpm-5.6.36-1.ius.centos6 \
+		php56u-fpm-httpd-5.6.36-1.ius.centos6 \
+		php56u-cli-5.6.36-1.ius.centos6 \
+		php56u-opcache-5.6.36-1.ius.centos6 \
 		php56u-pecl-memcached-2.2.0-6.ius.centos6 \
 	&& yum versionlock add \
 		elinks \
@@ -261,9 +261,6 @@ RUN mkdir -p \
 		/etc/services-config/ssl/certs/localhost.crt \
 		/etc/pki/tls/certs/localhost.crt \
 	&& ln -sf \
-		/etc/services-config/ssl/private/localhost.key \
-		/etc/pki/tls/private/localhost.key \
-	&& ln -sf \
 		/etc/services-config/supervisor/supervisord.conf \
 		/etc/supervisord.conf \
 	&& ln -sf \
@@ -324,7 +321,7 @@ ENV APACHE_AUTOSTART_HTTPD_BOOTSTRAP=true \
 	APACHE_ERROR_LOG_LEVEL="warn" \
 	APACHE_EXTENDED_STATUS_ENABLED=false \
 	APACHE_HEADER_X_SERVICE_UID="{{HOSTNAME}}" \
-	APACHE_LOAD_MODULES="authz_core_module authz_user_module log_config_module expires_module deflate_module filter_module headers_module setenvif_module socache_shmcb_module mime_module status_module dir_module alias_module unixd_module version_module proxy_module proxy_fcgi_module" \
+	APACHE_LOAD_MODULES="" \
 	APACHE_MOD_SSL_ENABLED=false \
 	APACHE_MPM="prefork" \
 	APACHE_OPERATING_MODE="production" \
@@ -341,14 +338,14 @@ ENV APACHE_AUTOSTART_HTTPD_BOOTSTRAP=true \
 	PHP_OPTIONS_DATE_TIMEZONE="UTC" \
 	PHP_OPTIONS_SESSION_NAME="PHPSESSID" \
 	PHP_OPTIONS_SESSION_SAVE_HANDLER="files" \
-	PHP_OPTIONS_SESSION_SAVE_PATH="/var/lib/php/session" \
+	PHP_OPTIONS_SESSION_SAVE_PATH="var/session" \
 	SSH_AUTOSTART_SSHD=false \
 	SSH_AUTOSTART_SSHD_BOOTSTRAP=false
 
 # -----------------------------------------------------------------------------
 # Set image metadata
 # -----------------------------------------------------------------------------
-ARG RELEASE_VERSION="2.2.4"
+ARG RELEASE_VERSION="2.2.5"
 LABEL \
 	maintainer="James Deathe <james.deathe@gmail.com>" \
 	install="docker run \
