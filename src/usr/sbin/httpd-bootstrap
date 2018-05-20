@@ -56,6 +56,44 @@ function enable_apache_modules ()
 	local SED_COMMAND=""
 
 	if [[ -f /etc/httpd/conf.modules.d/00-base.conf ]]; then
+		# Default Apache 2.4 DSO Modules
+		declare -a DEFAULT_MODULE_IDENTIFIERS=(
+			'authz_core_module'
+			'authz_user_module'
+			'log_config_module'
+			'expires_module'
+			'deflate_module'
+			'filter_module'
+			'headers_module'
+			'setenvif_module'
+			'socache_shmcb_module'
+			'mime_module'
+			'status_module'
+			'dir_module'
+			'alias_module'
+			'unixd_module'
+			'version_module'
+			'proxy_module'
+			'proxy_fcgi_module'
+		)
+	else
+		# Default Apache 2.2 DSO Modules
+		declare -a DEFAULT_MODULE_IDENTIFIERS=(
+			'authz_user_module'
+			'log_config_module'
+			'expires_module'
+			'deflate_module'
+			'headers_module'
+			'setenvif_module'
+			'mime_module'
+			'status_module'
+			'dir_module'
+			'alias_module'
+			'version_module'
+		)
+	fi
+
+	if [[ -f /etc/httpd/conf.modules.d/00-base.conf ]]; then
 		# Available Apache 2.4 DSO Modules
 		declare -a MODULE_IDENTFIERS=(
 			'access_compat_module'
@@ -210,10 +248,25 @@ function enable_apache_modules ()
 		)
 	fi
 
+	for MODULE_IDENTFIER in "${DEFAULT_MODULE_IDENTIFIERS[@]}"; do
+		# Prevent invalid or unavailable module identifiers
+		if [[ " ${MODULE_IDENTFIERS[@]} " =~ " ${MODULE_IDENTFIER} " ]]; then
+			MODULES_ENABLED+=" - ${MODULE_IDENTFIER}\n"
+			SED_COMMAND+="$(
+				printf -- \
+					" -e 's~^#LoadModule %s ~LoadModule %s ~g'" \
+					"${MODULE_IDENTFIER}" \
+					"${MODULE_IDENTFIER}"
+			)"
+		fi
+	done
+
 	if [[ -n ${MODULES} ]]; then
 		for MODULE_IDENTFIER in ${MODULES}; do
-			# Prevent invalid or unavailable module identifiers
-			if [[ " ${MODULE_IDENTFIERS[@]} " =~ " ${MODULE_IDENTFIER} " ]]; then
+			# Prevent invalid, unavailable or duplicate module identifiers
+			if [[ " ${MODULE_IDENTFIERS[@]} " =~ " ${MODULE_IDENTFIER} " ]] \
+				&& ! [[ " ${DEFAULT_MODULE_IDENTIFIERS[@]} " =~ " ${MODULE_IDENTFIER} " ]]
+			then
 				MODULES_ENABLED+=" - ${MODULE_IDENTFIER}\n"
 				SED_COMMAND+="$(
 					printf -- \
@@ -223,25 +276,25 @@ function enable_apache_modules ()
 				)"
 			fi
 		done
-
-		if [[ -n ${SED_COMMAND} ]]; then
-
-			for CONF_FILE in 00-base 00-dav 00-lua 00-optional 00-proxy; do
-				if [[ -f /etc/httpd/conf.modules.d/${CONF_FILE}.conf ]]; then
-					CONF_PATHS+=" /etc/httpd/conf.modules.d/${CONF_FILE}.conf"
-				fi
-			done
-
-			eval "$(
-				printf -- \
-					'sed -i %s %s' \
-					"${SED_COMMAND}" \
-					"${CONF_PATHS}"
-			)"
-		fi
-
-		printf -- "%b" "${MODULES_ENABLED}"
 	fi
+
+	if [[ -n ${SED_COMMAND} ]]; then
+
+		for CONF_FILE in 00-base 00-dav 00-lua 00-optional 00-proxy; do
+			if [[ -f /etc/httpd/conf.modules.d/${CONF_FILE}.conf ]]; then
+				CONF_PATHS+=" /etc/httpd/conf.modules.d/${CONF_FILE}.conf"
+			fi
+		done
+
+		eval "$(
+			printf -- \
+				'sed -i %s %s' \
+				"${SED_COMMAND}" \
+				"${CONF_PATHS}"
+		)"
+	fi
+
+	printf -- "%b" "${MODULES_ENABLED}"
 }
 
 function get_apache_content_root ()
@@ -722,43 +775,6 @@ function update_user_login ()
 
 DEFAULT_SYSTEM_USER=app
 DEFAULT_APACHE_USER=app-www
-if [[ -f /etc/httpd/conf.modules.d/00-base.conf ]]; then
-	# Default Apache 2.4 DSO Modules
-	DEFAULT_APACHE_LOAD_MODULES="
-	 authz_core_module
-	 authz_user_module
-	 log_config_module
-	 expires_module
-	 deflate_module
-	 filter_module
-	 headers_module
-	 setenvif_module
-	 socache_shmcb_module
-	 mime_module
-	 status_module
-	 dir_module
-	 alias_module
-	 unixd_module
-	 version_module
-	 proxy_module
-	 proxy_fcgi_module
-	"
-else
-	# Default Apache 2.2 DSO Modules
-	DEFAULT_APACHE_LOAD_MODULES="
-	 authz_user_module
-	 log_config_module
-	 expires_module
-	 deflate_module
-	 headers_module
-	 setenvif_module
-	 mime_module
-	 status_module
-	 dir_module
-	 alias_module
-	 version_module
-	"
-fi
 PACKAGE_PATH="${PACKAGE_PATH:-/opt/app}"
 PASSWORD_LENGTH=16
 
@@ -772,7 +788,6 @@ OPTS_APACHE_EXTENDED_STATUS_ENABLED="${APACHE_EXTENDED_STATUS_ENABLED:-false}"
 OPTS_APACHE_HEADER_X_SERVICE_UID="$(
 	get_apache_header_x_service_uid
 )"
-OPTS_APACHE_LOAD_MODULES="${APACHE_LOAD_MODULES:-${DEFAULT_APACHE_LOAD_MODULES}}"
 OPTS_APACHE_MOD_SSL_ENABLED="${APACHE_MOD_SSL_ENABLED:-false}"
 OPTS_APACHE_MPM="${APACHE_MPM:-prefork}"
 OPTS_APACHE_RUN_GROUP="${APACHE_RUN_GROUP:-${DEFAULT_APACHE_USER}}"
@@ -895,7 +910,8 @@ set_apache_server_name "${OPTS_APACHE_SERVER_NAME}" 80
 
 # Enable Apache modules
 APACHE_MODULES_ENABLED=$(
-	enable_apache_modules "${OPTS_APACHE_LOAD_MODULES}" \
+	enable_apache_modules \
+		"${APACHE_LOAD_MODULES}" \
 	| sort
 )
 
