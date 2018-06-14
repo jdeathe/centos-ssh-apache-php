@@ -18,5 +18,5 @@ SetEnvIfNoCase ^Authorization$ "(.+)" HTTP_AUTHORIZATION=$1
 
 <FilesMatch \.php$>
     #SetHandler "proxy:fcgi://127.0.0.1:9000"
-    SetHandler "proxy:unix:/var/run/php-fpm/www.sock|fcgi://localhost"
+    SetHandler "proxy:unix:/run/php-fpm/www.sock|fcgi://localhost"
 </FilesMatch>

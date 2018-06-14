@@ -1,10 +1,10 @@
 # =============================================================================
 # jdeathe/centos-ssh-apache-php
 #
-# CentOS-6, Apache 2.4, PHP-FPM 5.6, PHP memcached 2.2, Zend Opcache 7.0
+# CentOS-7, Apache 2.4, PHP-FPM 7.2, PHP memcached 3.0, Zend Opcache 7.2
 #
 # =============================================================================
-FROM jdeathe/centos-ssh:1.8.4
+FROM jdeathe/centos-ssh:2.3.2
 
 # Use the form ([{fqdn}-]{package-name}|[{fqdn}-]{provider-name})
 ARG PACKAGE_NAME="app"
@@ -12,25 +12,25 @@ ARG PACKAGE_PATH="/opt/${PACKAGE_NAME}"
 ARG PACKAGE_RELEASE_VERSION="0.8.0"
 
 # -----------------------------------------------------------------------------
-# IUS Apache 2.4, PHP-FPM 5.6
+# IUS Apache 2.4, PHP-FPM 7.2
 # -----------------------------------------------------------------------------
 RUN rpm --rebuilddb \
 	&& yum -y install \
 		--setopt=tsflags=nodocs \
 		--disableplugin=fastestmirror \
-		elinks-0.12-0.21.pre5.el6_3 \
-		httpd24u-2.4.33-3.ius.centos6 \
-		httpd24u-tools-2.4.33-3.ius.centos6 \
-		httpd24u-mod_ssl-2.4.33-3.ius.centos6 \
-		php56u-fpm-5.6.36-1.ius.centos6 \
-		php56u-fpm-httpd-5.6.36-1.ius.centos6 \
-		php56u-cli-5.6.36-1.ius.centos6 \
-		php56u-opcache-5.6.36-1.ius.centos6 \
-		php56u-pecl-memcached-2.2.0-6.ius.centos6 \
+		elinks-0.12-0.37.pre6.el7 \
+		httpd24u-2.4.33-3.ius.centos7 \
+		httpd24u-tools-2.4.33-3.ius.centos7 \
+		httpd24u-mod_ssl-2.4.33-3.ius.centos7 \
+		php72u-cli-7.2.6-1.ius.centos7 \
+		php72u-fpm-7.2.6-1.ius.centos7 \
+		php72u-fpm-httpd-7.2.6-1.ius.centos7 \
+		php72u-opcache-7.2.6-1.ius.centos7 \
+		php72u-pecl-memcached-3.0.4-2.ius.centos7 \
 	&& yum versionlock add \
 		elinks \
 		httpd24u* \
-		php56u* \
+		php72u* \
 	&& rm -rf /var/cache/yum/* \
 	&& yum clean all
 
@@ -118,14 +118,15 @@ RUN sed -i \
 	/etc/httpd/conf.modules.d/00-dav.conf \
 	/etc/httpd/conf.modules.d/00-lua.conf \
 	/etc/httpd/conf.modules.d/00-proxy.conf \
-	/etc/httpd/conf.modules.d/00-ssl.conf
+	/etc/httpd/conf.modules.d/00-ssl.conf \
+	/etc/httpd/conf.modules.d/00-systemd.conf
 
 # -----------------------------------------------------------------------------
 # Disable SSL + the default SSL Virtual Host
 # -----------------------------------------------------------------------------
 RUN sed -ri \
 		-e '/<VirtualHost _default_:443>/,/<\/VirtualHost>/ s~^~#~' \
-		-e 's~(SSLSessionCacheTimeout.*)$~\1\n\nSSLUseStapling on\nSSLStaplingCache shmcb:/var/run/httpd/sslstaplingcache(512000)\nSSLStaplingResponderTimeout 5\nSSLStaplingReturnResponderErrors off~' \
+		-e 's~(SSLSessionCacheTimeout.*)$~\1\n\nSSLUseStapling on\nSSLStaplingCache shmcb:/run/httpd/sslstaplingcache(512000)\nSSLStaplingResponderTimeout 5\nSSLStaplingReturnResponderErrors off~' \
 		/etc/httpd/conf.d/ssl.conf \
 	&& cat \
 		/etc/httpd/conf.d/ssl.conf \
@@ -193,7 +194,7 @@ RUN cp -pf \
 		-e 's~^user = php-fpm$~user = {{APACHE_RUN_USER}}~' \
 		-e 's~^group = php-fpm$~group = {{APACHE_RUN_GROUP}}~' \
 		-e 's~^listen = 127.0.0.1:9000$~;listen = 127.0.0.1:9000~' \
-		-e 's~^;listen = /var/run/php-fpm/www.sock$~listen = /var/run/php-fpm/{{APACHE_RUN_USER}}.sock~' \
+		-e 's~^;listen = /run/php-fpm/www.sock$~listen = /run/php-fpm/{{APACHE_RUN_USER}}.sock~' \
 		-e 's~^;listen.owner = root$~listen.owner = {{APACHE_RUN_USER}}~' \
 		-e 's~^;listen.group = root$~listen.group = {{APACHE_RUN_GROUP}}~' \
 		-e 's~^pm.max_children = 50$~pm.max_children = 64~' \
@@ -345,7 +346,7 @@ ENV APACHE_AUTOSTART_HTTPD_BOOTSTRAP=true \
 # -----------------------------------------------------------------------------
 # Set image metadata
 # -----------------------------------------------------------------------------
-ARG RELEASE_VERSION="2.2.5"
+ARG RELEASE_VERSION="3.0.0"
 LABEL \
 	maintainer="James Deathe <james.deathe@gmail.com>" \
 	install="docker run \
@@ -376,7 +377,7 @@ jdeathe/centos-ssh-apache-php:${RELEASE_VERSION} \
 	org.deathe.license="MIT" \
 	org.deathe.vendor="jdeathe" \
 	org.deathe.url="https://github.com/jdeathe/centos-ssh-apache-php" \
-	org.deathe.description="CentOS-6 6.9 x86_64 - IUS Apache 2.4, IUS PHP-FPM 5.6, PHP memcached 2.2, Zend Opcache 7.0."
+	org.deathe.description="CentOS-7 7.4.1708 x86_64 - IUS Apache 2.4, IUS PHP-FPM 7.2, PHP memcached 3.0, Zend Opcache 7.2."
 
 HEALTHCHECK \
 	--interval=1s \
