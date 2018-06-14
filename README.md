@@ -5,6 +5,7 @@ Docker Image including:
 
 - CentOS-6 6.9 x86_64, Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1.
 - CentOS-6 6.9 x86_64, Apache 2.4, PHP-FPM 5.6, PHP memcached 2.2, Zend Opcache 7.0.
+- CentOS-7 7.4.1708 x86_64, Apache 2.4, PHP-FPM 7.2, PHP memcached 3.0, Zend Opcache 7.2.
 
 Apache PHP web server, loading only a minimal set of Apache modules by default. Supports custom configuration via environment variables.
 
@@ -12,6 +13,7 @@ Apache PHP web server, loading only a minimal set of Apache modules by default. 
 
 ### Tags and respective `Dockerfile` links
 
+- `centos-7-httpd24u-php72u`, `centos-7-httpd24u-php72u-3.0.0`, `3.0.0` [(centos-7-httpd24u-php72u/Dockerfile)](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-7-httpd24u-php72u/Dockerfile)
 - `centos-6-httpd24u-php56u`, `centos-6-httpd24u-php56u-2.2.5`, `2.2.5` [(centos-6-httpd24u-php56u/Dockerfile)](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6-httpd24u-php56u/Dockerfile)
 - `centos-6`, `centos-6-1.10.5`, `1.10.5` [(centos-6/Dockerfile)](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6/Dockerfile)
 
@@ -21,7 +23,11 @@ The latest CentOS-6 Standard Package based release can be pulled from the `cento
 
 #### centos-6-httpd24u-php56u
 
-The latest CentOS-6 [IUS](https://ius.io) Apache 2.4, PHP-FPM 5.6 based release can be pulled from the `centos-6-httpd24u-php56u` Docker tag. It is recommended to select a specific release tag - the convention is `centos-6-httpd24u-php56u-2.2.5` or `2.2.5` for the [2.2.5](https://github.com/jdeathe/centos-ssh-apache-php/tree/2.2.5) release tag. This build of [Apache](https://httpd.apache.org/), (httpd24u package), uses the mpm_prefork_module and php-fpm for handling [PHP](http://php.net/). This version has the option of using the worker or event MPM.
+The latest CentOS-6 [IUS](https://ius.io) Apache 2.4, [IUS](https://ius.io) PHP-FPM 5.6 based release can be pulled from the `centos-6-httpd24u-php56u` Docker tag. It is recommended to select a specific release tag - the convention is `centos-6-httpd24u-php56u-2.2.5` or `2.2.5` for the [2.2.5](https://github.com/jdeathe/centos-ssh-apache-php/tree/2.2.5) release tag. This build of [Apache](https://httpd.apache.org/), (httpd24u package), uses the mpm_prefork_module and php-fpm for handling [PHP](http://php.net/). This version has the option of using the worker or event MPM.
+
+#### centos-7-httpd24u-php72u
+
+The latest CentOS-7 [IUS](https://ius.io) Apache 2.4, [IUS](https://ius.io) PHP-FPM 7.2 based release can be pulled from the `centos-7-httpd24u-php72u` Docker tag. It is recommended to select a specific release tag - the convention is `centos-7-httpd24u-php72u-3.0.0` or `3.0.0` for the [3.0.0](https://github.com/jdeathe/centos-ssh-apache-php/tree/3.0.0) release tag. This build of [Apache](https://httpd.apache.org/), uses the mpm_prefork_module and php-fpm for handling [PHP](http://php.net/). This version has the option of using the worker or event MPM.
 
 Included in the build are the [SCL](https://www.softwarecollections.org/), [EPEL](http://fedoraproject.org/wiki/EPEL) and [IUS](https://ius.io) repositories. Installed packages include [OpenSSH](http://www.openssh.com/portable.html) secure shell, [vim-minimal](http://www.vim.org/), [elinks](http://elinks.or.cz) (for fullstatus support), PHP [Memcached](http://pecl.php.net/package/memcached) are installed along with python-setuptools, [supervisor](http://supervisord.org/) and [supervisor-stdout](https://github.com/coderanger/supervisor-stdout). The `centos-6` "Standard" PHP 5.3 build includes PHP [APC](http://pecl.php.net/package/APC) where Zend Opcache is bundled in  PHP 5.6.
 

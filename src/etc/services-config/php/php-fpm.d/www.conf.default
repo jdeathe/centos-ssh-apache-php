@@ -38,7 +38,7 @@ group = php-fpm
 listen = 127.0.0.1:9000
 ; WARNING: If you switch to a unix socket, you have to grant your webserver user
 ;          access to that socket by setting listen.acl_users to the webserver user.
-;listen = /var/run/php-fpm/www.sock
+;listen = /run/php-fpm/www.sock
 
 ; Set listen(2) backlog.
 ; Default Value: 65535 (-1 on FreeBSD and OpenBSD)

@@ -5,8 +5,8 @@ readonly DOCKER_USER=jdeathe
 readonly DOCKER_IMAGE_NAME=centos-ssh-apache-php
 
 # Tag validation patterns
-readonly DOCKER_IMAGE_TAG_PATTERN='^(latest|centos-[6-7]|centos-6-httpd24u-php56u|(([1-3]|centos-(6-1|6-httpd24u-php56u-2|7-3))\.[0-9]+\.[0-9]+))$'
-readonly DOCKER_IMAGE_RELEASE_TAG_PATTERN='^(1|2|centos-(6-1|6-httpd24u-php56u-2))\.[0-9]+\.[0-9]+$'
+readonly DOCKER_IMAGE_TAG_PATTERN='^(latest|centos-[6-7]|centos-6-httpd24u-php56u|(([1-3]|centos-(6-1|6-httpd24u-php56u-2|7-httpd24u-php72u-3))\.[0-9]+\.[0-9]+))$'
+readonly DOCKER_IMAGE_RELEASE_TAG_PATTERN='^(1|2|3|centos-(6-1|6-httpd24u-php56u-2|7-httpd24u-php72u-3))\.[0-9]+\.[0-9]+$'
 
 # -----------------------------------------------------------------------------
 # Variables
