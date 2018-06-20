@@ -32,7 +32,12 @@ RUN rpm --rebuilddb \
 		httpd24u* \
 		php72u* \
 	&& rm -rf /var/cache/yum/* \
-	&& yum clean all
+	&& yum clean all \
+	&& /bin/find /usr/share \
+		-type f \
+		-regextype posix-extended \
+		-regex '.*\.(jpg|png)$' \
+		-delete
 
 # -----------------------------------------------------------------------------
 # Global Apache configuration changes
