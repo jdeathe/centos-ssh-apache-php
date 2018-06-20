@@ -6,7 +6,7 @@ Summary of release changes for Version 1.
 
 CentOS-6 6.9 x86_64, Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1.
 
-### 1.10.6 - Unreleased
+### 1.10.6 - 2018-06-20
 
 - Updates php-hello-world to [0.9.0](https://github.com/jdeathe/php-hello-world/releases/tag/0.9.0).
 

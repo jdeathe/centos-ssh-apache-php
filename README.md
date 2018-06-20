@@ -5,6 +5,7 @@ Docker Image including:
 
 - CentOS-6 6.9 x86_64, Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1.
 - CentOS-6 6.9 x86_64, Apache 2.4, PHP-FPM 5.6, PHP memcached 2.2, Zend Opcache 7.0.
+- CentOS-7 7.4.1708 x86_64, Apache 2.4, PHP-FPM 7.2, PHP memcached 3.0, Zend Opcache 7.2.
 
 Apache PHP web server, loading only a minimal set of Apache modules by default. Supports custom configuration via environment variables.
 
@@ -12,18 +13,23 @@ Apache PHP web server, loading only a minimal set of Apache modules by default. 
 
 ### Tags and respective `Dockerfile` links
 
-- `centos-6-httpd24u-php56u`, `centos-6-httpd24u-php56u-2.2.5`, `2.2.5` [(centos-6-httpd24u-php56u/Dockerfile)](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6-httpd24u-php56u/Dockerfile)
-- `centos-6`, `centos-6-1.10.5`, `1.10.5` [(centos-6/Dockerfile)](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6/Dockerfile)
+- `centos-7-httpd24u-php72u`, `centos-7-httpd24u-php72u-3.0.1`, `3.0.1` [(centos-7-httpd24u-php72u/Dockerfile)](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-7-httpd24u-php72u/Dockerfile)
+- `centos-6-httpd24u-php56u`, `centos-6-httpd24u-php56u-2.2.6`, `2.2.6` [(centos-6-httpd24u-php56u/Dockerfile)](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6-httpd24u-php56u/Dockerfile)
+- `centos-6`, `centos-6-1.10.6`, `1.10.6` [(centos-6/Dockerfile)](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6/Dockerfile)
 
 #### centos-6
 
-The latest CentOS-6 Standard Package based release can be pulled from the `centos-6` Docker tag. It is recommended to select a specific release tag - the convention is `centos-6-1.10.5` or `1.10.5` for the [1.10.5](https://github.com/jdeathe/centos-ssh-apache-php/tree/1.10.5) release tag. This build of [Apache](https://httpd.apache.org/), (httpd CentOS package), uses the mpm_prefork_module and php5_module modules for handling [PHP](http://php.net/).
+The latest CentOS-6 Standard Package based release can be pulled from the `centos-6` Docker tag. It is recommended to select a specific release tag - the convention is `centos-6-1.10.6` or `1.10.6` for the [1.10.6](https://github.com/jdeathe/centos-ssh-apache-php/tree/1.10.6) release tag. This build of [Apache](https://httpd.apache.org/), (httpd CentOS package), uses the mpm_prefork_module and php5_module modules for handling [PHP](http://php.net/).
 
 #### centos-6-httpd24u-php56u
 
-The latest CentOS-6 [IUS](https://ius.io) Apache 2.4, PHP-FPM 5.6 based release can be pulled from the `centos-6-httpd24u-php56u` Docker tag. It is recommended to select a specific release tag - the convention is `centos-6-httpd24u-php56u-2.2.5` or `2.2.5` for the [2.2.5](https://github.com/jdeathe/centos-ssh-apache-php/tree/2.2.5) release tag. This build of [Apache](https://httpd.apache.org/), (httpd24u package), uses the mpm_prefork_module and php-fpm for handling [PHP](http://php.net/). This version has the option of using the worker or event MPM.
+The latest CentOS-6 [IUS](https://ius.io) Apache 2.4, [IUS](https://ius.io) PHP-FPM 5.6 based release can be pulled from the `centos-6-httpd24u-php56u` Docker tag. It is recommended to select a specific release tag - the convention is `centos-6-httpd24u-php56u-2.2.6` or `2.2.6` for the [2.2.6](https://github.com/jdeathe/centos-ssh-apache-php/tree/2.2.6) release tag. This build of [Apache](https://httpd.apache.org/), (httpd24u package), uses the mpm_prefork_module and php-fpm for handling [PHP](http://php.net/). This version has the option of using the worker or event MPM.
 
-Included in the build are the [SCL](https://www.softwarecollections.org/), [EPEL](http://fedoraproject.org/wiki/EPEL) and [IUS](https://ius.io) repositories. Installed packages include [OpenSSH](http://www.openssh.com/portable.html) secure shell, [vim-minimal](http://www.vim.org/), [elinks](http://elinks.or.cz) (for fullstatus support), PHP [Memcached](http://pecl.php.net/package/memcached) are installed along with python-setuptools, [supervisor](http://supervisord.org/) and [supervisor-stdout](https://github.com/coderanger/supervisor-stdout). The `centos-6` "Standard" PHP 5.3 build includes PHP [APC](http://pecl.php.net/package/APC) where Zend Opcache is bundled in  PHP 5.6.
+#### centos-7-httpd24u-php72u
+
+The latest CentOS-7 [IUS](https://ius.io) Apache 2.4, [IUS](https://ius.io) PHP-FPM 7.2 based release can be pulled from the `centos-7-httpd24u-php72u` Docker tag. It is recommended to select a specific release tag - the convention is `centos-7-httpd24u-php72u-3.0.1` or `3.0.1` for the [3.0.1](https://github.com/jdeathe/centos-ssh-apache-php/tree/3.0.1) release tag. This build of [Apache](https://httpd.apache.org/), uses the mpm_prefork_module and php-fpm for handling [PHP](http://php.net/). This version has the option of using the worker or event MPM.
+
+Included in the build are the [SCL](https://www.softwarecollections.org/), [EPEL](http://fedoraproject.org/wiki/EPEL) and [IUS](https://ius.io) repositories. Installed packages include [OpenSSH](http://www.openssh.com/portable.html) secure shell, [vim-minimal](http://www.vim.org/), [elinks](http://elinks.or.cz) (for fullstatus support), PHP [Memcached](http://pecl.php.net/package/memcached) are installed along with python-setuptools, [supervisor](http://supervisord.org/) and [supervisor-stdout](https://github.com/coderanger/supervisor-stdout). The `centos-6` "Standard" PHP 5.3 build includes PHP [APC](http://pecl.php.net/package/APC) where Zend Opcache is bundled in PHP 5.6 and 7.2.
 
 Supervisor is used to start the httpd (and, if applicable, php-fpm) daemon when a docker container based on this image is run. To enable simple viewing of stdout for the service's subprocess, supervisor-stdout is included. This allows you to see output from the supervisord controlled subprocesses with `docker logs {docker-container-name}`.
 
@@ -37,7 +43,7 @@ SSH is not required in order to access a terminal for the running container. The
 $ docker exec -it {docker-name-or-id} bash
 ```
 
-For cases where access to docker exec is not possible the preferred method is to use Command Keys and the nsenter command. See [command-keys.md](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6-httpd24u-php56u/command-keys.md) for details on how to set this up.
+For cases where access to docker exec is not possible the preferred method is to use Command Keys and the nsenter command. See [command-keys.md](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6/command-keys.md) for details on how to set this up.
 
 ## Quick Example
 
@@ -48,12 +54,12 @@ $ docker run -d \
   --name apache-php.pool-1.1.1 \
   -p 8080:80 \
   -e "APACHE_SERVER_NAME=app-1.local" \
-  jdeathe/centos-ssh-apache-php:centos-6-httpd24u-php56u
+  jdeathe/centos-ssh-apache-php:1.10.6
 ```
 
 Now point your browser to `http://{docker-host}:8080` where `{docker-host}` is the host name of your docker server and, if all went well, you should see the "Hello, world!" page.
 
-![PHP "Hello, world!" - Chrome screenshot](https://raw.github.com/jdeathe/centos-ssh-apache-php/centos-6-httpd24u-php56u/images/php-hello-world-chrome.png)
+![PHP "Hello, world!" - Chrome screenshot](https://raw.github.com/jdeathe/centos-ssh-apache-php/centos-6/images/php-hello-world-chrome.png)
 
 To be able to access the server using the "app-1.local" domain name you need to add a hosts file entry locally; such that the IP address of the Docker host resolves to the name "app-1.local". Alternatively, you can use the elinks browser installed in the container. Note that because you are using the browser from the container you access the site over port 80.
 
@@ -62,7 +68,7 @@ $ docker exec -it apache-php.pool-1.1.1 \
   elinks http://app-1.local
 ```
 
-![PHP "Hello, world!" - eLinks screenshot](https://raw.github.com/jdeathe/centos-ssh-apache-php/centos-6-httpd24u-php56u/images/php-hello-world-elinks.png)
+![PHP "Hello, world!" - eLinks screenshot](https://raw.github.com/jdeathe/centos-ssh-apache-php/centos-6/images/php-hello-world-elinks.png)
 
 To verify the container is initialised and running successfully by inspecting the container's logs.
 
@@ -70,7 +76,7 @@ To verify the container is initialised and running successfully by inspecting th
 $ docker logs apache-php.pool-1.1.1
 ```
 
-On first run, the bootstrap script, ([/usr/sbin/httpd-bootstrap](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6-httpd24u-php56u/src/usr/sbin/httpd-bootstrap)), will check if the DocumentRoot directory is empty and, if so, will populate it with the example app scripts and app specific configuration files.
+On first run, the bootstrap script, ([/usr/sbin/httpd-bootstrap](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6/src/usr/sbin/httpd-bootstrap)), will check if the DocumentRoot directory is empty and, if so, will populate it with the example app scripts and app specific configuration files.
 
 The `apachectl` command can be accessed as follows.
 
@@ -97,10 +103,10 @@ $ docker run \
   --volume /:/media/root \
   --env BASH_ENV="" \
   --env ENV="" \
-  jdeathe/centos-ssh-apache-php:1.10.5 \
+  jdeathe/centos-ssh-apache-php:1.10.6 \
   /usr/sbin/scmi install \
     --chroot=/media/root \
-    --tag=1.10.5 \
+    --tag=1.10.6 \
     --name=apache-php.pool-1.1.1
 ```
 
@@ -115,10 +121,10 @@ $ docker run \
   --volume /:/media/root \
   --env BASH_ENV="" \
   --env ENV="" \
-  jdeathe/centos-ssh-apache-php:1.10.5 \
+  jdeathe/centos-ssh-apache-php:1.10.6 \
   /usr/sbin/scmi uninstall \
     --chroot=/media/root \
-    --tag=1.10.5 \
+    --tag=1.10.6 \
     --name=apache-php.pool-1.1.1
 ```
 
@@ -133,10 +139,10 @@ $ docker run \
   --volume /:/media/root \
   --env BASH_ENV="" \
   --env ENV="" \
-  jdeathe/centos-ssh-apache-php:1.10.5 \
+  jdeathe/centos-ssh-apache-php:1.10.6 \
   /usr/sbin/scmi install \
     --chroot=/media/root \
-    --tag=1.10.5 \
+    --tag=1.10.6 \
     --name=apache-php.pool-1.1.1 \
     --manager=systemd \
     --register \
@@ -157,7 +163,7 @@ Since release `centos-6-1.7.2` the install template has been added to the image 
 _NOTE:_ A prerequisite of the following examples is that the image has been pulled (or loaded from the release package).
 
 ```
-$ docker pull jdeathe/centos-ssh-apache-php:1.10.5
+$ docker pull jdeathe/centos-ssh-apache-php:1.10.6
 ```
 
 To see detailed information about the image run `scmi` with the `--info` option. To see all available `scmi` options run with the `--help` option.
@@ -166,7 +172,7 @@ To see detailed information about the image run `scmi` with the `--info` option.
 $ eval "sudo -E $(
     docker inspect \
     -f "{{.ContainerConfig.Labels.install}}" \
-    jdeathe/centos-ssh-apache-php:1.10.5
+    jdeathe/centos-ssh-apache-php:1.10.6
   ) --info"
 ```
 
@@ -176,7 +182,7 @@ To perform an installation using the docker name `apache-php.pool-1.2.1` simply 
 $ eval "sudo -E $(
     docker inspect \
     -f "{{.ContainerConfig.Labels.install}}" \
-    jdeathe/centos-ssh-apache-php:1.10.5
+    jdeathe/centos-ssh-apache-php:1.10.6
   ) --name=apache-php.pool-1.2.1"
 ```
 
@@ -186,7 +192,7 @@ To uninstall use the *same command* that was used to install but with the `unins
 $ eval "sudo -E $(
     docker inspect \
     -f "{{.ContainerConfig.Labels.uninstall}}" \
-    jdeathe/centos-ssh-apache-php:1.10.5
+    jdeathe/centos-ssh-apache-php:1.10.6
   ) --name=apache-php.pool-1.2.1"
 ```
 
@@ -199,7 +205,7 @@ To see detailed information about the image run `scmi` with the `--info` option.
 ```
 $ sudo -E atomic install \
   -n apache-php.pool-1.3.1 \
-  jdeathe/centos-ssh-apache-php:1.10.5 \
+  jdeathe/centos-ssh-apache-php:1.10.6 \
   --info
 ```
 
@@ -208,14 +214,14 @@ To perform an installation using the docker name `apache-php.pool-1.3.1` simply 
 ```
 $ sudo -E atomic install \
   -n apache-php.pool-1.3.1 \
-  jdeathe/centos-ssh-apache-php:1.10.5
+  jdeathe/centos-ssh-apache-php:1.10.6
 ```
 
 Alternatively, you could use the `scmi` options `--name` or `-n` for naming the container.
 
 ```
 $ sudo -E atomic install \
-  jdeathe/centos-ssh-apache-php:1.10.5 \
+  jdeathe/centos-ssh-apache-php:1.10.6 \
   --name apache-php.pool-1.3.1
 ```
 
@@ -224,7 +230,7 @@ To uninstall use the *same command* that was used to install but with the `unins
 ```
 $ sudo -E atomic uninstall \
   -n apache-php.pool-1.3.1 \
-  jdeathe/centos-ssh-apache-php:1.10.5
+  jdeathe/centos-ssh-apache-php:1.10.6
 ```
 
 #### Environment Variables
@@ -352,7 +358,7 @@ $ docker run -d \
   --env "APACHE_SERVER_NAME=app-1.local" \
   --env "APACHE_MOD_SSL_ENABLED=true" \
   --volume apache-php.pool-1.1.1.data-ssl:/etc/services-config/ssl \
-  jdeathe/centos-ssh-apache-php:centos-6
+  jdeathe/centos-ssh-apache-php:1.10.6
 ```
 
 ##### APACHE_MPM
