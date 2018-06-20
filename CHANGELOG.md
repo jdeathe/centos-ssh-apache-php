@@ -10,6 +10,7 @@ CentOS-7 7.4.1708 x86_64, Apache 2.4, PHP-FPM 7.2, PHP memcached 3.0, Zend Opcac
 
 - Updates php-hello-world to [0.9.0](https://github.com/jdeathe/php-hello-world/releases/tag/0.9.0).
 - Removes ~20MB of image files added by the `centos-logos` package.
+- Fixes links and image tag in the README documentation.
 
 ### 3.0.0 - 2018-06-15
 
