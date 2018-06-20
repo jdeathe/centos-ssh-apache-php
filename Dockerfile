@@ -9,7 +9,7 @@ FROM jdeathe/centos-ssh:2.3.2
 # Use the form ([{fqdn}-]{package-name}|[{fqdn}-]{provider-name})
 ARG PACKAGE_NAME="app"
 ARG PACKAGE_PATH="/opt/${PACKAGE_NAME}"
-ARG PACKAGE_RELEASE_VERSION="0.8.0"
+ARG PACKAGE_RELEASE_VERSION="0.9.0"
 
 # -----------------------------------------------------------------------------
 # IUS Apache 2.4, PHP-FPM 7.2
@@ -32,7 +32,12 @@ RUN rpm --rebuilddb \
 		httpd24u* \
 		php72u* \
 	&& rm -rf /var/cache/yum/* \
-	&& yum clean all
+	&& yum clean all \
+	&& /bin/find /usr/share \
+		-type f \
+		-regextype posix-extended \
+		-regex '.*\.(jpg|png)$' \
+		-delete
 
 # -----------------------------------------------------------------------------
 # Global Apache configuration changes
@@ -346,7 +351,7 @@ ENV APACHE_AUTOSTART_HTTPD_BOOTSTRAP=true \
 # -----------------------------------------------------------------------------
 # Set image metadata
 # -----------------------------------------------------------------------------
-ARG RELEASE_VERSION="3.0.0"
+ARG RELEASE_VERSION="3.0.1"
 LABEL \
 	maintainer="James Deathe <james.deathe@gmail.com>" \
 	install="docker run \
