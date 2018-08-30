@@ -19,13 +19,13 @@ RUN rpm --rebuilddb \
 		--setopt=tsflags=nodocs \
 		--disableplugin=fastestmirror \
 		elinks-0.12-0.37.pre6.el7 \
-		httpd24u-2.4.33-3.ius.centos7 \
-		httpd24u-tools-2.4.33-3.ius.centos7 \
-		httpd24u-mod_ssl-2.4.33-3.ius.centos7 \
-		php72u-cli-7.2.6-1.ius.centos7 \
-		php72u-fpm-7.2.6-1.ius.centos7 \
-		php72u-fpm-httpd-7.2.6-1.ius.centos7 \
-		php72u-opcache-7.2.6-1.ius.centos7 \
+		httpd24u-2.4.34-1.ius.centos7 \
+		httpd24u-tools-2.4.34-1.ius.centos7 \
+		httpd24u-mod_ssl-2.4.34-1.ius.centos7 \
+		php72u-cli-7.2.8-1.ius.centos7 \
+		php72u-fpm-7.2.8-1.ius.centos7 \
+		php72u-fpm-httpd-7.2.8-1.ius.centos7 \
+		php72u-opcache-7.2.8-1.ius.centos7 \
 		php72u-pecl-memcached-3.0.4-2.ius.centos7 \
 	&& yum versionlock add \
 		elinks \
