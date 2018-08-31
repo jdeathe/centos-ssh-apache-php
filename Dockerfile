@@ -19,8 +19,8 @@ RUN rpm --rebuilddb \
 		--setopt=tsflags=nodocs \
 		--disableplugin=fastestmirror \
 		elinks-0.12-0.21.pre5.el6_3 \
-		httpd-2.2.15-60.el6.centos.6 \
-		mod_ssl-2.2.15-60.el6.centos.6 \
+		httpd-2.2.15-69.el6.centos \
+		mod_ssl-2.2.15-69.el6.centos \
 		php-5.3.3-49.el6 \
 		php-cli-5.3.3-49.el6 \
 		php-zts-5.3.3-49.el6 \
