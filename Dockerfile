@@ -9,7 +9,7 @@ FROM jdeathe/centos-ssh:2.4.0
 # Use the form ([{fqdn}-]{package-name}|[{fqdn}-]{provider-name})
 ARG PACKAGE_NAME="app"
 ARG PACKAGE_PATH="/opt/${PACKAGE_NAME}"
-ARG PACKAGE_RELEASE_VERSION="0.9.0"
+ARG PACKAGE_RELEASE_VERSION="0.10.0"
 
 # -----------------------------------------------------------------------------
 # IUS Apache 2.4, PHP-FPM 7.2
