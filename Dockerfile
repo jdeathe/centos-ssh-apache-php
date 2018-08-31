@@ -19,13 +19,13 @@ RUN rpm --rebuilddb \
 		--setopt=tsflags=nodocs \
 		--disableplugin=fastestmirror \
 		elinks-0.12-0.21.pre5.el6_3 \
-		httpd24u-2.4.33-3.ius.centos6 \
-		httpd24u-tools-2.4.33-3.ius.centos6 \
-		httpd24u-mod_ssl-2.4.33-3.ius.centos6 \
-		php56u-fpm-5.6.36-1.ius.centos6 \
-		php56u-fpm-httpd-5.6.36-1.ius.centos6 \
-		php56u-cli-5.6.36-1.ius.centos6 \
-		php56u-opcache-5.6.36-1.ius.centos6 \
+		httpd24u-2.4.34-1.ius.centos6 \
+		httpd24u-mod_ssl-2.4.34-1.ius.centos6 \
+		httpd24u-tools-2.4.34-1.ius.centos6 \
+		php56u-cli-5.6.37-1.ius.centos6 \
+		php56u-fpm-5.6.37-1.ius.centos6 \
+		php56u-fpm-httpd-5.6.37-1.ius.centos6 \
+		php56u-opcache-5.6.37-1.ius.centos6 \
 		php56u-pecl-memcached-2.2.0-6.ius.centos6 \
 	&& yum versionlock add \
 		elinks \
