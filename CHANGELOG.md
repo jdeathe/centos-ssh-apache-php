@@ -12,6 +12,7 @@ CentOS-7 7.5.1804 x86_64, Apache 2.4, PHP-FPM 7.2, PHP memcached 3.0, Zend Opcac
 - Updates `httpd24u` packages to 2.4.34-1.
 - Updates source image to [2.4.0](https://github.com/jdeathe/centos-ssh/releases/tag/2.4.0).
 - Updates php-hello-world to [0.10.0](https://github.com/jdeathe/php-hello-world/releases/tag/0.10.0).
+- Adds web fonts to expires rules.
 
 ### 3.0.1 - 2018-06-20
 
