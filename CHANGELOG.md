@@ -4,7 +4,15 @@
 
 Summary of release changes for Version 1.
 
-CentOS-6 6.9 x86_64, Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1.
+CentOS-6 6.10 x86_64, Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1.
+
+### 1.11.0 - 2018-09-03
+
+- Updates `httpd` packages to 2.2.15-69.
+- Updates source image to [1.9.0](https://github.com/jdeathe/centos-ssh/releases/tag/1.9.0).
+- Updates php-hello-world to [0.10.0](https://github.com/jdeathe/php-hello-world/releases/tag/0.10.0).
+- Adds web fonts to expires rules.
+- Adds FileETag configuration removing INode from the Apache 2.2 default.
 
 ### 1.10.6 - 2018-06-20
 

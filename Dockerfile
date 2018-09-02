@@ -4,12 +4,12 @@
 # CentOS-6, Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1
 #
 # =============================================================================
-FROM jdeathe/centos-ssh:1.8.4
+FROM jdeathe/centos-ssh:1.9.0
 
 # Use the form ([{fqdn}-]{package-name}|[{fqdn}-]{provider-name})
 ARG PACKAGE_NAME="app"
 ARG PACKAGE_PATH="/opt/${PACKAGE_NAME}"
-ARG PACKAGE_RELEASE_VERSION="0.9.0"
+ARG PACKAGE_RELEASE_VERSION="0.10.0"
 
 # -----------------------------------------------------------------------------
 # Base Apache, PHP
@@ -19,8 +19,8 @@ RUN rpm --rebuilddb \
 		--setopt=tsflags=nodocs \
 		--disableplugin=fastestmirror \
 		elinks-0.12-0.21.pre5.el6_3 \
-		httpd-2.2.15-60.el6.centos.6 \
-		mod_ssl-2.2.15-60.el6.centos.6 \
+		httpd-2.2.15-69.el6.centos \
+		mod_ssl-2.2.15-69.el6.centos \
 		php-5.3.3-49.el6 \
 		php-cli-5.3.3-49.el6 \
 		php-zts-5.3.3-49.el6 \
@@ -297,7 +297,7 @@ ENV APACHE_AUTOSTART_HTTPD_BOOTSTRAP=true \
 # -----------------------------------------------------------------------------
 # Set image metadata
 # -----------------------------------------------------------------------------
-ARG RELEASE_VERSION="1.10.6"
+ARG RELEASE_VERSION="1.11.0"
 LABEL \
 	maintainer="James Deathe <james.deathe@gmail.com>" \
 	install="docker run \
@@ -328,7 +328,7 @@ jdeathe/centos-ssh-apache-php:${RELEASE_VERSION} \
 	org.deathe.license="MIT" \
 	org.deathe.vendor="jdeathe" \
 	org.deathe.url="https://github.com/jdeathe/centos-ssh-apache-php" \
-	org.deathe.description="CentOS-6 6.9 x86_64 - Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1."
+	org.deathe.description="CentOS-6 6.10 x86_64 - Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1."
 
 HEALTHCHECK \
 	--interval=1s \
