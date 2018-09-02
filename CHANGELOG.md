@@ -6,7 +6,7 @@ Summary of release changes for Version 3.
 
 CentOS-7 7.5.1804 x86_64, Apache 2.4, PHP-FPM 7.2, PHP memcached 3.0, Zend Opcache 7.2.
 
-### 3.1.0 - Unreleased
+### 3.1.0 - 2018-09-03
 
 - Updates `php72u` packages to 7.2.8-1.
 - Updates `httpd24u` packages to 2.4.34-1.
