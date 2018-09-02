@@ -4,12 +4,12 @@
 # CentOS-7, Apache 2.4, PHP-FPM 7.2, PHP memcached 3.0, Zend Opcache 7.2
 #
 # =============================================================================
-FROM jdeathe/centos-ssh:2.3.2
+FROM jdeathe/centos-ssh:2.4.0
 
 # Use the form ([{fqdn}-]{package-name}|[{fqdn}-]{provider-name})
 ARG PACKAGE_NAME="app"
 ARG PACKAGE_PATH="/opt/${PACKAGE_NAME}"
-ARG PACKAGE_RELEASE_VERSION="0.9.0"
+ARG PACKAGE_RELEASE_VERSION="0.10.0"
 
 # -----------------------------------------------------------------------------
 # IUS Apache 2.4, PHP-FPM 7.2
@@ -19,13 +19,13 @@ RUN rpm --rebuilddb \
 		--setopt=tsflags=nodocs \
 		--disableplugin=fastestmirror \
 		elinks-0.12-0.37.pre6.el7 \
-		httpd24u-2.4.33-3.ius.centos7 \
-		httpd24u-tools-2.4.33-3.ius.centos7 \
-		httpd24u-mod_ssl-2.4.33-3.ius.centos7 \
-		php72u-cli-7.2.6-1.ius.centos7 \
-		php72u-fpm-7.2.6-1.ius.centos7 \
-		php72u-fpm-httpd-7.2.6-1.ius.centos7 \
-		php72u-opcache-7.2.6-1.ius.centos7 \
+		httpd24u-2.4.34-1.ius.centos7 \
+		httpd24u-tools-2.4.34-1.ius.centos7 \
+		httpd24u-mod_ssl-2.4.34-1.ius.centos7 \
+		php72u-cli-7.2.8-1.ius.centos7 \
+		php72u-fpm-7.2.8-1.ius.centos7 \
+		php72u-fpm-httpd-7.2.8-1.ius.centos7 \
+		php72u-opcache-7.2.8-1.ius.centos7 \
 		php72u-pecl-memcached-3.0.4-2.ius.centos7 \
 	&& yum versionlock add \
 		elinks \
@@ -351,7 +351,7 @@ ENV APACHE_AUTOSTART_HTTPD_BOOTSTRAP=true \
 # -----------------------------------------------------------------------------
 # Set image metadata
 # -----------------------------------------------------------------------------
-ARG RELEASE_VERSION="3.0.1"
+ARG RELEASE_VERSION="3.1.0"
 LABEL \
 	maintainer="James Deathe <james.deathe@gmail.com>" \
 	install="docker run \
@@ -382,7 +382,7 @@ jdeathe/centos-ssh-apache-php:${RELEASE_VERSION} \
 	org.deathe.license="MIT" \
 	org.deathe.vendor="jdeathe" \
 	org.deathe.url="https://github.com/jdeathe/centos-ssh-apache-php" \
-	org.deathe.description="CentOS-7 7.4.1708 x86_64 - IUS Apache 2.4, IUS PHP-FPM 7.2, PHP memcached 3.0, Zend Opcache 7.2."
+	org.deathe.description="CentOS-7 7.5.1804 x86_64 - IUS Apache 2.4, IUS PHP-FPM 7.2, PHP memcached 3.0, Zend Opcache 7.2."
 
 HEALTHCHECK \
 	--interval=1s \
