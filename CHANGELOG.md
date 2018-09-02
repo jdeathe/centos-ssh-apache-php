@@ -6,7 +6,7 @@ Summary of release changes for Version 1.
 
 CentOS-6 6.10 x86_64, Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1.
 
-### 1.11.0 - Unreleased
+### 1.11.0 - 2018-09-03
 
 - Updates `httpd` packages to 2.2.15-69.
 - Updates source image to [1.9.0](https://github.com/jdeathe/centos-ssh/releases/tag/1.9.0).
