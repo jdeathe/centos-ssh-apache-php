@@ -10,6 +10,7 @@ CentOS-6 6.10 x86_64, Apache 2.4, PHP-FPM 5.6, PHP memcached 2.2, Zend Opcache 7
 
 - Updates `php56u` packages to 5.6.38-1.
 - Updates `httpd24u` packages to 2.4.35-1.
+- Adds improved example of `apachectl` usage via docker exec.
 
 ### 2.3.0 - 2018-09-03
 
