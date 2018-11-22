@@ -81,7 +81,8 @@ On first run, the bootstrap script, ([/usr/sbin/httpd-bootstrap](https://github.
 The `apachectl` command can be accessed as follows.
 
 ```
-$ docker exec -it apache-php.pool-1.1.1 apachectl -h
+$ docker exec -it apache-php.pool-1.1.1 \
+	bash -c "apachectl -h"
 ```
 
 ## Instructions
