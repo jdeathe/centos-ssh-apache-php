@@ -4,7 +4,7 @@
 # CentOS-7, Apache 2.4, PHP-FPM 7.2, PHP memcached 3.0, Zend Opcache 7.2
 #
 # =============================================================================
-FROM jdeathe/centos-ssh:2.4.0
+FROM jdeathe/centos-ssh:2.4.1
 
 # Use the form ([{fqdn}-]{package-name}|[{fqdn}-]{provider-name})
 ARG PACKAGE_NAME="app"
