@@ -8,6 +8,8 @@ CentOS-7 7.5.1804 x86_64, Apache 2.4, PHP-FPM 7.2, PHP memcached 3.0, Zend Opcac
 
 ### 3.1.1 - Unreleased
 
+- Updates `php72u` packages to 7.2.11-1.
+- Updates `httpd24u` packages to 2.4.35-1.
 - Adds improved example of `apachectl` usage via docker exec.
 
 ### 3.1.0 - 2018-09-03
