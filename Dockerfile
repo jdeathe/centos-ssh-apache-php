@@ -27,6 +27,7 @@ RUN rpm --rebuilddb \
 		php72u-fpm-httpd-7.2.11-1.ius.centos7 \
 		php72u-opcache-7.2.11-1.ius.centos7 \
 		php72u-pecl-memcached-3.0.4-2.ius.centos7 \
+		php72u-pecl-redis-3.1.6-2.ius.centos7 \
 	&& yum versionlock add \
 		elinks \
 		httpd24u* \
