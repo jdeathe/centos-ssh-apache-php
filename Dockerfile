@@ -26,6 +26,7 @@ RUN rpm --rebuilddb \
 		php-zts-5.3.3-49.el6 \
 		php-pecl-apc-3.1.9-2.el6 \
 		php-pecl-memcached-1.0.0-1.el6 \
+		php-pecl-redis-2.2.8-1.el6 \
 	&& yum versionlock add \
 		elinks \
 		httpd \
