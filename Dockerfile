@@ -9,7 +9,7 @@ FROM jdeathe/centos-ssh:2.4.1
 # Use the form ([{fqdn}-]{package-name}|[{fqdn}-]{provider-name})
 ARG PACKAGE_NAME="app"
 ARG PACKAGE_PATH="/opt/${PACKAGE_NAME}"
-ARG PACKAGE_RELEASE_VERSION="0.10.0"
+ARG PACKAGE_RELEASE_VERSION="0.11.0"
 
 # -----------------------------------------------------------------------------
 # IUS Apache 2.4, PHP-FPM 7.2
@@ -22,10 +22,11 @@ RUN rpm --rebuilddb \
 		httpd24u-2.4.35-1.ius.centos7 \
 		httpd24u-tools-2.4.35-1.ius.centos7 \
 		httpd24u-mod_ssl-2.4.35-1.ius.centos7 \
-		php72u-cli-7.2.11-1.ius.centos7 \
-		php72u-fpm-7.2.11-1.ius.centos7 \
-		php72u-fpm-httpd-7.2.11-1.ius.centos7 \
-		php72u-opcache-7.2.11-1.ius.centos7 \
+		php72u-cli-7.2.12-1.ius.centos7 \
+		php72u-common-7.2.12-1.ius.centos7 \
+		php72u-fpm-7.2.12-1.ius.centos7 \
+		php72u-fpm-httpd-7.2.12-1.ius.centos7 \
+		php72u-opcache-7.2.12-1.ius.centos7 \
 		php72u-pecl-memcached-3.0.4-2.ius.centos7 \
 		php72u-pecl-redis-3.1.6-2.ius.centos7 \
 	&& yum versionlock add \
