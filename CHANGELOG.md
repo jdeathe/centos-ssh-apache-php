@@ -8,9 +8,10 @@ CentOS-7 7.5.1804 x86_64, Apache 2.4, PHP-FPM 7.2, PHP memcached 3.0, Zend Opcac
 
 ### 3.1.1 - Unreleased
 
-- Updates `php72u` packages to 7.2.11-1.
+- Updates `php72u` packages to 7.2.12-1.
 - Updates `httpd24u` packages to 2.4.35-1.
 - Updates source image to [2.4.1](https://github.com/jdeathe/centos-ssh/releases/tag/2.4.1).
+- Updates php-hello-world to [0.11.0](https://github.com/jdeathe/php-hello-world/releases/tag/0.11.0).
 - Adds improved example of `apachectl` usage via docker exec.
 - Adds `php72u-pecl-redis` package to support Redis.
 
