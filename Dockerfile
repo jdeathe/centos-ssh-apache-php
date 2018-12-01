@@ -9,7 +9,7 @@ FROM jdeathe/centos-ssh:1.9.1
 # Use the form ([{fqdn}-]{package-name}|[{fqdn}-]{provider-name})
 ARG PACKAGE_NAME="app"
 ARG PACKAGE_PATH="/opt/${PACKAGE_NAME}"
-ARG PACKAGE_RELEASE_VERSION="0.10.0"
+ARG PACKAGE_RELEASE_VERSION="0.11.0"
 
 # -----------------------------------------------------------------------------
 # IUS Apache 2.4, PHP-FPM 5.6
@@ -23,6 +23,7 @@ RUN rpm --rebuilddb \
 		httpd24u-mod_ssl-2.4.35-1.ius.centos6 \
 		httpd24u-tools-2.4.35-1.ius.centos6 \
 		php56u-cli-5.6.38-1.ius.centos6 \
+		php56u-common-5.6.38-1.ius.centos6 \
 		php56u-fpm-5.6.38-1.ius.centos6 \
 		php56u-fpm-httpd-5.6.38-1.ius.centos6 \
 		php56u-opcache-5.6.38-1.ius.centos6 \
