@@ -6,6 +6,13 @@ Summary of release changes for Version 1.
 
 CentOS-6 6.10 x86_64, Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1.
 
+### 1.11.1 - 2018-12-03
+
+- Updates source image to [1.9.1](https://github.com/jdeathe/centos-ssh/releases/tag/1.9.1).
+- Updates php-hello-world to [0.11.0](https://github.com/jdeathe/php-hello-world/releases/tag/0.11.0).
+- Adds improved example of `apachectl` usage via docker exec.
+- Adds `php-pecl-redis` package to support Redis.
+
 ### 1.11.0 - 2018-09-03
 
 - Updates `httpd` packages to 2.2.15-69.

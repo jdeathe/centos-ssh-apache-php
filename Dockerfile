@@ -4,12 +4,12 @@
 # CentOS-6, Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1
 #
 # =============================================================================
-FROM jdeathe/centos-ssh:1.9.0
+FROM jdeathe/centos-ssh:1.9.1
 
 # Use the form ([{fqdn}-]{package-name}|[{fqdn}-]{provider-name})
 ARG PACKAGE_NAME="app"
 ARG PACKAGE_PATH="/opt/${PACKAGE_NAME}"
-ARG PACKAGE_RELEASE_VERSION="0.10.0"
+ARG PACKAGE_RELEASE_VERSION="0.11.0"
 
 # -----------------------------------------------------------------------------
 # Base Apache, PHP
@@ -23,9 +23,11 @@ RUN rpm --rebuilddb \
 		mod_ssl-2.2.15-69.el6.centos \
 		php-5.3.3-49.el6 \
 		php-cli-5.3.3-49.el6 \
+		php-common-5.3.3-49.el6 \
 		php-zts-5.3.3-49.el6 \
 		php-pecl-apc-3.1.9-2.el6 \
 		php-pecl-memcached-1.0.0-1.el6 \
+		php-pecl-redis-2.2.8-1.el6 \
 	&& yum versionlock add \
 		elinks \
 		httpd \
@@ -297,7 +299,7 @@ ENV APACHE_AUTOSTART_HTTPD_BOOTSTRAP=true \
 # -----------------------------------------------------------------------------
 # Set image metadata
 # -----------------------------------------------------------------------------
-ARG RELEASE_VERSION="1.11.0"
+ARG RELEASE_VERSION="1.11.1"
 LABEL \
 	maintainer="James Deathe <james.deathe@gmail.com>" \
 	install="docker run \
