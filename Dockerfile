@@ -4,12 +4,12 @@
 # CentOS-6, Apache 2.4, PHP-FPM 5.6, PHP memcached 2.2, Zend Opcache 7.0
 #
 # =============================================================================
-FROM jdeathe/centos-ssh:1.9.0
+FROM jdeathe/centos-ssh:1.9.1
 
 # Use the form ([{fqdn}-]{package-name}|[{fqdn}-]{provider-name})
 ARG PACKAGE_NAME="app"
 ARG PACKAGE_PATH="/opt/${PACKAGE_NAME}"
-ARG PACKAGE_RELEASE_VERSION="0.10.0"
+ARG PACKAGE_RELEASE_VERSION="0.11.0"
 
 # -----------------------------------------------------------------------------
 # IUS Apache 2.4, PHP-FPM 5.6
@@ -19,14 +19,16 @@ RUN rpm --rebuilddb \
 		--setopt=tsflags=nodocs \
 		--disableplugin=fastestmirror \
 		elinks-0.12-0.21.pre5.el6_3 \
-		httpd24u-2.4.34-1.ius.centos6 \
-		httpd24u-mod_ssl-2.4.34-1.ius.centos6 \
-		httpd24u-tools-2.4.34-1.ius.centos6 \
-		php56u-cli-5.6.37-1.ius.centos6 \
-		php56u-fpm-5.6.37-1.ius.centos6 \
-		php56u-fpm-httpd-5.6.37-1.ius.centos6 \
-		php56u-opcache-5.6.37-1.ius.centos6 \
+		httpd24u-2.4.35-1.ius.centos6 \
+		httpd24u-mod_ssl-2.4.35-1.ius.centos6 \
+		httpd24u-tools-2.4.35-1.ius.centos6 \
+		php56u-cli-5.6.38-1.ius.centos6 \
+		php56u-common-5.6.38-1.ius.centos6 \
+		php56u-fpm-5.6.38-1.ius.centos6 \
+		php56u-fpm-httpd-5.6.38-1.ius.centos6 \
+		php56u-opcache-5.6.38-1.ius.centos6 \
 		php56u-pecl-memcached-2.2.0-6.ius.centos6 \
+		php56u-pecl-redis-3.1.6-1.ius.centos6 \
 	&& yum versionlock add \
 		elinks \
 		httpd24u* \
@@ -345,7 +347,7 @@ ENV APACHE_AUTOSTART_HTTPD_BOOTSTRAP=true \
 # -----------------------------------------------------------------------------
 # Set image metadata
 # -----------------------------------------------------------------------------
-ARG RELEASE_VERSION="2.3.0"
+ARG RELEASE_VERSION="2.3.1"
 LABEL \
 	maintainer="James Deathe <james.deathe@gmail.com>" \
 	install="docker run \

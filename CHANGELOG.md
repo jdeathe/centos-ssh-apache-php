@@ -6,6 +6,15 @@ Summary of release changes for Version 2.
 
 CentOS-6 6.10 x86_64, Apache 2.4, PHP-FPM 5.6, PHP memcached 2.2, Zend Opcache 7.0.
 
+### 2.3.1 - 2018-12-03
+
+- Updates `php56u` packages to 5.6.38-1.
+- Updates `httpd24u` packages to 2.4.35-1.
+- Updates source image to [1.9.1](https://github.com/jdeathe/centos-ssh/releases/tag/1.9.1).
+- Updates php-hello-world to [0.11.0](https://github.com/jdeathe/php-hello-world/releases/tag/0.11.0).
+- Adds improved example of `apachectl` usage via docker exec.
+- Adds `php56u-pecl-redis` package to support Redis.
+
 ### 2.3.0 - 2018-09-03
 
 - Updates `php56u` packages to 5.6.37-1.
