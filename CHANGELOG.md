@@ -27,6 +27,7 @@ CentOS-7 7.5.1804 x86_64, Apache 2.4, PHP-FPM 7.2, PHP memcached 3.0, Zend Opcac
 - Removes the node element from the default container name.
 - Removes unused environment variables from Makefile and scmi configuration.
 - Removes X-Fleet section from etcd register template unit-file.
+- Removes unnecessary configuration file `/etc/httpd-bootstrap.conf`.
 
 ### 3.1.1 - 2018-12-03
 

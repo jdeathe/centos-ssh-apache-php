@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-source /etc/httpd-bootstrap.conf
-
 function setup_php_fpm_pool ()
 {
 	rm -f /etc/php-fpm.d/*.conf

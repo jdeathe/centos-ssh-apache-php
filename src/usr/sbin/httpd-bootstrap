@@ -7,8 +7,6 @@ TIMER_START="$(
 	date +%s.%N
 )"
 
-source /etc/httpd-bootstrap.conf
-
 function absolute_path ()
 {
 	local DIRECTORY_PATH="${1:-}"

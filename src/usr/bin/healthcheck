@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-source /etc/httpd-bootstrap.conf
-
 function __is_throttled_interval ()
 {
 	local -i interval="${1:-10}"

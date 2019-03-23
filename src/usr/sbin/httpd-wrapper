@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-source /etc/httpd-bootstrap.conf
-
 function get_httpd_bin ()
 {
 	local -r HTTPD=/usr/sbin/httpd
