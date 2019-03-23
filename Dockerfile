@@ -1,4 +1,4 @@
-FROM jdeathe/centos-ssh:2.4.1
+FROM jdeathe/centos-ssh:2.5.1
 
 # Use the form ([{fqdn}-]{package-name}|[{fqdn}-]{provider-name})
 ARG PACKAGE_NAME="app"
@@ -258,17 +258,17 @@ EXPOSE 80 8443 443
 ENV APACHE_CONTENT_ROOT="/var/www/${PACKAGE_NAME}" \
 	BASH_ENV="/usr/sbin/httpd-startup" \
 	ENV="/usr/sbin/httpd-startup"
-ENV APACHE_AUTOSTART_HTTPD_BOOTSTRAP=true \
-	APACHE_AUTOSTART_HTTPD_WRAPPER=true \
-	APACHE_AUTOSTART_PHP_FPM_WRAPPER=true \
+ENV APACHE_AUTOSTART_HTTPD_BOOTSTRAP="true" \
+	APACHE_AUTOSTART_HTTPD_WRAPPER="true" \
+	APACHE_AUTOSTART_PHP_FPM_WRAPPER="true" \
 	APACHE_CUSTOM_LOG_FORMAT="combined" \
 	APACHE_CUSTOM_LOG_LOCATION="var/log/apache_access_log" \
 	APACHE_ERROR_LOG_LOCATION="var/log/apache_error_log" \
 	APACHE_ERROR_LOG_LEVEL="warn" \
-	APACHE_EXTENDED_STATUS_ENABLED=false \
+	APACHE_EXTENDED_STATUS_ENABLED="false" \
 	APACHE_HEADER_X_SERVICE_UID="{{HOSTNAME}}" \
 	APACHE_LOAD_MODULES="" \
-	APACHE_MOD_SSL_ENABLED=false \
+	APACHE_MOD_SSL_ENABLED="false" \
 	APACHE_MPM="prefork" \
 	APACHE_OPERATING_MODE="production" \
 	APACHE_PUBLIC_DIRECTORY="public_html" \
@@ -285,8 +285,9 @@ ENV APACHE_AUTOSTART_HTTPD_BOOTSTRAP=true \
 	PHP_OPTIONS_SESSION_NAME="PHPSESSID" \
 	PHP_OPTIONS_SESSION_SAVE_HANDLER="files" \
 	PHP_OPTIONS_SESSION_SAVE_PATH="var/session" \
-	SSH_AUTOSTART_SSHD=false \
-	SSH_AUTOSTART_SSHD_BOOTSTRAP=false
+	SSH_AUTOSTART_SSHD="false" \
+	SSH_AUTOSTART_SSHD_BOOTSTRAP="false" \
+	SSH_AUTOSTART_SUPERVISOR_STDOUT="false"
 
 # ------------------------------------------------------------------------------
 # Set image metadata
