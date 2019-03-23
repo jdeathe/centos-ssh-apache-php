@@ -11,15 +11,19 @@ CentOS-7 7.5.1804 x86_64, Apache 2.4, PHP-FPM 7.2, PHP memcached 3.0, Zend Opcac
 - Updates `elinks` package to elinks-0.12-0.37.pre6.el7.0.1.
 - Updates `httpd24u` packages to 2.4.38-1.
 - Updates `php72u` packages to 7.2.16-1.
-- Adds consideration for event lag into test cases for unhealthy health_status events.
 - Updates and restructures Dockerfile.
 - Updates container naming conventions and readability of `Makefile`.
+- Fixes issue with unexpected published port in run templates when `DOCKER_PORT_MAP_TCP_80`, `DOCKER_PORT_MAP_TCP_443` or `DOCKER_PORT_MAP_TCP_8443` is set to an empty string or 0.
+- Fixes binary paths in systemd unit files for compatibility with both EL and Ubuntu hosts.
+- Adds consideration for event lag into test cases for unhealthy health_status events.
 - Adds port incrementation to Makefile's run template for container names with an instance suffix.
 - Adds placeholder replacement of `RELEASE_VERSION` docker argument to systemd service unit template.
+- Adds improvement to pull logic in systemd unit install template.
 - Removes use of `/etc/services-config` paths.
 - Removes the unused group element from the default container name.
 - Removes the node element from the default container name.
 - Removes unused environment variables from Makefile and scmi configuration.
+- Removes X-Fleet section from etcd register template unit-file.
 
 ### 3.1.1 - 2018-12-03
 
