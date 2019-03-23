@@ -15,6 +15,7 @@ CentOS-7 7.5.1804 x86_64, Apache 2.4, PHP-FPM 7.2, PHP memcached 3.0, Zend Opcac
 - Updates and restructures Dockerfile.
 - Updates container naming conventions and readability of `Makefile`.
 - Adds port incrementation to Makefile's run template for container names with an instance suffix.
+- Adds placeholder replacement of `RELEASE_VERSION` docker argument to systemd service unit template.
 - Removes use of `/etc/services-config` paths.
 - Removes the unused group element from the default container name.
 - Removes the node element from the default container name.

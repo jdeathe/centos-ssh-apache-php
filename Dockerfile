@@ -52,6 +52,7 @@ ADD src /
 # - Disable SSL
 # - Disable the default SSL Virtual Host
 # - Global PHP configuration changes
+# - Replace placeholders with values in systemd service unit template
 # - Set permissions
 # ------------------------------------------------------------------------------
 RUN useradd -r -M -d /var/www/app -s /sbin/nologin app \
@@ -214,6 +215,9 @@ RUN useradd -r -M -d /var/www/app -s /sbin/nologin app \
 		-e 's~^\([ \t]*\)\(SetHandler "proxy:fcgi:.*\)$~\1#\2~' \
 		-e 's~^\([ \t]*\)#\(SetHandler "proxy:unix:.*\)$~\1\2~' \
 		/etc/httpd/conf.d/php-fpm.conf \
+	&& sed -i \
+		-e "s~{{RELEASE_VERSION}}~${RELEASE_VERSION}~g" \
+		/etc/systemd/system/centos-ssh-apache-php@.service \
 	&& chmod 700 \
 		/usr/{bin/healthcheck,sbin/{httpd-{bootstrap,startup,wrapper},php-fpm-wrapper}}
 
