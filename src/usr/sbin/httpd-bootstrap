@@ -50,7 +50,7 @@ function add_hosts_entry ()
 
 function enable_apache_modules ()
 {
-	local CONF_PATHS="/etc/services-config/httpd/conf/httpd.conf"
+	local CONF_PATHS="/etc/httpd/conf/httpd.conf"
 	local MODULES="${1:-}"
 	local MODULES_ENABLED=""
 	local SED_COMMAND=""
@@ -457,7 +457,7 @@ function load_httpd_conf_scan_files ()
 		for FILE_PATH in "${PACKAGE_PATH}"/etc/httpd/conf.d/*.conf; do
 			cat  \
 				"${FILE_PATH}" \
-			> "/etc/services-config/httpd/conf.d/${FILE_PATH##*/}"
+			> "/etc/httpd/conf.d/${FILE_PATH##*/}"
 		done
 	fi
 
@@ -466,7 +466,7 @@ function load_httpd_conf_scan_files ()
 		for FILE_PATH in "${PACKAGE_PATH}"/etc/httpd/conf.virtualhost.d/*.conf; do
 			cat  \
 				"${FILE_PATH}" \
-			> "/etc/services-config/httpd/conf.virtualhost.d/${FILE_PATH##*/}"
+			> "/etc/httpd/conf.virtualhost.d/${FILE_PATH##*/}"
 		done
 	fi
 }
@@ -588,7 +588,7 @@ function set_apache_enable_sendfile ()
 
 	sed -i \
 		-re "s~${PATTERN_FROM}~${PATTERN_TO}~g" \
-		/etc/services-config/httpd/conf/httpd.conf
+		/etc/httpd/conf/httpd.conf
 }
 
 function set_apache_extended_status ()
@@ -608,7 +608,7 @@ function set_apache_extended_status ()
 
 	sed -i \
 		-re "s~${PATTERN_FROM}~${PATTERN_TO}~g" \
-		/etc/services-config/httpd/conf/httpd.conf
+		/etc/httpd/conf/httpd.conf
 }
 
 function set_apache_header_x_service_uid ()
@@ -619,7 +619,7 @@ function set_apache_header_x_service_uid ()
 	if [[ -z ${HEADER} ]]; then
 		sed -i \
 			-e 's~^\([ \t]*\)\(Header set X-Service-UID .*\)$~\1#\2~g' \
-			/etc/services-config/httpd/conf.d/00-headers.conf
+			/etc/httpd/conf.d/00-headers.conf
 	fi
 }
 
@@ -695,7 +695,7 @@ function set_apache_server_name ()
 
 	sed -i \
 		-e "s~^#ServerName \(.*\):80$~ServerName ${HOST_NAME}:${PORT}~g" \
-		/etc/services-config/httpd/conf/httpd.conf
+		/etc/httpd/conf/httpd.conf
 }
 
 function set_apache_ssl_certificate ()
@@ -922,10 +922,10 @@ if [[ ${OPTS_APACHE_MOD_SSL_ENABLED} == true ]]; then
 		/etc/httpd/conf.d/ssl.conf.off \
 		> /etc/httpd/conf.d/ssl.conf
 
-	if [[ -f /etc/services-config/httpd/conf.d/10-ssl-vhost.conf.off ]]; then
+	if [[ -f /etc/httpd/conf.d/10-ssl-vhost.conf.off ]]; then
 		cat \
-			/etc/services-config/httpd/conf.d/10-ssl-vhost.conf.off \
-			> /etc/services-config/httpd/conf.d/10-ssl-vhost.conf
+			/etc/httpd/conf.d/10-ssl-vhost.conf.off \
+			> /etc/httpd/conf.d/10-ssl-vhost.conf
 	fi
 
 	if [[ -f /etc/httpd/conf.modules.d/00-ssl.conf ]]; then
@@ -936,8 +936,8 @@ if [[ ${OPTS_APACHE_MOD_SSL_ENABLED} == true ]]; then
 else
 	> /etc/httpd/conf.d/ssl.conf
 
-	if [[ -f /etc/services-config/httpd/conf.d/10-ssl-vhost.conf ]]; then
-		> /etc/services-config/httpd/conf.d/10-ssl-vhost.conf
+	if [[ -f /etc/httpd/conf.d/10-ssl-vhost.conf ]]; then
+		> /etc/httpd/conf.d/10-ssl-vhost.conf
 	fi
 
 	if [[ -f /etc/httpd/conf.modules.d/00-ssl.conf ]]; then

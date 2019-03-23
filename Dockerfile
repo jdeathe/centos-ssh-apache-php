@@ -1,19 +1,14 @@
-# =============================================================================
-# jdeathe/centos-ssh-apache-php
-#
-# CentOS-7, Apache 2.4, PHP-FPM 7.2, PHP memcached 3.0, Zend Opcache 7.2
-#
-# =============================================================================
 FROM jdeathe/centos-ssh:2.4.1
 
 # Use the form ([{fqdn}-]{package-name}|[{fqdn}-]{provider-name})
 ARG PACKAGE_NAME="app"
 ARG PACKAGE_PATH="/opt/${PACKAGE_NAME}"
 ARG PACKAGE_RELEASE_VERSION="0.11.0"
+ARG RELEASE_VERSION="3.1.1"
 
-# -----------------------------------------------------------------------------
-# IUS Apache 2.4, PHP-FPM 7.2
-# -----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+# - Base install of required packages
+# ------------------------------------------------------------------------------
 RUN rpm --rebuilddb \
 	&& yum -y install \
 		--setopt=tsflags=nodocs \
@@ -41,13 +36,34 @@ RUN rpm --rebuilddb \
 		-regex '.*\.(jpg|png)$' \
 		-delete
 
-# -----------------------------------------------------------------------------
-# Global Apache configuration changes
-# - Disable Apache directory indexes and welcome page.
-# - Disable Apache language based content negotiation.
-# - Custom Apache configuration.
-# -----------------------------------------------------------------------------
-RUN cp -pf \
+# ------------------------------------------------------------------------------
+# Copy files into place
+# ------------------------------------------------------------------------------
+ADD src /
+
+# ------------------------------------------------------------------------------
+# Provisioning
+# - Add default system users
+# - Limit threads for the application user
+# - Disable Apache directory indexes and welcome page
+# - Disable Apache language based content negotiation
+# - Custom Apache configuration
+# - Disable all Apache modules and enable the minimum
+# - Disable SSL
+# - Disable the default SSL Virtual Host
+# - Global PHP configuration changes
+# - Set permissions
+# ------------------------------------------------------------------------------
+RUN useradd -r -M -d /var/www/app -s /sbin/nologin app \
+	&& useradd -r -M -d /var/www/app -s /sbin/nologin -G apache,app app-www \
+	&& usermod -a -G app-www app \
+	&& usermod -a -G app-www,app apache \
+	&& { \
+		echo ''; \
+		echo -e '@apache\tsoft\tnproc\t85'; \
+		echo -e '@apache\thard\tnproc\t170'; \
+	} >> /etc/security/limits.conf \
+	&& cp -pf \
 		/etc/httpd/conf/httpd.conf \
 		/etc/httpd/conf/httpd.conf.default \
 	&& sed -i \
@@ -93,7 +109,6 @@ RUN cp -pf \
 		echo 'LogFormat \'; \
 		echo '  "%{X-Forwarded-For}i %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\"" \'; \
 		echo '  forwarded_for_combined'; \
-		echo 'Include /etc/services-config/httpd/conf.d/*.conf'; \
 		echo 'ExtendedStatus Off'; \
 		echo 'Listen 8443'; \
 		echo 'Options -Indexes'; \
@@ -102,36 +117,28 @@ RUN cp -pf \
 		echo 'TraceEnable Off'; \
 		echo 'UseCanonicalName On'; \
 		echo 'UseCanonicalPhysicalPort On'; \
-	} >> /etc/httpd/conf/httpd.conf
-
-# -----------------------------------------------------------------------------
-# Disable all Apache modules and enable the minimum
-# -----------------------------------------------------------------------------
-RUN sed -i \
-	-e 's~^\(LoadModule .*\)$~#\1~g' \
-	-e 's~^#\(LoadModule mime_module .*\)$~\1~' \
-	-e 's~^#\(LoadModule log_config_module .*\)$~\1~' \
-	-e 's~^#\(LoadModule setenvif_module .*\)$~\1~' \
-	-e 's~^#\(LoadModule status_module .*\)$~\1~' \
-	-e 's~^#\(LoadModule authz_host_module .*\)$~\1~' \
-	-e 's~^#\(LoadModule dir_module .*\)$~\1~' \
-	-e 's~^#\(LoadModule alias_module .*\)$~\1~' \
-	-e 's~^#\(LoadModule expires_module .*\)$~\1~' \
-	-e 's~^#\(LoadModule deflate_module .*\)$~\1~' \
-	-e 's~^#\(LoadModule headers_module .*\)$~\1~' \
-	-e 's~^#\(LoadModule alias_module .*\)$~\1~' \
-	-e 's~^#\(LoadModule version_module .*\)$~\1~' \
-	/etc/httpd/conf.modules.d/00-base.conf \
-	/etc/httpd/conf.modules.d/00-dav.conf \
-	/etc/httpd/conf.modules.d/00-lua.conf \
-	/etc/httpd/conf.modules.d/00-proxy.conf \
-	/etc/httpd/conf.modules.d/00-ssl.conf \
-	/etc/httpd/conf.modules.d/00-systemd.conf
-
-# -----------------------------------------------------------------------------
-# Disable SSL + the default SSL Virtual Host
-# -----------------------------------------------------------------------------
-RUN sed -ri \
+	} >> /etc/httpd/conf/httpd.conf \
+	&& sed -i \
+		-e 's~^\(LoadModule .*\)$~#\1~g' \
+		-e 's~^#\(LoadModule mime_module .*\)$~\1~' \
+		-e 's~^#\(LoadModule log_config_module .*\)$~\1~' \
+		-e 's~^#\(LoadModule setenvif_module .*\)$~\1~' \
+		-e 's~^#\(LoadModule status_module .*\)$~\1~' \
+		-e 's~^#\(LoadModule authz_host_module .*\)$~\1~' \
+		-e 's~^#\(LoadModule dir_module .*\)$~\1~' \
+		-e 's~^#\(LoadModule alias_module .*\)$~\1~' \
+		-e 's~^#\(LoadModule expires_module .*\)$~\1~' \
+		-e 's~^#\(LoadModule deflate_module .*\)$~\1~' \
+		-e 's~^#\(LoadModule headers_module .*\)$~\1~' \
+		-e 's~^#\(LoadModule alias_module .*\)$~\1~' \
+		-e 's~^#\(LoadModule version_module .*\)$~\1~' \
+		/etc/httpd/conf.modules.d/00-base.conf \
+		/etc/httpd/conf.modules.d/00-dav.conf \
+		/etc/httpd/conf.modules.d/00-lua.conf \
+		/etc/httpd/conf.modules.d/00-proxy.conf \
+		/etc/httpd/conf.modules.d/00-ssl.conf \
+		/etc/httpd/conf.modules.d/00-systemd.conf \
+	&& sed -ri \
 		-e '/<VirtualHost _default_:443>/,/<\/VirtualHost>/ s~^~#~' \
 		-e 's~(SSLSessionCacheTimeout.*)$~\1\n\nSSLUseStapling on\nSSLStaplingCache shmcb:/run/httpd/sslstaplingcache(512000)\nSSLStaplingResponderTimeout 5\nSSLStaplingReturnResponderErrors off~' \
 		/etc/httpd/conf.d/ssl.conf \
@@ -141,21 +148,8 @@ RUN sed -ri \
 	&& > \
 		/etc/httpd/conf.d/ssl.conf \
 	&& chmod 444 \
-		/etc/httpd/conf.d/ssl.conf
-
-# -----------------------------------------------------------------------------
-# Limit threads for the application user
-# -----------------------------------------------------------------------------
-RUN { \
-		echo ''; \
-		echo -e '@apache\tsoft\tnproc\t85'; \
-		echo -e '@apache\thard\tnproc\t170'; \
-	} >> /etc/security/limits.conf
-
-# -----------------------------------------------------------------------------
-# Global PHP configuration changes
-# -----------------------------------------------------------------------------
-RUN cp -pf \
+		/etc/httpd/conf.d/ssl.conf \
+	&& cp -pf \
 		/etc/php-fpm.conf \
 		/etc/php-fpm.conf.default \
 	&& cp -pf \
@@ -219,73 +213,13 @@ RUN cp -pf \
 	&& sed -i \
 		-e 's~^\([ \t]*\)\(SetHandler "proxy:fcgi:.*\)$~\1#\2~' \
 		-e 's~^\([ \t]*\)#\(SetHandler "proxy:unix:.*\)$~\1\2~' \
-		/etc/httpd/conf.d/php-fpm.conf
-
-# -----------------------------------------------------------------------------
-# Add default system users
-# -----------------------------------------------------------------------------
-RUN useradd -r -M -d /var/www/app -s /sbin/nologin app \
-	&& useradd -r -M -d /var/www/app -s /sbin/nologin -G apache,app app-www \
-	&& usermod -a -G app-www app \
-	&& usermod -a -G app-www,app apache
-
-# -----------------------------------------------------------------------------
-# Copy files into place
-# -----------------------------------------------------------------------------
-ADD src/usr/bin \
-	/usr/bin/
-ADD src/usr/sbin \
-	/usr/sbin/
-ADD src/opt/scmi \
-	/opt/scmi/
-ADD src/etc/profile.d \
-	/etc/profile.d/
-ADD src/etc/systemd/system \
-	/etc/systemd/system/
-ADD src/etc/services-config/httpd/httpd-bootstrap.conf \
-	/etc/services-config/httpd/
-ADD src/etc/services-config/httpd/conf.d/*.conf \
-	/etc/services-config/httpd/conf.d/
-ADD src/etc/services-config/httpd/conf.virtualhost.d/*.conf \
-	/etc/services-config/httpd/conf.virtualhost.d/
-ADD src/etc/services-config/supervisor/supervisord.d \
-	/etc/services-config/supervisor/supervisord.d/
-
-RUN mkdir -p \
-		/etc/services-config/{httpd/{conf,conf.d,conf.virtualhost.d},ssl/{certs,private}} \
-	&& cp \
-		/etc/httpd/conf/httpd.conf \
-		/etc/services-config/httpd/conf/ \
-	&& ln -sf \
-		/etc/services-config/httpd/conf.virtualhost.d \
-		/etc/httpd/conf.virtualhost.d \
-	&& ln -sf \
-		/etc/services-config/httpd/httpd-bootstrap.conf \
-		/etc/httpd-bootstrap.conf \
-	&& ln -sf \
-		/etc/services-config/httpd/conf/httpd.conf \
-		/etc/httpd/conf/httpd.conf \
-	&& ln -sf \
-		/etc/services-config/ssl/certs/localhost.crt \
-		/etc/pki/tls/certs/localhost.crt \
-	&& ln -sf \
-		/etc/services-config/supervisor/supervisord.conf \
-		/etc/supervisord.conf \
-	&& ln -sf \
-		/etc/services-config/supervisor/supervisord.d/httpd-bootstrap.conf \
-		/etc/supervisord.d/httpd-bootstrap.conf \
-	&& ln -sf \
-		/etc/services-config/supervisor/supervisord.d/httpd-wrapper.conf \
-		/etc/supervisord.d/httpd-wrapper.conf \
-	&& ln -sf \
-		/etc/services-config/supervisor/supervisord.d/php-fpm-wrapper.conf \
-		/etc/supervisord.d/php-fpm-wrapper.conf \
+		/etc/httpd/conf.d/php-fpm.conf \
 	&& chmod 700 \
 		/usr/{bin/healthcheck,sbin/{httpd-{bootstrap,startup,wrapper},php-fpm-wrapper}}
 
-# -----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 # Package installation
-# -----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 RUN mkdir -p -m 750 ${PACKAGE_PATH} \
 	&& curl -Ls \
 		https://github.com/jdeathe/php-hello-world/archive/${PACKAGE_RELEASE_VERSION}.tar.gz \
@@ -314,9 +248,9 @@ RUN mkdir -p -m 750 ${PACKAGE_PATH} \
 
 EXPOSE 80 8443 443
 
-# -----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 # Set default environment variables used to configure the service container
-# -----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 ENV APACHE_CONTENT_ROOT="/var/www/${PACKAGE_NAME}" \
 	BASH_ENV="/usr/sbin/httpd-startup" \
 	ENV="/usr/sbin/httpd-startup"
@@ -350,10 +284,9 @@ ENV APACHE_AUTOSTART_HTTPD_BOOTSTRAP=true \
 	SSH_AUTOSTART_SSHD=false \
 	SSH_AUTOSTART_SSHD_BOOTSTRAP=false
 
-# -----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 # Set image metadata
-# -----------------------------------------------------------------------------
-ARG RELEASE_VERSION="3.1.1"
+# ------------------------------------------------------------------------------
 LABEL \
 	maintainer="James Deathe <james.deathe@gmail.com>" \
 	install="docker run \

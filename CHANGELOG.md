@@ -6,12 +6,19 @@ Summary of release changes for Version 3.
 
 CentOS-7 7.5.1804 x86_64, Apache 2.4, PHP-FPM 7.2, PHP memcached 3.0, Zend Opcache 7.2.
 
-### 3.1.2 - Unreleased
+### 3.2.0 - Unreleased
 
 - Updates `elinks` package to elinks-0.12-0.37.pre6.el7.0.1.
 - Updates `httpd24u` packages to 2.4.38-1.
 - Updates `php72u` packages to 7.2.16-1.
 - Adds consideration for event lag into test cases for unhealthy health_status events.
+- Updates and restructures Dockerfile.
+- Updates container naming conventions and readability of `Makefile`.
+- Adds port incrementation to Makefile's run template for container names with an instance suffix.
+- Removes use of `/etc/services-config` paths.
+- Removes the unused group element from the default container name.
+- Removes the node element from the default container name.
+- Removes unused environment variables from Makefile and scmi configuration.
 
 ### 3.1.1 - 2018-12-03
 
