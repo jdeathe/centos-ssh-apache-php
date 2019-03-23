@@ -8,11 +8,13 @@ function __is_throttled_interval ()
 	local pattern_seconds_in_minute='^([1-9]|[1-5][0-9]|60)$'
 
 	# interval must be between 1 and 60 seconds
-	if [[ ! ${interval} =~ ${pattern_seconds_in_minute} ]]; then
+	if [[ ! ${interval} =~ ${pattern_seconds_in_minute} ]]
+	then
 		interval=10
 	fi
 
-	if (( $(date +%-S)%${interval} == 0 )); then
+	if (( $(date +%-S)%${interval} == 0 ))
+	then
 		return 0
 	else
 		return 1
@@ -23,7 +25,8 @@ function __last_check_passed ()
 {
 	local -i status=0
 
-	if [[ ! -f ${STATUS_PATH} ]]; then
+	if [[ ! -f ${STATUS_PATH} ]]
+	then
 		return ${status}
 	else
 		read \
@@ -31,7 +34,8 @@ function __last_check_passed ()
 			status \
 		< "${STATUS_PATH}"
 
-		if [[ ${status} =~ ^[01]$ ]]; then
+		if [[ ${status} =~ ^[01]$ ]]
+		then
 			return ${status}
 		else
 			return 1
@@ -42,7 +46,7 @@ function __last_check_passed ()
 function __print_message ()
 {
 	local -r type="${1:-}"
-	local -r quiet=${QUIET:-false}
+	local -r quiet="${QUIET:-false}"
 	local message="${2:-}"
 	local prefix=""
 
@@ -84,7 +88,8 @@ function __record_exit_status ()
 		dirname "${STATUS_PATH}"
 	)"
 
-	if [[ ! -d ${status_directory} ]]; then
+	if [[ ! -d ${status_directory} ]]
+	then
 		install \
 			-d \
 			-m 0660 \
@@ -93,7 +98,8 @@ function __record_exit_status ()
 			"${status_directory}"
 	fi
 
-	if [[ ! -f ${STATUS_PATH} ]]; then
+	if [[ ! -f ${STATUS_PATH} ]]
+	then
 		install \
 			-m 0660 \
 			-o root \
@@ -148,7 +154,7 @@ function __usage ()
 function main ()
 {
 	local -r STATUS_PATH="/var/lib/healthcheck/status"
-	local QUITE=false
+	local QUITE="false"
 
 	local host="localhost.localdomain"
 	local -i interval=10
@@ -163,7 +169,8 @@ function main ()
 	trap "__record_exit_status \${?}" \
 		EXIT
 
-	while [[ ${#} -gt 0 ]]; do
+	while [[ "${#}" -gt 0 ]]
+	do
 		case "${1}" in
 			-h|--help)
 				__usage
@@ -211,31 +218,44 @@ function main ()
 		esac
 	done
 
-	if [[ ! ${host} =~ ${pattern_host} ]]; then
+	if [[ ! ${host} =~ ${pattern_host} ]]
+	then
 		__print_message \
 			"error" \
 			"Invalid host."
 		exit 1
 	fi
 
-	if [[ ! ${interval} =~ ${pattern_seconds_in_minute} ]]; then
+	if [[ ! ${interval} =~ ${pattern_seconds_in_minute} ]]
+	then
 		__print_message \
 			"error" \
 			"Invalid interval."
 		exit 1
 	fi
 
-	if [[ ! ${max_time} =~ ${pattern_max_time} ]]; then
+	if [[ ! ${max_time} =~ ${pattern_max_time} ]]
+	then
 		__print_message \
 			"error" \
 			"Invalid max_time."
 		exit 1
 	fi
 
-	if [[ ! ${url} =~ ${pattern_local_url} ]]; then
+	if [[ ! ${url} =~ ${pattern_local_url} ]]
+	then
 		__print_message \
 			"error" \
 			"Invalid url."
+		exit 1
+	fi
+
+	if ! ps axo command \
+		| grep -qE '^/usr/bin/python /usr/bin/supervisord'
+	then
+		__print_message \
+			"error" \
+			"supervisord not running."
 		exit 1
 	fi
 
@@ -250,6 +270,9 @@ function main ()
 	if [[ ${APACHE_AUTOSTART_HTTPD_BOOTSTRAP} == true ]] \
 		&& [[ -e /var/lock/subsys/httpd-bootstrap ]]
 	then
+		__print_message \
+			"error" \
+			"Bootstrap failed to complete."
 		exit 1
 	fi
 
@@ -258,6 +281,9 @@ function main ()
 		&& ! ps axo command \
 		| grep -qE '^/usr/sbin/httpd(\.worker|\.event)? '
 	then
+		__print_message \
+			"error" \
+			"httpd not running."
 		exit 1
 	fi
 
@@ -266,6 +292,9 @@ function main ()
 		&& ! ps axo command \
 		| grep -q "^php-fpm: pool ${APACHE_RUN_USER}[ ]*$"
 	then
+		__print_message \
+			"error" \
+			"php-fpm not running."
 		exit 1
 	fi
 
