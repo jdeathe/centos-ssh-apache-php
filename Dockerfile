@@ -250,7 +250,7 @@ RUN mkdir -p -m 750 ${PACKAGE_PATH} \
 	&& find ${PACKAGE_PATH} -type f -exec chmod 640 {} + \
 	&& find ${PACKAGE_PATH}/bin -type f -exec chmod 750 {} +
 
-EXPOSE 80 8443 443
+EXPOSE 80 443 8443
 
 # ------------------------------------------------------------------------------
 # Set default environment variables used to configure the service container

@@ -24,6 +24,7 @@ CentOS-7 7.5.1804 x86_64, Apache 2.4, PHP-FPM 7.2, PHP memcached 3.0, Zend Opcac
 - Adds error messages to healthcheck script and includes supervisord check.
 - Adds improved logging output.
 - Adds images directory `.dockerignore` to reduce size of build context.
+- Adds docker-compose configuration example.
 - Removes use of `/etc/services-config` paths.
 - Removes the unused group element from the default container name.
 - Removes the node element from the default container name.
