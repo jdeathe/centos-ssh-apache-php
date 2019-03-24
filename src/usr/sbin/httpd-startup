@@ -35,16 +35,15 @@ function __is_valid_apache_content_root ()
 	return 1
 }
 
-function get_absolute_apache_custom_log_location ()
+function __get_absolute_apache_custom_log_location ()
 {
 	local content_root
-	local value="${APACHE_CUSTOM_LOG_LOCATION}"
+	local value="${APACHE_CUSTOM_LOG_LOCATION:-var/log/apache_access_log}"
 
-	if [[ -n ${value} ]] \
-		&& [[ ! ${value} =~ ^[\.]{,2}/ ]]
+	if [[ ! ${value} =~ ^[\.]{,2}/ ]]
 	then
 		content_root="$(
-			get_apache_content_root
+			__get_apache_content_root
 		)"
 
 		printf -v \
@@ -57,16 +56,15 @@ function get_absolute_apache_custom_log_location ()
 	printf -- '%s' "${value}"
 }
 
-function get_absolute_apache_error_log_location ()
+function __get_absolute_apache_error_log_location ()
 {
 	local content_root
-	local value="${APACHE_ERROR_LOG_LOCATION}"
+	local value="${APACHE_ERROR_LOG_LOCATION:-var/log/apache_error_log}"
 
-	if [[ -n ${value} ]] \
-		&& [[ ! ${value} =~ ^[\.]{,2}/ ]]
+	if [[ ! ${value} =~ ^[\.]{,2}/ ]]
 	then
 		content_root="$(
-			get_apache_content_root
+			__get_apache_content_root
 		)"
 
 		printf -v \
@@ -79,19 +77,18 @@ function get_absolute_apache_error_log_location ()
 	printf -- '%s' "${value}"
 }
 
-function get_absolute_php_options_session_save_path ()
+function __get_absolute_php_options_session_save_path ()
 {
-	local -r save_handler="${PHP_OPTIONS_SESSION_SAVE_HANDLER}"
+	local -r save_handler="${PHP_OPTIONS_SESSION_SAVE_HANDLER:-files}"
 
 	local content_root
-	local value="${PHP_OPTIONS_SESSION_SAVE_PATH}"
+	local value="${PHP_OPTIONS_SESSION_SAVE_PATH:-var/session}"
 
 	if [[ ${save_handler} == files ]] \
-		&& [[ -n ${value} ]] \
 		&& [[ ! ${value} =~ ^[\.]{,2}/ ]]
 	then
 		content_root="$(
-			get_apache_content_root
+			__get_apache_content_root
 		)"
 
 		printf -v \
@@ -104,11 +101,11 @@ function get_absolute_php_options_session_save_path ()
 	printf -- '%s' "${value}"
 }
 
-function get_apache_content_root ()
+function __get_apache_content_root ()
 {
 	local -r default_value="${1:-/var/www/app}"
 
-	local value="${APACHE_CONTENT_ROOT}"
+	local value="${APACHE_CONTENT_ROOT:-/var/www/app}"
 
 	if ! __is_valid_apache_content_root "${value}"
 	then
@@ -118,7 +115,7 @@ function get_apache_content_root ()
 	printf -- '%s' "${value}"
 }
 
-function get_apache_header_x_service_uid ()
+function __get_apache_header_x_service_uid ()
 {
 	local hostname="${HOSTNAME}"
 	local value="${APACHE_HEADER_X_SERVICE_UID}"
@@ -138,7 +135,7 @@ function get_apache_header_x_service_uid ()
 	printf -- '%s' "${value}"
 }
 
-function get_apache_server_alias ()
+function __get_apache_server_alias ()
 {
 	local hostname="${HOSTNAME}"
 	local value="${APACHE_SERVER_ALIAS}"
@@ -158,7 +155,7 @@ function get_apache_server_alias ()
 	printf -- '%s' "${value}"
 }
 
-function get_apache_server_name ()
+function __get_apache_server_name ()
 {
 	local hostname="${HOSTNAME}"
 	local value="${APACHE_SERVER_NAME}"
@@ -180,27 +177,33 @@ function get_apache_server_name ()
 	printf -- '%s' "${value}"
 }
 
-unset BASH_ENV ENV
+function main ()
+{
+	unset BASH_ENV ENV
 
-export APACHE_CUSTOM_LOG_LOCATION="$(
-	get_absolute_apache_custom_log_location
-)"
-export APACHE_ERROR_LOG_LOCATION="$(
-	get_absolute_apache_error_log_location
-)"
-export APACHE_HEADER_X_SERVICE_UID="$(
-	get_apache_header_x_service_uid
-)"
-export APACHE_SERVER_ALIAS="$(
-	get_apache_server_alias
-)"
-export APACHE_SERVER_NAME="$(
-	get_apache_server_name
-)"
-export PHP_OPTIONS_SESSION_SAVE_PATH="$(
-	get_absolute_php_options_session_save_path
-)"
+	export APACHE_CUSTOM_LOG_LOCATION="$(
+		__get_absolute_apache_custom_log_location
+	)"
+	export APACHE_ERROR_LOG_LOCATION="$(
+		__get_absolute_apache_error_log_location
+	)"
+	export APACHE_HEADER_X_SERVICE_UID="$(
+		__get_apache_header_x_service_uid
+	)"
+	export APACHE_SERVER_ALIAS="$(
+		__get_apache_server_alias
+	)"
+	export APACHE_SERVER_NAME="$(
+		__get_apache_server_name
+	)"
+	export PHP_OPTIONS_SESSION_SAVE_PATH="$(
+		__get_absolute_php_options_session_save_path
+	)"
 
-if [[ -n ${@} ]]; then
-	exec "${@}"
-fi
+	if [[ -n ${@} ]]
+	then
+		exec "${@}"
+	fi
+}
+
+main "${@}"
