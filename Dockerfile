@@ -59,10 +59,10 @@ RUN useradd -r -M -d /var/www/app -s /sbin/nologin app \
 	&& useradd -r -M -d /var/www/app -s /sbin/nologin -G apache,app app-www \
 	&& usermod -a -G app-www app \
 	&& usermod -a -G app-www,app apache \
-	&& { \
-		echo ''; \
-		echo -e '@apache\tsoft\tnproc\t85'; \
-		echo -e '@apache\thard\tnproc\t170'; \
+	&& { printf -- \
+		'\n@apache\tsoft\tnproc\t%s\n@apache\thard\tnproc\t%s\n' \
+		'85' \
+		'170'; \
 	} >> /etc/security/limits.conf \
 	&& cp -pf \
 		/etc/httpd/conf/httpd.conf \
@@ -99,25 +99,26 @@ RUN useradd -r -M -d /var/www/app -s /sbin/nologin app \
 		/etc/httpd/conf.d/welcome.conf \
 	&& chmod 444 \
 		/etc/httpd/conf.d/welcome.conf \
-	&& { \
-		echo ''; \
-		echo '#'; \
-		echo '# Custom configuration'; \
-		echo '#'; \
-		echo 'KeepAlive On'; \
-		echo 'MaxKeepAliveRequests 200'; \
-		echo 'KeepAliveTimeout 2'; \
-		echo 'LogFormat \'; \
-		echo '  "%{X-Forwarded-For}i %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\"" \'; \
-		echo '  forwarded_for_combined'; \
-		echo 'ExtendedStatus Off'; \
-		echo 'Listen 8443'; \
-		echo 'Options -Indexes'; \
-		echo 'ServerSignature Off'; \
-		echo 'ServerTokens Prod'; \
-		echo 'TraceEnable Off'; \
-		echo 'UseCanonicalName On'; \
-		echo 'UseCanonicalPhysicalPort On'; \
+	&& { printf -- \
+		'\n%s\n%s\n%s\n%s\n%s\n%s\n%s\\\n%s%s\\\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n' \
+		'#' \
+		'# Custom configuration' \
+		'#' \
+		'KeepAlive On' \
+		'MaxKeepAliveRequests 200' \
+		'KeepAliveTimeout 2' \
+		'LogFormat ' \
+		'  "%{X-Forwarded-For}i %l %u %t \"%r\" %>s %b' \
+		' \"%{Referer}i\" \"%{User-Agent}i\"" ' \
+		'  forwarded_for_combined' \
+		'ExtendedStatus Off' \
+		'Listen 8443' \
+		'Options -Indexes' \
+		'ServerSignature Off' \
+		'ServerTokens Prod' \
+		'TraceEnable Off' \
+		'UseCanonicalName On' \
+		'UseCanonicalPhysicalPort On'; \
 	} >> /etc/httpd/conf/httpd.conf \
 	&& sed -i \
 		-e 's~^\(LoadModule .*\)$~#\1~g' \
