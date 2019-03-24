@@ -1,30 +1,34 @@
 #!/usr/bin/env bash
 
-function absolute_path ()
+function __absolute_path ()
 {
-	local DIRECTORY_PATH="${1:-}"
-	local VALUE
+	local -r directory_path="${1}"
 
-	if [[ -n ${DIRECTORY_PATH} ]]; then
-		VALUE="$(
+	local value
+
+	if [[ -n ${directory_path} ]]
+	then
+		value="$(
 			python -c "import os,sys; print os.path.abspath(sys.argv[1])" \
-			"${DIRECTORY_PATH}"
+			"${directory_path}"
 		)"
 	fi
 
-	printf -- "%s" "${VALUE}"
+	printf -- '%s' "${value}"
 }
 
-function is_valid_apache_content_root ()
+function __is_valid_apache_content_root ()
 {
-	local DIRECTORY_PATH="${1:-}"
-	local DIRECTORY_PATH_ABSOLUTE="$(
-		absolute_path \
-			"${DIRECTORY_PATH}"
-	)"
-	local VALID_DIRECTORY='^\/(?!\/|bin|dev|etc|lib|lib64|lost+found|media|proc|root|sbin|sys|tmp|usr).+$'
+	local -r directory_path="${1}"
+	local -r valid_directory='^\/(?!\/|bin|dev|etc|lib|lib64|lost+found|media|proc|root|sbin|sys|tmp|usr).+$'
 
-	if grep -qoP "${VALID_DIRECTORY}" <<< "${DIRECTORY_PATH_ABSOLUTE}"; then
+	local absolute_path="$(
+		__absolute_path \
+			"${directory_path}"
+	)"
+
+	if grep -qoP "${valid_directory}" <<< "${absolute_path}"
+	then
 		return 0
 	fi
 
@@ -33,153 +37,147 @@ function is_valid_apache_content_root ()
 
 function get_absolute_apache_custom_log_location ()
 {
-	local CONTENT_ROOT
-	local VALUE="${APACHE_CUSTOM_LOG_LOCATION:-}"
+	local content_root
+	local value="${APACHE_CUSTOM_LOG_LOCATION}"
 
-	if [[ -n ${VALUE} ]] \
-		&& [[ ! ${VALUE} =~ ^[\.]{,2}/ ]]
+	if [[ -n ${value} ]] \
+		&& [[ ! ${value} =~ ^[\.]{,2}/ ]]
 	then
-		CONTENT_ROOT="$(
+		content_root="$(
 			get_apache_content_root
 		)"
 
 		printf -v \
-			VALUE \
+			value \
 			-- '%s/%s' \
-			"${CONTENT_ROOT}" \
-			"${VALUE}"
+			"${content_root}" \
+			"${value}"
 	fi
 
-	printf -- \
-		'%s' \
-		"${VALUE}"
+	printf -- '%s' "${value}"
 }
 
 function get_absolute_apache_error_log_location ()
 {
-	local CONTENT_ROOT
-	local VALUE="${APACHE_ERROR_LOG_LOCATION:-}"
+	local content_root
+	local value="${APACHE_ERROR_LOG_LOCATION}"
 
-	if [[ -n ${VALUE} ]] \
-		&& [[ ! ${VALUE} =~ ^[\.]{,2}/ ]]
+	if [[ -n ${value} ]] \
+		&& [[ ! ${value} =~ ^[\.]{,2}/ ]]
 	then
-		CONTENT_ROOT="$(
+		content_root="$(
 			get_apache_content_root
 		)"
 
 		printf -v \
-			VALUE \
+			value \
 			-- '%s/%s' \
-			"${CONTENT_ROOT}" \
-			"${VALUE}"
+			"${content_root}" \
+			"${value}"
 	fi
 
-	printf -- \
-		'%s' \
-		"${VALUE}"
+	printf -- '%s' "${value}"
 }
 
 function get_absolute_php_options_session_save_path ()
 {
-	local CONTENT_ROOT
-	local VALUE="${PHP_OPTIONS_SESSION_SAVE_PATH:-}"
+	local -r save_handler="${PHP_OPTIONS_SESSION_SAVE_HANDLER}"
 
-	if [[ ${PHP_OPTIONS_SESSION_SAVE_HANDLER} == files ]] \
-		&& [[ -n ${VALUE} ]] \
-		&& [[ ! ${VALUE} =~ ^[\.]{,2}/ ]]
+	local content_root
+	local value="${PHP_OPTIONS_SESSION_SAVE_PATH}"
+
+	if [[ ${save_handler} == files ]] \
+		&& [[ -n ${value} ]] \
+		&& [[ ! ${value} =~ ^[\.]{,2}/ ]]
 	then
-		CONTENT_ROOT="$(
+		content_root="$(
 			get_apache_content_root
 		)"
 
 		printf -v \
-			VALUE \
+			value \
 			-- '%s/%s' \
-			"${CONTENT_ROOT}" \
-			"${VALUE}"
+			"${content_root}" \
+			"${value}"
 	fi
 
-	printf -- \
-		'%s' \
-		"${VALUE}"
+	printf -- '%s' "${value}"
 }
 
 function get_apache_content_root ()
 {
-	local DEFAULT_VALUE="${1:-/var/www/app}"
-	local VALUE="${APACHE_CONTENT_ROOT:-}"
+	local -r default_value="${1:-/var/www/app}"
 
-	if [[ -z ${VALUE} ]] \
-		|| ! is_valid_apache_content_root "${VALUE}"
+	local value="${APACHE_CONTENT_ROOT}"
+
+	if ! __is_valid_apache_content_root "${value}"
 	then
-		VALUE="${DEFAULT_VALUE}"
+		value="${default_value}"
 	fi
 
-	printf -- "%s" "${VALUE}"
+	printf -- '%s' "${value}"
 }
 
 function get_apache_header_x_service_uid ()
 {
-	local HOST_NAME="${HOSTNAME:-}"
-	local VALUE="${APACHE_HEADER_X_SERVICE_UID:-}"
+	local hostname="${HOSTNAME}"
+	local value="${APACHE_HEADER_X_SERVICE_UID}"
 
-	if [[ -n ${VALUE} ]]; then
-		if [[ -z ${HOST_NAME} ]]; then
-			HOST_NAME="$(
+	if [[ -n ${value} ]]
+	then
+		if [[ -z ${hostname} ]]
+		then
+			hostname="$(
 				hostname
 			)"
 		fi
 
-		# Replace {{HOSTNAME}} with system hostname
-		VALUE="${VALUE//\{\{HOSTNAME\}\}/${HOST_NAME}}"
+		value="${value//'{{HOSTNAME}}'/${hostname}}"
 	fi
 
-	printf -- \
-		'%s' \
-		"${VALUE}"
+	printf -- '%s' "${value}"
 }
 
 function get_apache_server_alias ()
 {
-	local HOST_NAME="${HOSTNAME:-}"
-	local VALUE="${APACHE_SERVER_ALIAS:-}"
+	local hostname="${HOSTNAME}"
+	local value="${APACHE_SERVER_ALIAS}"
 
-	if [[ -n ${VALUE} ]]; then
-		if [[ -z ${HOST_NAME} ]]; then
-			HOST_NAME="$(
+	if [[ -n ${value} ]]
+	then
+		if [[ -z ${hostname} ]]
+		then
+			hostname="$(
 				hostname
 			)"
 		fi
 
-		# Replace {{HOSTNAME}} with system hostname
-		VALUE="${VALUE//\{\{HOSTNAME\}\}/${HOST_NAME}}"
+		value="${value//'{{HOSTNAME}}'/${hostname}}"
 	fi
 
-	printf -- \
-		'%s' \
-		"${VALUE}"
+	printf -- '%s' "${value}"
 }
 
 function get_apache_server_name ()
 {
-	local HOST_NAME="${HOSTNAME:-}"
-	local VALUE="${APACHE_SERVER_NAME:-}"
+	local hostname="${HOSTNAME}"
+	local value="${APACHE_SERVER_NAME}"
 
-	if [[ -z ${HOST_NAME} ]]; then
-		HOST_NAME="$(
+	if [[ -z ${hostname} ]]
+	then
+		hostname="$(
 			hostname
 		)"
 	fi
 
-	if [[ -z ${VALUE} ]]; then
-		VALUE="${HOST_NAME}"
+	if [[ -z ${value} ]]
+	then
+		value="${hostname}"
 	else
-		VALUE="${VALUE//\{\{HOSTNAME\}\}/${HOST_NAME}}"
+		value="${value//'{{HOSTNAME}}'/${hostname}}"
 	fi
 
-	printf -- \
-		'%s' \
-		"${VALUE}"
+	printf -- '%s' "${value}"
 }
 
 unset BASH_ENV ENV
