@@ -744,6 +744,28 @@ function set_apache_ssl_certificate ()
 	fi
 }
 
+function set_php_fpm_pool ()
+{
+	local -r user="${1:-app}"
+	local -r group="${2:-app-www}"
+
+	if [[ -f /etc/php-fpm.d/www.conf.template ]]
+	then
+		rm -f /etc/php-fpm.d/*.conf
+
+		sed \
+			-e "s~{{APACHE_RUN_GROUP}}~${group}~g" \
+			-e "s~{{APACHE_RUN_USER}}~${user}~g" \
+			/etc/php-fpm.d/www.conf.template \
+			> "/etc/php-fpm.d/${user}.conf"
+
+		sed -i \
+			-e "s~php-fpm/\(.*\)\.sock~php-fpm/${user}\.sock~" \
+			/etc/httpd/conf.d/php-fpm.conf
+	fi
+
+}
+
 function update_group_name ()
 {
 	local GROUP_FROM="${1}"
@@ -791,12 +813,16 @@ OPTS_APACHE_MPM="${APACHE_MPM:-prefork}"
 OPTS_APACHE_RUN_GROUP="${APACHE_RUN_GROUP:-${DEFAULT_APACHE_USER}}"
 OPTS_APACHE_RUN_USER="${APACHE_RUN_USER:-${DEFAULT_APACHE_USER}}"
 OPTS_APACHE_SERVER_ALIAS="${APACHE_SERVER_ALIAS:-}"
-OPTS_APACHE_SERVER_NAME="${APACHE_SERVER_NAME:-$(hostname)}"
+OPTS_APACHE_SERVER_NAME="${APACHE_SERVER_NAME:-"$(
+	hostname
+)"}"
 OPTS_APACHE_SSL_CERTIFICATE="${APACHE_SSL_CERTIFICATE:-}"
 OPTS_APACHE_SYSTEM_USER="${APACHE_SYSTEM_USER:-${DEFAULT_SYSTEM_USER}}"
 
 # Load app package Apache configuration files.
 load_httpd_conf_scan_files "${PACKAGE_PATH}"
+
+set_php_fpm_pool "${OPTS_APACHE_RUN_USER}" "${OPTS_APACHE_RUN_GROUP}"
 
 # Load app package PHP configuration files.
 load_php_ini_scan_files "${PACKAGE_PATH}"
