@@ -37,19 +37,14 @@ function __is_valid_apache_content_root ()
 
 function __get_absolute_apache_custom_log_location ()
 {
-	local content_root
 	local value="${APACHE_CUSTOM_LOG_LOCATION:-var/log/apache_access_log}"
 
 	if [[ ! ${value} =~ ^[\.]{,2}/ ]]
 	then
-		content_root="$(
-			__get_apache_content_root
-		)"
-
 		printf -v \
 			value \
 			-- '%s/%s' \
-			"${content_root}" \
+			"${CONTENT_ROOT}" \
 			"${value}"
 	fi
 
@@ -58,19 +53,14 @@ function __get_absolute_apache_custom_log_location ()
 
 function __get_absolute_apache_error_log_location ()
 {
-	local content_root
 	local value="${APACHE_ERROR_LOG_LOCATION:-var/log/apache_error_log}"
 
 	if [[ ! ${value} =~ ^[\.]{,2}/ ]]
 	then
-		content_root="$(
-			__get_apache_content_root
-		)"
-
 		printf -v \
 			value \
 			-- '%s/%s' \
-			"${content_root}" \
+			"${CONTENT_ROOT}" \
 			"${value}"
 	fi
 
@@ -81,20 +71,15 @@ function __get_absolute_php_options_session_save_path ()
 {
 	local -r save_handler="${PHP_OPTIONS_SESSION_SAVE_HANDLER:-files}"
 
-	local content_root
 	local value="${PHP_OPTIONS_SESSION_SAVE_PATH:-var/session}"
 
 	if [[ ${save_handler} == files ]] \
 		&& [[ ! ${value} =~ ^[\.]{,2}/ ]]
 	then
-		content_root="$(
-			__get_apache_content_root
-		)"
-
 		printf -v \
 			value \
 			-- '%s/%s' \
-			"${content_root}" \
+			"${CONTENT_ROOT}" \
 			"${value}"
 	fi
 
@@ -117,19 +102,11 @@ function __get_apache_content_root ()
 
 function __get_apache_header_x_service_uid ()
 {
-	local hostname="${HOSTNAME}"
 	local value="${APACHE_HEADER_X_SERVICE_UID}"
 
 	if [[ -n ${value} ]]
 	then
-		if [[ -z ${hostname} ]]
-		then
-			hostname="$(
-				hostname
-			)"
-		fi
-
-		value="${value//'{{HOSTNAME}}'/${hostname}}"
+		value="${value//'{{HOSTNAME}}'/${HOSTNAME}}"
 	fi
 
 	printf -- '%s' "${value}"
@@ -137,19 +114,11 @@ function __get_apache_header_x_service_uid ()
 
 function __get_apache_server_alias ()
 {
-	local hostname="${HOSTNAME}"
 	local value="${APACHE_SERVER_ALIAS}"
 
 	if [[ -n ${value} ]]
 	then
-		if [[ -z ${hostname} ]]
-		then
-			hostname="$(
-				hostname
-			)"
-		fi
-
-		value="${value//'{{HOSTNAME}}'/${hostname}}"
+		value="${value//'{{HOSTNAME}}'/${HOSTNAME}}"
 	fi
 
 	printf -- '%s' "${value}"
@@ -157,21 +126,13 @@ function __get_apache_server_alias ()
 
 function __get_apache_server_name ()
 {
-	local hostname="${HOSTNAME}"
 	local value="${APACHE_SERVER_NAME}"
-
-	if [[ -z ${hostname} ]]
-	then
-		hostname="$(
-			hostname
-		)"
-	fi
 
 	if [[ -z ${value} ]]
 	then
-		value="${hostname}"
+		value="${HOSTNAME}"
 	else
-		value="${value//'{{HOSTNAME}}'/${hostname}}"
+		value="${value//'{{HOSTNAME}}'/${HOSTNAME}}"
 	fi
 
 	printf -- '%s' "${value}"
@@ -179,7 +140,18 @@ function __get_apache_server_name ()
 
 function main ()
 {
+	local CONTENT_ROOT="$(
+		__get_apache_content_root
+	)"
+
 	unset BASH_ENV ENV
+
+	if [[ -z ${HOSTNAME} ]]
+	then
+		export HOSTNAME="$(
+			hostname
+		)"
+	fi
 
 	export APACHE_CUSTOM_LOG_LOCATION="$(
 		__get_absolute_apache_custom_log_location
