@@ -2,13 +2,49 @@
 
 set -e
 
+function __get_apache_autostart_httpd_bootstrap ()
+{
+	local -r default_value="${1:-true}"
+
+	local value="${APACHE_AUTOSTART_HTTPD_BOOTSTRAP}"
+
+	if ! __is_valid_apache_autostart_httpd_bootstrap "${value}"
+	then
+		value="${default_value}"
+	fi
+
+	printf -- '%s' "${value}"
+}
+
+function __is_valid_apache_autostart_httpd_bootstrap ()
+{
+	local -r boolean_value='^(true|false)$'
+	local -r value="${1}"
+
+	if [[ ${value} =~ ${boolean_value} ]]
+	then
+		return 0
+	fi
+
+	return 1
+}
+
 function main ()
 {
+	local -r autostart_bootstrap="$(
+		__get_apache_autostart_httpd_bootstrap
+	)"
 	local -r bin="/usr/sbin/php-fpm"
 	local -r lock_file="/var/lock/subsys/httpd-bootstrap"
 	local -r nice="/bin/nice"
 	local -r niceness="10"
 	local -r options="-g /var/run/php-fpm/php-fpm.pid -F"
+
+	if [[ ${autostart_bootstrap} == false ]]
+	then
+		# block.
+		sleep infinity
+	fi
 
 	while true
 	do
