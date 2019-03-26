@@ -30,7 +30,7 @@ function __last_check_passed ()
 		read \
 			-n 1 \
 			status \
-		< "${STATUS_PATH}"
+			< "${STATUS_PATH}"
 
 		if [[ ${status} =~ ^[01]$ ]]
 		then
@@ -109,7 +109,7 @@ function __record_exit_status ()
 	printf -- \
 		'%d' \
 		"${status}" \
-	> "${STATUS_PATH}"
+		> "${STATUS_PATH}"
 
 	trap - \
 		EXIT
@@ -335,8 +335,6 @@ function main ()
 			)"
 		exit 1
 	fi
-
-	exit 0
 }
 
 main "${@}"

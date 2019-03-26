@@ -10,29 +10,11 @@ function __absolute_path ()
 	then
 		value="$(
 			python -c "import os,sys; print os.path.abspath(sys.argv[1])" \
-			"${directory_path}"
+				"${directory_path}"
 		)"
 	fi
 
 	printf -- '%s' "${value}"
-}
-
-function __is_valid_apache_content_root ()
-{
-	local -r directory_path="${1}"
-	local -r valid_directory='^\/(?!\/|bin|dev|etc|lib|lib64|lost+found|media|proc|root|sbin|sys|tmp|usr).+$'
-
-	local absolute_path="$(
-		__absolute_path \
-			"${directory_path}"
-	)"
-
-	if grep -qoP "${valid_directory}" <<< "${absolute_path}"
-	then
-		return 0
-	fi
-
-	return 1
 }
 
 function __get_absolute_apache_custom_log_location ()
@@ -106,7 +88,7 @@ function __get_apache_header_x_service_uid ()
 
 	if [[ -n ${value} ]]
 	then
-		value="${value//'{{HOSTNAME}}'/${HOSTNAME}}"
+		value="${value//'{{HOSTNAME}}'/${HOSTNAME:-localhost.localdomain}}"
 	fi
 
 	printf -- '%s' "${value}"
@@ -136,6 +118,24 @@ function __get_apache_server_name ()
 	fi
 
 	printf -- '%s' "${value}"
+}
+
+function __is_valid_apache_content_root ()
+{
+	local -r directory_path="${1}"
+	local -r valid_directory='^\/(?!\/|bin|dev|etc|lib|lib64|lost+found|media|proc|root|sbin|sys|tmp|usr).+$'
+
+	local absolute_path="$(
+		__absolute_path \
+			"${directory_path}"
+	)"
+
+	if grep -qoP "${valid_directory}" <<< "${absolute_path}"
+	then
+		return 0
+	fi
+
+	return 1
 }
 
 function main ()
