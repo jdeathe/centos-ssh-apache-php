@@ -1218,29 +1218,8 @@ function main ()
 			"${OPTS_APACHE_SERVER_ALIAS}" \
 			&> /dev/null \
 			&
-		pids[2]="${!}"
+		pids[1]="${!}"
 	fi
-
-	# Set the system user passwords
-	printf -- \
-		'%s:%s\n' \
-		"${apache_system_user_default}" \
-		"$(
-			__get_password
-		)" \
-		| chpasswd \
-		&
-	pids[0]="${!}"
-
-	printf -- \
-		'%s:%s\n' \
-		"${apache_run_user_default}" \
-		"$(
-			__get_password
-		)" \
-		| chpasswd \
-		&
-	pids[1]="${!}"
 
 	__load_php_ini_scan_files \
 		"${package_path}"
@@ -1317,16 +1296,12 @@ function main ()
 				"${OPTS_APACHE_SERVER_ALIAS}"
 		)"
 
-	# Wait for background processes
-	wait ${pids[0]}
-	wait ${pids[1]}
-
 	if [[ ${OPTS_APACHE_MOD_SSL_ENABLED} == true ]]
 	then
 		# Wait for certificate generation if necessary
-		if [[ -n ${pids[2]} ]]
+		if [[ -n ${pids[1]} ]]
 		then
-			wait ${pids[2]}
+			wait ${pids[1]}
 		fi
 
 		printf -v \

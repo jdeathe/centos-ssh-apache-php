@@ -59,6 +59,8 @@ RUN useradd -r -M -d /var/www/app -s /sbin/nologin app \
 	&& useradd -r -M -d /var/www/app -s /sbin/nologin -G apache,app app-www \
 	&& usermod -a -G app-www app \
 	&& usermod -a -G app-www,app apache \
+	&& usermod -L app \
+	&& usermod -L app-www \
 	&& { printf -- \
 		'\n@apache\tsoft\tnproc\t%s\n@apache\thard\tnproc\t%s\n' \
 		'85' \
