@@ -38,7 +38,7 @@ function main ()
 	local -r lock_file="/var/lock/subsys/httpd-bootstrap"
 	local -r nice="/bin/nice"
 	local -r niceness="10"
-	local -r options="-g /var/run/php-fpm/php-fpm.pid -F"
+	local -r options="-g /var/run/php-fpm/php-fpm.pid -F -O"
 
 	if [[ ${autostart_bootstrap} == false ]]
 	then
