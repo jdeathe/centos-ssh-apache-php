@@ -147,7 +147,7 @@ RUN useradd -r -M -d /var/www/app -s /sbin/nologin app \
 	&& cat \
 		/etc/httpd/conf.d/ssl.conf \
 		> /etc/httpd/conf.d/ssl.conf.off \
-	&& > \
+	&& truncate -s 0 \
 		/etc/httpd/conf.d/ssl.conf \
 	&& chmod 444 \
 		/etc/httpd/conf.d/ssl.conf \
@@ -192,8 +192,9 @@ RUN useradd -r -M -d /var/www/app -s /sbin/nologin app \
 		-e 's~^;\(opcache.validate_timestamps=\).*$~\10~g' \
 		/etc/php.d/10-opcache.ini.default \
 		> /etc/php.d/10-opcache.ini \
-	&& sed -i \
-		-e 's~^\(error_log\) *=.*$~\1 = /dev/stderr~' \
+	&& sed -r -i \
+		-e 's~^(error_log) *=.*$~\1 = /dev/stderr~' \
+		-e 's~^;?(systemd_interval = ).*$~\10~' \
 		/etc/php-fpm.conf \
 	&& sed -i \
 		-e 's~^\[www\]$~[{{APACHE_RUN_USER}}]~' \
