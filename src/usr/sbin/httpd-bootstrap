@@ -1,12 +1,5 @@
 #!/usr/bin/env bash
 
-# Create lock file
-touch /var/lock/subsys/httpd-bootstrap
-
-TIMER_START="$(
-	date +%s.%N
-)"
-
 function __absolute_path ()
 {
 	local -r directory_path="${1}"
@@ -333,9 +326,23 @@ function __get_apache_content_root ()
 {
 	local -r default_value="${1:-/var/www/app}"
 
-	local value="${APACHE_CONTENT_ROOT:-/var/www/app}"
+	local value="${APACHE_CONTENT_ROOT}"
 
 	if ! __is_valid_apache_content_root "${value}"
+	then
+		value="${default_value}"
+	fi
+
+	printf -- '%s' "${value}"
+}
+
+function __get_apache_extended_status_enabled ()
+{
+	local -r default_value="${1:-false}"
+
+	local value="${APACHE_EXTENDED_STATUS_ENABLED}"
+
+	if ! __is_valid_apache_extended_status_enabled "${value}"
 	then
 		value="${default_value}"
 	fi
@@ -355,6 +362,34 @@ function __get_apache_header_x_service_uid ()
 	printf -- '%s' "${value}"
 }
 
+function __get_apache_mod_ssl_enabled ()
+{
+	local -r default_value="${1:-false}"
+
+	local value="${APACHE_MOD_SSL_ENABLED}"
+
+	if ! __is_valid_apache_mod_ssl_enabled "${value}"
+	then
+		value="${default_value}"
+	fi
+
+	printf -- '%s' "${value}"
+}
+
+function __get_apache_mpm ()
+{
+	local -r default_value="${1:-prefork}"
+
+	local value="${APACHE_MPM}"
+
+	if ! __is_valid_apache_mpm "${value}"
+	then
+		value="${default_value}"
+	fi
+
+	printf -- '%s' "${value}"
+}
+
 function __get_apache_public_directory ()
 {
 	local -r default_value="${1:-public_html}"
@@ -362,6 +397,85 @@ function __get_apache_public_directory ()
 	local value="${APACHE_PUBLIC_DIRECTORY}"
 
 	if ! __is_valid_apache_public_directory "${value}"
+	then
+		value="${default_value}"
+	fi
+
+	printf -- '%s' "${value}"
+}
+
+function __get_apache_run_group ()
+{
+	local -r default_value="${1:-app-www}"
+
+	local value="${APACHE_RUN_GROUP}"
+
+	if ! __is_valid_apache_run_group "${value}"
+	then
+		value="${default_value}"
+	fi
+
+	printf -- '%s' "${value}"
+}
+
+function __get_apache_run_user ()
+{
+	local -r default_value="${1:-app-www}"
+
+	local value="${APACHE_RUN_USER}"
+
+	if ! __is_valid_apache_run_user "${value}"
+	then
+		value="${default_value}"
+	fi
+
+	printf -- '%s' "${value}"
+}
+
+function __get_apache_server_alias ()
+{
+	local value="${APACHE_SERVER_ALIAS}"
+
+	printf -- '%s' "${value}"
+}
+
+function __get_apache_server_name ()
+{
+	local -r default_value="${1:-"$(
+		hostname
+	)"}"
+
+	local value="${APACHE_SERVER_NAME}"
+
+	if ! __is_valid_apache_server_name "${value}"
+	then
+		value="${default_value}"
+	fi
+
+	printf -- '%s' "${value}"
+}
+
+function __get_apache_system_user ()
+{
+	local -r default_value="${1:-app}"
+
+	local value="${APACHE_SYSTEM_USER}"
+
+	if ! __is_valid_apache_system_user "${value}"
+	then
+		value="${default_value}"
+	fi
+
+	printf -- '%s' "${value}"
+}
+
+function __get_package_path ()
+{
+	local -r default_value="${1:-/opt/app}"
+
+	local value="${PACKAGE_PATH}"
+
+	if ! __is_valid_package_path "${value}"
 	then
 		value="${default_value}"
 	fi
@@ -401,6 +515,65 @@ function __get_ssl_certificate_fingerprint ()
 	printf -- '%s' "${value}"
 }
 
+function __init_datadir ()
+{
+	local -r content_root="${2:-"$(
+		__get_apache_content_root
+	)"}"
+	local -r content_root_prefix="$(
+		dirname \
+			"${content_root}"
+	)"
+	local -r package_path="${1:-"$(
+		__get_package_path
+	)"}"
+
+	if [[ ! -d ${content_root_prefix} ]]
+	then
+		mkdir \
+			-p \
+			-m 755 \
+			"${content_root_prefix}"
+	fi
+
+	if [[ ! -d ${content_root} ]]
+	then
+		printf -- \
+			'Linking install directory %s > %s.\n' \
+			"${package_path}" \
+			"${content_root}"
+
+		ln -s \
+			"${package_path}" \
+			"${content_root}"
+	elif [[ -d ${content_root} ]] \
+		&& [[ ! -h ${content_root} ]] \
+		&& [[ -z "$(find "${content_root}" -maxdepth 1 -type f)" ]]
+	then
+		printf -- \
+			'Populating install directory %s > %s.\n' \
+			"${package_path}" \
+			"${content_root}"
+
+		cp -rpf \
+			"${package_path}"/. \
+			"${content_root}"
+	fi
+}
+
+function __is_valid_boolean ()
+{
+	local -r boolean_value='^(true|false)$'
+	local -r value="${1}"
+
+	if [[ ${value} =~ ${boolean_value} ]]
+	then
+		return 0
+	fi
+
+	return 1
+}
+
 function __is_valid_apache_content_root ()
 {
 	local -r directory_path="${1}"
@@ -417,6 +590,39 @@ function __is_valid_apache_content_root ()
 	fi
 
 	return 1
+}
+
+function __is_valid_apache_extended_status_enabled ()
+{
+	__is_valid_boolean "${@}"
+}
+
+function __is_valid_apache_mod_ssl_enabled ()
+{
+	__is_valid_boolean "${@}"
+}
+
+function __is_valid_apache_mpm ()
+{
+	local -r valid_value='^(prefork|worker|event)$'
+	local -r value="${1}"
+
+	if [[ ${value} =~ ${valid_value} ]]
+	then
+		return 0
+	fi
+
+	return 1
+}
+
+function __is_valid_apache_run_group ()
+{
+	__is_valid_user_login "${@}"
+}
+
+function __is_valid_apache_run_user ()
+{
+	__is_valid_user_login "${@}"
 }
 
 function __is_valid_apache_public_directory ()
@@ -436,6 +642,18 @@ function __is_valid_apache_public_directory ()
 	fi
 
 	if grep -qoP "${valid_subdirectory}" <<< "${directory}"
+	then
+		return 0
+	fi
+
+	return 1
+}
+
+function __is_valid_apache_server_name ()
+{
+	local -r name="${1}"
+
+	if [[ -n ${name} ]]
 	then
 		return 0
 	fi
@@ -465,6 +683,16 @@ function __is_valid_apache_ssl_certificate ()
 	fi
 
 	return 1
+}
+
+function __is_valid_apache_system_user ()
+{
+	__is_valid_user_login "${@}"
+}
+
+function __is_valid_package_path ()
+{
+	__is_valid_apache_content_root "${@}"
 }
 
 function __is_valid_user_login ()
@@ -674,6 +902,50 @@ function __set_apache_header_x_service_uid ()
 	fi
 }
 
+function __set_apache_mod_ssl_enabled ()
+{
+	local enable="${1:-"$(
+		__get_apache_mod_ssl_enabled
+	)"}"
+
+	if [[ ${enable} == true ]]
+	then
+		cat \
+			/etc/httpd/conf.d/ssl.conf.off \
+			> /etc/httpd/conf.d/ssl.conf
+
+		if [[ -f /etc/httpd/conf.d/10-ssl-vhost.conf.off ]]
+		then
+			cat \
+				/etc/httpd/conf.d/10-ssl-vhost.conf.off \
+				> /etc/httpd/conf.d/10-ssl-vhost.conf
+		fi
+
+		if [[ -f /etc/httpd/conf.modules.d/00-ssl.conf ]]
+		then
+			sed -i \
+				-e 's~^#\(LoadModule ssl_module .*\)$~\1~' \
+				/etc/httpd/conf.modules.d/00-ssl.conf
+		fi
+	else
+		truncate -s 0 \
+			/etc/httpd/conf.d/ssl.conf
+
+		if [[ -f /etc/httpd/conf.d/10-ssl-vhost.conf ]]
+		then
+			truncate -s 0 \
+				/etc/httpd/conf.d/10-ssl-vhost.conf
+		fi
+
+		if [[ -f /etc/httpd/conf.modules.d/00-ssl.conf ]]
+		then
+			sed -i \
+				-e 's~^\(LoadModule ssl_module .*\)$~#\1~' \
+				/etc/httpd/conf.modules.d/00-ssl.conf
+		fi
+	fi
+}
+
 function __set_apache_mpm ()
 {
 	local apache_mpm="${1:-${APACHE_MPM}}"
@@ -747,9 +1019,9 @@ function __set_apache_mpm ()
 
 function __set_apache_server_name ()
 {
-	local -r host="${1:-${APACHE_SERVER_NAME:-"$(
-		hostname
-	)"}}"
+	local -r host="${1:-"$(
+		__get_apache_server_name
+	)"}"
 	local -r port="${2:-80}"
 
 	sed -i \
@@ -826,7 +1098,6 @@ function __set_php_fpm_pool ()
 			-e "s~php-fpm/\(.*\)\.sock~php-fpm/${user}\.sock~" \
 			/etc/httpd/conf.d/php-fpm.conf
 	fi
-
 }
 
 function __update_group_name ()
@@ -858,300 +1129,250 @@ function __update_user_login ()
 	fi
 }
 
-# Ensure HOSTNAME global is set
-if [[ -z ${HOSTNAME} ]]
-then
-	export HOSTNAME="$(
+function main ()
+{
+	local -r apache_system_user_default="app"
+	local -r apache_run_user_default="app-www"
+	local -r lock_file="/var/lock/subsys/httpd-bootstrap"
+	local -r ssl_certificate_fingerprint_digest="sha1"
+	local -r timer_start="$(
+		date +%s.%N
+	)"
+
+	local HOSTNAME
+	local document_root_file_system
+	local modules_enabled_list
+	local package_path
+	local -a pids
+	local ssl_certificate_fingerprint_details
+
+	# Create lock
+	touch \
+		"${lock_file}"
+
+	HOSTNAME="$(
 		hostname
 	)"
-fi
 
-DEFAULT_SYSTEM_USER="app"
-DEFAULT_APACHE_USER="app-www"
-PACKAGE_PATH="${PACKAGE_PATH:-/opt/app}"
-
-OPTS_APACHE_CONTENT_ROOT="$(
-	__get_apache_content_root
-)"
-OPTS_APACHE_DOCUMENT_ROOT="${OPTS_APACHE_CONTENT_ROOT}/$(
-	__get_apache_public_directory
-)"
-OPTS_APACHE_EXTENDED_STATUS_ENABLED="${APACHE_EXTENDED_STATUS_ENABLED:-false}"
-OPTS_APACHE_HEADER_X_SERVICE_UID="$(
-	__get_apache_header_x_service_uid
-)"
-OPTS_APACHE_MOD_SSL_ENABLED="${APACHE_MOD_SSL_ENABLED:-false}"
-OPTS_APACHE_MPM="${APACHE_MPM:-prefork}"
-OPTS_APACHE_RUN_GROUP="${APACHE_RUN_GROUP:-${DEFAULT_APACHE_USER}}"
-OPTS_APACHE_RUN_USER="${APACHE_RUN_USER:-${DEFAULT_APACHE_USER}}"
-OPTS_APACHE_SERVER_ALIAS="${APACHE_SERVER_ALIAS:-}"
-OPTS_APACHE_SERVER_NAME="${APACHE_SERVER_NAME:-"$(
-	hostname
-)"}"
-OPTS_APACHE_SSL_CERTIFICATE="${APACHE_SSL_CERTIFICATE:-}"
-OPTS_APACHE_SYSTEM_USER="${APACHE_SYSTEM_USER:-${DEFAULT_SYSTEM_USER}}"
-
-__set_php_fpm_pool "${OPTS_APACHE_RUN_USER}" "${OPTS_APACHE_RUN_GROUP}"
-
-# Load app package Apache configuration files.
-__load_httpd_conf_scan_files "${PACKAGE_PATH}"
-
-# Load app package PHP configuration files.
-__load_php_ini_scan_files "${PACKAGE_PATH}"
-
-# Populate SSL certificate file.
-if [[ ${OPTS_APACHE_MOD_SSL_ENABLED} == true ]] \
-	&& [[ -n ${OPTS_APACHE_SSL_CERTIFICATE} ]]
-then
-	__set_apache_ssl_certificate \
-		"${OPTS_APACHE_SSL_CERTIFICATE}"
-elif [[ ${OPTS_APACHE_MOD_SSL_ENABLED} == true ]] \
-	&& [[ -z ${OPTS_APACHE_SSL_CERTIFICATE} ]]
-then
-	__make_self_signed_san_certificate \
-		"${OPTS_APACHE_SERVER_NAME}" \
-		"${OPTS_APACHE_SERVER_ALIAS}" \
-		&> /dev/null \
-		&
-
-	PIDS[2]="${!}"
-fi
-
-# Set the system user passwords
-printf -- \
-	'%s:%s\n' \
-	"${DEFAULT_SYSTEM_USER}" \
-	"$(
-		__get_password
-	)" \
-	| chpasswd \
-	&
-PIDS[0]="${!}"
-
-printf -- \
-	'%s:%s\n' \
-	"${DEFAULT_APACHE_USER}" \
-	"$(
-		__get_password
-	)" \
-	| chpasswd \
-	&
-PIDS[1]="${!}"
-
-# Verify package installation directory exists
-if [[ ! -d ${PACKAGE_PATH} ]]
-then
-	>&2 printf -- \
-		'ERROR: %s not found.\n' \
-		"${PACKAGE_PATH}"
-	exit 1
-fi
-
-# Initialise Apache server root directory.
-APACHE_SERVER_HOME="$(
-	dirname \
-		"${OPTS_APACHE_CONTENT_ROOT}"
-)"
-
-if [[ ! -d ${APACHE_SERVER_HOME} ]]
-then
-	printf -- \
-		'Create home directory %s.\n' \
-		"${APACHE_SERVER_HOME}"
-	mkdir \
-		-p \
-		-m 755 \
-		"${APACHE_SERVER_HOME}"
-fi
-
-if [[ ! -d ${OPTS_APACHE_CONTENT_ROOT} ]]
-then
-	printf -- \
-		'Linking install directory %s > %s.\n' \
-		"${PACKAGE_PATH}" \
-		"${OPTS_APACHE_CONTENT_ROOT}"
-	ln -s \
-		"${PACKAGE_PATH}" \
-		"${OPTS_APACHE_CONTENT_ROOT}"
-elif [[ -d ${OPTS_APACHE_CONTENT_ROOT} ]] \
-	&& [[ ! -h ${OPTS_APACHE_CONTENT_ROOT} ]] \
-	&& [[ -z "$(find "${OPTS_APACHE_CONTENT_ROOT}" -maxdepth 1 -type f)" ]]
-then
-	printf -- \
-		'Populating install directory  %s > %s.\n' \
-		"${PACKAGE_PATH}" \
-		"${OPTS_APACHE_CONTENT_ROOT}"
-	cp -rpf \
-		"${PACKAGE_PATH}"/. \
-		"${OPTS_APACHE_CONTENT_ROOT}"
-fi
-
-# Verify Apache DocumentRoot directory exists
-if [[ ! -d ${OPTS_APACHE_DOCUMENT_ROOT} ]]
-then
-	>&2 printf -- \
-		'ERROR: %s not found.\n' \
-		"${OPTS_APACHE_DOCUMENT_ROOT}"
-	exit 1
-fi
-
-APACHE_DOCUMENT_ROOT_FILE_SYSTEM="$(
-	df -PT "${OPTS_APACHE_DOCUMENT_ROOT}" \
-		| awk 'NR>1 { print $2 }'
-)"
-
-# Server MPM
-__set_apache_mpm "${OPTS_APACHE_MPM}"
-
-# Add local hosts entries
-__add_hosts_entry \
-	127.0.0.1 \
-	"$(
-		printf -- \
-			'%s%s%s' \
-			"${OPTS_APACHE_SERVER_NAME}" \
-			"${OPTS_APACHE_SERVER_ALIAS:+ }" \
-			"${OPTS_APACHE_SERVER_ALIAS}"
+	OPTS_APACHE_CONTENT_ROOT="$(
+		__get_apache_content_root
+	)"
+	OPTS_APACHE_DOCUMENT_ROOT="${OPTS_APACHE_CONTENT_ROOT}/$(
+		__get_apache_public_directory
+	)"
+	OPTS_APACHE_EXTENDED_STATUS_ENABLED="$(
+		__get_apache_extended_status_enabled
+	)"
+	OPTS_APACHE_HEADER_X_SERVICE_UID="$(
+		__get_apache_header_x_service_uid
+	)"
+	OPTS_APACHE_MOD_SSL_ENABLED="$(
+		__get_apache_mod_ssl_enabled
+	)"
+	OPTS_APACHE_MPM="$(
+		__get_apache_mpm
+	)"
+	OPTS_APACHE_RUN_GROUP="$(
+		__get_apache_run_group \
+			"${apache_run_user_default}"
+	)"
+	OPTS_APACHE_RUN_USER="$(
+		__get_apache_run_user \
+			"${apache_run_user_default}"
+	)"
+	OPTS_APACHE_SERVER_ALIAS="$(
+		__get_apache_server_alias
+	)"
+	OPTS_APACHE_SERVER_NAME="$(
+		__get_apache_server_name
+	)"
+	OPTS_APACHE_SSL_CERTIFICATE="${APACHE_SSL_CERTIFICATE}"
+	OPTS_APACHE_SYSTEM_USER="$(
+		__get_apache_system_user \
+			"${apache_system_user_default}"
+	)"
+	package_path="$(
+		__get_package_path
 	)"
 
-# Set Apache EnableSendfile
-if [[ ${APACHE_DOCUMENT_ROOT_FILE_SYSTEM} == nfs ]]
-then
+	# Verify package installation directory exists
+	if [[ ! -d ${package_path} ]]
+	then
+		>&2 printf -- \
+			'ERROR: %s not found.\n' \
+			"${package_path}"
+		exit 1
+	fi
+
+	# Populate SSL certificate file.
+	if [[ ${OPTS_APACHE_MOD_SSL_ENABLED} == true ]] \
+		&& [[ -n ${OPTS_APACHE_SSL_CERTIFICATE} ]]
+	then
+		__set_apache_ssl_certificate \
+			"${OPTS_APACHE_SSL_CERTIFICATE}"
+	elif [[ ${OPTS_APACHE_MOD_SSL_ENABLED} == true ]] \
+		&& [[ -z ${OPTS_APACHE_SSL_CERTIFICATE} ]]
+	then
+		__make_self_signed_san_certificate \
+			"${OPTS_APACHE_SERVER_NAME}" \
+			"${OPTS_APACHE_SERVER_ALIAS}" \
+			&> /dev/null \
+			&
+		pids[2]="${!}"
+	fi
+
+	# Set the system user passwords
 	printf -- \
-		'Disabling EnableSendfile.'
-	__set_apache_enable_sendfile false
-else
-	__set_apache_enable_sendfile true
-fi
-
-# Set Apache ExtendedStatus
-if [[ ${OPTS_APACHE_EXTENDED_STATUS_ENABLED} == true ]]
-then
-	printf -- \
-		'Enabling EnableSendfile.'
-fi
-__set_apache_extended_status "${OPTS_APACHE_EXTENDED_STATUS_ENABLED}"
-
-# Set Apache X-Service-UID Header
-__set_apache_header_x_service_uid "${OPTS_APACHE_HEADER_X_SERVICE_UID}"
-
-# Set Apache ServerName
-__set_apache_server_name "${OPTS_APACHE_SERVER_NAME}" "80"
-
-# Enable Apache modules
-APACHE_MODULES_ENABLED="$(
-	__enable_apache_modules \
-		"${APACHE_LOAD_MODULES}"
-)"
-
-# Enable/Disable SSL support
-if [[ ${OPTS_APACHE_MOD_SSL_ENABLED} == true ]]
-then
-	printf -- \
-		'Enabling SSL support.'
-	cat \
-		/etc/httpd/conf.d/ssl.conf.off \
-		> /etc/httpd/conf.d/ssl.conf
-
-	if [[ -f /etc/httpd/conf.d/10-ssl-vhost.conf.off ]]
-	then
-		cat \
-			/etc/httpd/conf.d/10-ssl-vhost.conf.off \
-			> /etc/httpd/conf.d/10-ssl-vhost.conf
-	fi
-
-	if [[ -f /etc/httpd/conf.modules.d/00-ssl.conf ]]
-	then
-		sed -i \
-			-e 's~^#\(LoadModule ssl_module .*\)$~\1~' \
-			/etc/httpd/conf.modules.d/00-ssl.conf
-	fi
-else
-	:> /etc/httpd/conf.d/ssl.conf
-
-	if [[ -f /etc/httpd/conf.d/10-ssl-vhost.conf ]]
-	then
-		:> /etc/httpd/conf.d/10-ssl-vhost.conf
-	fi
-
-	if [[ -f /etc/httpd/conf.modules.d/00-ssl.conf ]]
-	then
-		sed -i \
-			-e 's~^\(LoadModule ssl_module .*\)$~#\1~' \
-			/etc/httpd/conf.modules.d/00-ssl.conf
-	fi
-fi
-
-# Set ownership for fcgid php-wrapper and socket if necessary
-if [[ -d ${PACKAGE_PATH}/bin ]] \
-	&& [[ -d /var/run/mod_fcgid ]]
-then
-	chown -R \
-		"${OPTS_APACHE_RUN_USER}":"${OPTS_APACHE_RUN_GROUP}" \
-		{"${PACKAGE_PATH}"/bin,/var/run/mod_fcgid}
-fi
-
-# Set the system user's login names and groups
-__update_user_login "${DEFAULT_SYSTEM_USER}" "${OPTS_APACHE_SYSTEM_USER}"
-__update_group_name "${DEFAULT_SYSTEM_USER}" "${OPTS_APACHE_SYSTEM_USER}"
-__update_user_login "${DEFAULT_APACHE_USER}" "${OPTS_APACHE_RUN_USER}"
-__update_group_name "${DEFAULT_APACHE_USER}" "${OPTS_APACHE_RUN_GROUP}"
-
-# Wait for background processes
-wait ${PIDS[0]}
-wait ${PIDS[1]}
-
-SSL_CRT_FINGERPRINT_DETAILS=
-if [[ ${OPTS_APACHE_MOD_SSL_ENABLED} == true ]]
-then
-	# Wait for certificate generation if necessary
-	if [[ -n ${PIDS[2]} ]]
-	then
-		wait ${PIDS[2]}
-	fi
-
-	DIGEST="sha1"
-
-	printf -v \
-		SSL_CRT_FINGERPRINT_DETAILS \
-		-- '\nssl certificate %s fingerprint : \n%s' \
-		"${DIGEST}" \
+		'%s:%s\n' \
+		"${apache_system_user_default}" \
 		"$(
-			__get_ssl_certificate_fingerprint \
-				"${DIGEST}"
-		)"
-fi
-
-TIMER_TOTAL="$(
-	awk \
-		-v timer_end="$(
-			date +%s.%N
+			__get_password
 		)" \
-		-v timer_start="${TIMER_START}" \
-		'BEGIN { print \
-			timer_end - timer_start;
-		}'
-)"
+		| chpasswd \
+		&
+	pids[0]="${!}"
 
-cat <<-EOT
+	printf -- \
+		'%s:%s\n' \
+		"${apache_run_user_default}" \
+		"$(
+			__get_password
+		)" \
+		| chpasswd \
+		&
+	pids[1]="${!}"
 
-	================================================================================
-	Apache Details
-	--------------------------------------------------------------------------------
-	system user : ${OPTS_APACHE_SYSTEM_USER}
-	run user : ${OPTS_APACHE_RUN_USER}
-	run group : ${OPTS_APACHE_RUN_GROUP}
-	server name : ${OPTS_APACHE_SERVER_NAME}
-	server alias : ${OPTS_APACHE_SERVER_ALIAS}
-	header x-service-uid : ${OPTS_APACHE_HEADER_X_SERVICE_UID:-unset}
-	document root : ${OPTS_APACHE_DOCUMENT_ROOT} (${APACHE_DOCUMENT_ROOT_FILE_SYSTEM})
-	server mpm : ${OPTS_APACHE_MPM,,}
-	modules enabled :
-	${APACHE_MODULES_ENABLED}${SSL_CRT_FINGERPRINT_DETAILS}
-	--------------------------------------------------------------------------------
-	${TIMER_TOTAL}
+	__load_php_ini_scan_files \
+		"${package_path}"
+	__set_php_fpm_pool \
+		"${OPTS_APACHE_RUN_USER}" \
+		"${OPTS_APACHE_RUN_GROUP}"
+	__set_apache_mpm \
+		"${OPTS_APACHE_MPM}"
+	__load_httpd_conf_scan_files \
+		"${package_path}"
+	__set_apache_header_x_service_uid \
+		"${OPTS_APACHE_HEADER_X_SERVICE_UID}"
+	__set_apache_server_name \
+		"${OPTS_APACHE_SERVER_NAME}" \
+		"80"
+	__set_apache_mod_ssl_enabled \
+		"${OPTS_APACHE_MOD_SSL_ENABLED}"
+	__set_apache_extended_status \
+		"${OPTS_APACHE_EXTENDED_STATUS_ENABLED}"
+	modules_enabled_list="$(
+		__enable_apache_modules \
+			"${APACHE_LOAD_MODULES}"
+	)"
+	__init_datadir \
+		"${package_path}" \
+		"${OPTS_APACHE_CONTENT_ROOT}"
 
-EOT
+	# Verify Apache DocumentRoot directory exists
+	if [[ ! -d ${OPTS_APACHE_DOCUMENT_ROOT} ]]
+	then
+		>&2 printf -- \
+			'ERROR: %s not found.\n' \
+			"${OPTS_APACHE_DOCUMENT_ROOT}"
+		exit 1
+	fi
 
-# Release lock file
-rm -f /var/lock/subsys/httpd-bootstrap
+	document_root_file_system="$(
+		df -PT "${OPTS_APACHE_DOCUMENT_ROOT}" \
+			| awk 'NR>1 { print $2 }'
+	)"
+	if [[ ${document_root_file_system} == nfs ]]
+	then
+		printf -- \
+			'Disabling EnableSendfile.'
+		__set_apache_enable_sendfile \
+			"false"
+	else
+		__set_apache_enable_sendfile \
+			"true"
+	fi
+
+	# Set ownership for fcgid php-wrapper and socket if necessary
+	if [[ -d ${package_path}/bin ]] \
+		&& [[ -d /var/run/mod_fcgid ]]
+	then
+		chown -R \
+			"${OPTS_APACHE_RUN_USER}":"${OPTS_APACHE_RUN_GROUP}" \
+			{"${package_path}"/bin,/var/run/mod_fcgid}
+	fi
+
+	# Set the system user's login names and groups
+	__update_user_login "${apache_system_user_default}" "${OPTS_APACHE_SYSTEM_USER}"
+	__update_group_name "${apache_system_user_default}" "${OPTS_APACHE_SYSTEM_USER}"
+	__update_user_login "${apache_run_user_default}" "${OPTS_APACHE_RUN_USER}"
+	__update_group_name "${apache_run_user_default}" "${OPTS_APACHE_RUN_GROUP}"
+	
+	__add_hosts_entry \
+		"127.0.0.1" \
+		"$(
+			printf -- \
+				'%s%s%s' \
+				"${OPTS_APACHE_SERVER_NAME}" \
+				"${OPTS_APACHE_SERVER_ALIAS:+ }" \
+				"${OPTS_APACHE_SERVER_ALIAS}"
+		)"
+
+	# Wait for background processes
+	wait ${pids[0]}
+	wait ${pids[1]}
+
+	if [[ ${OPTS_APACHE_MOD_SSL_ENABLED} == true ]]
+	then
+		# Wait for certificate generation if necessary
+		if [[ -n ${pids[2]} ]]
+		then
+			wait ${pids[2]}
+		fi
+
+		printf -v \
+			ssl_certificate_fingerprint_details \
+			-- '\nssl certificate %s fingerprint : \n%s' \
+			"${ssl_certificate_fingerprint_digest}" \
+			"$(
+				__get_ssl_certificate_fingerprint \
+					"${ssl_certificate_fingerprint_digest}"
+			)"
+	fi
+
+	timer_total="$(
+		awk \
+			-v timer_end="$(
+				date +%s.%N
+			)" \
+			-v timer_start="${timer_start}" \
+			'BEGIN { print \
+				timer_end - timer_start;
+			}'
+	)"
+
+	cat <<-EOT
+
+		================================================================================
+		Apache Details
+		--------------------------------------------------------------------------------
+		system user : ${OPTS_APACHE_SYSTEM_USER}
+		run user : ${OPTS_APACHE_RUN_USER}
+		run group : ${OPTS_APACHE_RUN_GROUP}
+		server name : ${OPTS_APACHE_SERVER_NAME}
+		server alias : ${OPTS_APACHE_SERVER_ALIAS}
+		header x-service-uid : ${OPTS_APACHE_HEADER_X_SERVICE_UID:-unset}
+		document root : ${OPTS_APACHE_DOCUMENT_ROOT} (${document_root_file_system})
+		server mpm : ${OPTS_APACHE_MPM,,}
+		modules enabled :
+		${modules_enabled_list}${ssl_certificate_fingerprint_details}
+		--------------------------------------------------------------------------------
+		${timer_total}
+
+	EOT
+
+	# Release lock
+	rm -f \
+		"${lock_file}"
+}
+
+main "${@}"
