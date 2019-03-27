@@ -1131,8 +1131,8 @@ function __update_user_login ()
 
 function main ()
 {
-	local -r apache_system_user_default="app"
 	local -r apache_run_user_default="app-www"
+	local -r apache_system_user_default="app"
 	local -r lock_file="/var/lock/subsys/httpd-bootstrap"
 	local -r ssl_certificate_fingerprint_digest="sha1"
 	local -r timer_start="$(
@@ -1209,7 +1209,9 @@ function main ()
 		&& [[ -n ${OPTS_APACHE_SSL_CERTIFICATE} ]]
 	then
 		__set_apache_ssl_certificate \
-			"${OPTS_APACHE_SSL_CERTIFICATE}"
+			"${OPTS_APACHE_SSL_CERTIFICATE}" \
+			&
+		pids[1]="${!}"
 	elif [[ ${OPTS_APACHE_MOD_SSL_ENABLED} == true ]] \
 		&& [[ -z ${OPTS_APACHE_SSL_CERTIFICATE} ]]
 	then
@@ -1281,11 +1283,19 @@ function main ()
 	fi
 
 	# Set the system user's login names and groups
-	__update_user_login "${apache_system_user_default}" "${OPTS_APACHE_SYSTEM_USER}"
-	__update_group_name "${apache_system_user_default}" "${OPTS_APACHE_SYSTEM_USER}"
-	__update_user_login "${apache_run_user_default}" "${OPTS_APACHE_RUN_USER}"
-	__update_group_name "${apache_run_user_default}" "${OPTS_APACHE_RUN_GROUP}"
-	
+	__update_user_login \
+		"${apache_system_user_default}" \
+		"${OPTS_APACHE_SYSTEM_USER}"
+	__update_group_name \
+		"${apache_system_user_default}" \
+		"${OPTS_APACHE_SYSTEM_USER}"
+	__update_user_login \
+		"${apache_run_user_default}" \
+		"${OPTS_APACHE_RUN_USER}"
+	__update_group_name \
+		"${apache_run_user_default}" \
+		"${OPTS_APACHE_RUN_GROUP}"
+
 	__add_hosts_entry \
 		"127.0.0.1" \
 		"$(
