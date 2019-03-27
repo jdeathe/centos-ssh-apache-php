@@ -1368,7 +1368,7 @@ function test_custom_configuration ()
 
 				docker exec \
 					apache-php.1 \
-					bash -c 'apachectl graceful'
+					bash -c 'httpd -k graceful'
 
 				curl_response_code_default="$(
 					curl -s \
@@ -1454,7 +1454,7 @@ function test_custom_configuration ()
 
 				docker exec \
 					apache-php.1 \
-					bash -c 'apachectl graceful'
+					bash -c 'httpd -k graceful'
 
 				curl_response_code_default="$(
 					curl -s \
@@ -1525,7 +1525,7 @@ function test_custom_configuration ()
 
 				docker exec \
 					apache-php.1 \
-					bash -c 'apachectl graceful'
+					bash -c 'httpd -k graceful'
 
 				curl_response_code_default="$(
 					curl -s \
@@ -1599,7 +1599,7 @@ function test_custom_configuration ()
 
 				docker exec \
 					apache-php.1 \
-					bash -c 'apachectl graceful'
+					bash -c 'httpd -k graceful'
 
 				curl_response_code_default="$(
 					curl -s \
@@ -2461,7 +2461,6 @@ function test_healthcheck ()
 			end
 
 			it "Returns unhealthy on failure."
-				# sshd-wrapper failure
 				docker exec -t \
 					apache-php.1 \
 					bash -c "mv \
@@ -2469,9 +2468,7 @@ function test_healthcheck ()
 						/usr/sbin/httpd2" \
 				&& docker exec -t \
 					apache-php.1 \
-					bash -c "if [[ -n \$(pgrep -f '^/usr/sbin/httpd ') ]]; then \
-						kill -9 \$(pgrep -f '^/usr/sbin/httpd '); \
-					fi"
+					bash -c '/usr/sbin/httpd2 -k stop'
 
 				events_since_timestamp="$(
 					date +%s
