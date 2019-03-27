@@ -193,6 +193,9 @@ RUN useradd -r -M -d /var/www/app -s /sbin/nologin app \
 		/etc/php.d/10-opcache.ini.default \
 		> /etc/php.d/10-opcache.ini \
 	&& sed -i \
+		-e 's~^\(error_log\) *=.*$~\1 = /dev/stderr~' \
+		/etc/php-fpm.conf \
+	&& sed -i \
 		-e 's~^\[www\]$~[{{APACHE_RUN_USER}}]~' \
 		-e 's~^user = php-fpm$~user = {{APACHE_RUN_USER}}~' \
 		-e 's~^group = php-fpm$~group = {{APACHE_RUN_GROUP}}~' \
