@@ -66,7 +66,9 @@ function __enable_apache_modules ()
 	local identifier
 	local -a identifiers
 	local -a identifiers_default
-	local modules="${1}"
+	local modules="${1:-"$(
+		__get_apache_load_modules
+	)"}"
 	local enabled
 	local sed_command
 
@@ -357,6 +359,13 @@ function __get_apache_header_x_service_uid ()
 	local value="${APACHE_HEADER_X_SERVICE_UID}"
 
 	value="${value//'{{HOSTNAME}}'/${HOSTNAME:-localhost.localdomain}}"
+
+	printf -- '%s' "${value}"
+}
+
+function __get_apache_load_modules ()
+{
+	local value="${APACHE_LOAD_MODULES}"
 
 	printf -- '%s' "${value}"
 }
@@ -1263,7 +1272,6 @@ function main ()
 	# - APACHE_CUSTOM_LOG_LOCATION
 	# - APACHE_ERROR_LOG_LOCATION
 	# - APACHE_ERROR_LOG_LEVEL
-	# - APACHE_LOAD_MODULES
 	# - APACHE_OPERATING_MODE
 	# - APACHE_SSL_CIPHER_SUITE
 	# - APACHE_SSL_PROTOCOL
@@ -1325,8 +1333,7 @@ function main ()
 		"${apache_extended_status_enabled}"
 
 	modules_enabled_list="$(
-		__enable_apache_modules \
-			"${APACHE_LOAD_MODULES}"
+		__enable_apache_modules
 	)"
 
 	# Set ownership for fcgid php-wrapper and socket if necessary
