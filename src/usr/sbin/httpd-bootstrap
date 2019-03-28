@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -e
+
 function __absolute_path ()
 {
 	local -r directory_path="${1}"
@@ -455,6 +457,36 @@ function __get_apache_server_name ()
 	printf -- '%s' "${value}"
 }
 
+function __get_apache_ssl_certificate ()
+{
+	local -r default_value=""
+	local -r base64_pattern='^[A-Za-z0-9/+=]*$'
+
+	local value="${APACHE_SSL_CERTIFICATE}"
+
+	if [[ -n ${value} ]]
+	then
+		if [[ -f ${value} ]]
+		then
+			value="$(< "${value}")"
+		fi
+
+		if [[ ${value} =~ ${base64_pattern} ]]
+		then
+			value="$(
+				base64 -d -i <<< "${value}"
+			)"
+		fi
+
+		if ! __is_valid_apache_ssl_certificate "${value}"
+		then
+			value="${default_value}"
+		fi
+	fi
+
+	printf -- '%s' "${value}"
+}
+
 function __get_apache_system_user ()
 {
 	local -r default_value="${1:-app}"
@@ -663,8 +695,21 @@ function __is_valid_apache_server_name ()
 
 function __is_valid_apache_ssl_certificate ()
 {
+	local -r certificate="${1}"
+	local -r certificate_pattern='^-----BEGIN '
+
+	if [[ ${certificate} =~ ${certificate_pattern} ]]
+	then
+		return 0
+	fi
+
+	return 1
+}
+
+function __is_valid_apache_ssl_certificate_file ()
+{
 	local -r certificate_path="${1:-/etc/pki/tls/certs/localhost.crt}"
-	local -r valid_pattern='^SHA1 Fingerprint='
+	local -r fingerprint_pattern='^SHA1 Fingerprint='
 
 	local fingerprint
 
@@ -677,7 +722,7 @@ function __is_valid_apache_ssl_certificate ()
 			-fingerprint
 	)"
 
-	if [[ ${fingerprint} =~ ${valid_pattern} ]]
+	if [[ ${fingerprint} =~ ${fingerprint_pattern} ]]
 	then
 		return 0
 	fi
@@ -1031,51 +1076,19 @@ function __set_apache_server_name ()
 
 function __set_apache_ssl_certificate ()
 {
-	local -r certificate_path="/etc/pki/tls/certs/localhost.crt"
-	local -r base64_pattern='^[A-Za-z0-9/+=]*$'
-	local -r plain_text_pattern='^-----BEGIN '
+	local -r certificate="${1}"
+	local -r certificate_path="${2:-/etc/pki/tls/certs/localhost.crt}"
 
-	local certificate="${1}"
+	printf -- \
+		'%s' \
+		"${certificate}" \
+		> "${certificate_path}"
 
-	if [[ -n ${certificate} ]]
+	if ! __is_valid_apache_ssl_certificate_file "${certificate_path}"
 	then
-		# Decode base64 encoded values
-		if [[ ${certificate} =~ ${base64_pattern} ]]
-		then
-			certificate="$(
-				base64 -d -i <<< "${certificate}"
-			)"
-		fi
-
-		if [[ -s ${certificate} ]] \
-			&& [[ ${certificate} != ${certificate_path} ]]
-		then
-			ln -sf \
-				"${certificate}" \
-				"${certificate_path}"
-		else
-			if [[ ! ${certificate} =~ ${plain_text_pattern} ]]
-			then
-				>&2 printf -- \
-					'ERROR: Invalid APACHE_SSL_CERTIFICATE\n'
-				sleep 0.1
-				exit 1
-			fi
-
-			printf -- \
-				'%s' \
-				"${certificate}" \
-				> "${certificate_path}"
-		fi
-
-		if ! __is_valid_apache_ssl_certificate \
-			"${certificate_path}"
-		then
-			>&2 printf -- \
-				'ERROR: Invalid APACHE_SSL_CERTIFICATE\n'
-			sleep 0.1
-			exit 1
-		fi
+		>&2 printf -- \
+			'ERROR: Invalid APACHE_SSL_CERTIFICATE\n'
+		exit 1
 	fi
 }
 
@@ -1186,7 +1199,9 @@ function main ()
 	OPTS_APACHE_SERVER_NAME="$(
 		__get_apache_server_name
 	)"
-	OPTS_APACHE_SSL_CERTIFICATE="${APACHE_SSL_CERTIFICATE}"
+	OPTS_APACHE_SSL_CERTIFICATE="$(
+		__get_apache_ssl_certificate
+	)"
 	OPTS_APACHE_SYSTEM_USER="$(
 		__get_apache_system_user \
 			"${apache_system_user_default}"
