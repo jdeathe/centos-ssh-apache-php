@@ -72,7 +72,7 @@ function __get_apache_content_root ()
 {
 	local -r default_value="${1:-/var/www/app}"
 
-	local value="${APACHE_CONTENT_ROOT:-/var/www/app}"
+	local value="${APACHE_CONTENT_ROOT}"
 
 	if ! __is_valid_apache_content_root "${value}"
 	then
@@ -86,10 +86,7 @@ function __get_apache_header_x_service_uid ()
 {
 	local value="${APACHE_HEADER_X_SERVICE_UID}"
 
-	if [[ -n ${value} ]]
-	then
-		value="${value//'{{HOSTNAME}}'/${HOSTNAME:-localhost.localdomain}}"
-	fi
+	value="${value//'{{HOSTNAME}}'/${HOSTNAME:-localhost.localdomain}}"
 
 	printf -- '%s' "${value}"
 }
@@ -98,24 +95,16 @@ function __get_apache_server_alias ()
 {
 	local value="${APACHE_SERVER_ALIAS}"
 
-	if [[ -n ${value} ]]
-	then
-		value="${value//'{{HOSTNAME}}'/${HOSTNAME}}"
-	fi
+	value="${value//'{{HOSTNAME}}'/${HOSTNAME:-localhost.localdomain}}"
 
 	printf -- '%s' "${value}"
 }
 
 function __get_apache_server_name ()
 {
-	local value="${APACHE_SERVER_NAME}"
+	local value="${APACHE_SERVER_NAME:-"{{HOSTNAME}}"}"
 
-	if [[ -z ${value} ]]
-	then
-		value="${HOSTNAME}"
-	else
-		value="${value//'{{HOSTNAME}}'/${HOSTNAME}}"
-	fi
+	value="${value//'{{HOSTNAME}}'/${HOSTNAME:-localhost.localdomain}}"
 
 	printf -- '%s' "${value}"
 }

@@ -356,10 +356,7 @@ function __get_apache_header_x_service_uid ()
 {
 	local value="${APACHE_HEADER_X_SERVICE_UID}"
 
-	if [[ -n ${value} ]]
-	then
-		value="${value//'{{HOSTNAME}}'/${HOSTNAME:-localhost.localdomain}}"
-	fi
+	value="${value//'{{HOSTNAME}}'/${HOSTNAME:-localhost.localdomain}}"
 
 	printf -- '%s' "${value}"
 }
@@ -438,21 +435,16 @@ function __get_apache_server_alias ()
 {
 	local value="${APACHE_SERVER_ALIAS}"
 
+	value="${value//'{{HOSTNAME}}'/${HOSTNAME:-localhost.localdomain}}"
+
 	printf -- '%s' "${value}"
 }
 
 function __get_apache_server_name ()
 {
-	local -r default_value="${1:-"$(
-		hostname
-	)"}"
+	local value="${APACHE_SERVER_NAME:-"{{HOSTNAME}}"}"
 
-	local value="${APACHE_SERVER_NAME}"
-
-	if ! __is_valid_apache_server_name "${value}"
-	then
-		value="${default_value}"
-	fi
+	value="${value//'{{HOSTNAME}}'/${HOSTNAME:-localhost.localdomain}}"
 
 	printf -- '%s' "${value}"
 }
@@ -681,18 +673,6 @@ function __is_valid_apache_public_directory ()
 	return 1
 }
 
-function __is_valid_apache_server_name ()
-{
-	local -r name="${1}"
-
-	if [[ -n ${name} ]]
-	then
-		return 0
-	fi
-
-	return 1
-}
-
 function __is_valid_apache_ssl_certificate ()
 {
 	local -r certificate="${1}"
@@ -912,7 +892,9 @@ function __set_apache_enable_sendfile ()
 
 function __set_apache_extended_status ()
 {
-	local enable="${1:-false}"
+	local enable="${1:-"$(
+		__get_apache_extended_status_enabled
+	)"}"
 	local match
 	local replace
 
@@ -993,7 +975,9 @@ function __set_apache_mod_ssl_enabled ()
 
 function __set_apache_mpm ()
 {
-	local apache_mpm="${1:-${APACHE_MPM}}"
+	local apache_mpm="${1:-"$(
+		__get_apache_mpm
+	)"}"
 
 	case "${apache_mpm,,}" in
 		event)
@@ -1092,10 +1076,73 @@ function __set_apache_ssl_certificate ()
 	fi
 }
 
+function __set_apache_run_user ()
+{
+	local -r user="${1:-"$(
+		__get_apache_run_user
+	)"}"
+	local -r user_default="${2:-app-www}"
+
+	__update_user_login \
+		"${user_default}" \
+		"${user}"
+}
+
+function __set_apache_run_group ()
+{
+	local -r group="${1:-"$(
+		__get_apache_run_group
+	)"}"
+	local -r group_default="${2:-app-www}"
+
+	__update_group_name \
+		"${group_default}" \
+		"${group}"
+}
+
+function __set_apache_system_user ()
+{
+	local -r user="${1:-"$(
+		__get_apache_system_user
+	)"}"
+	local -r user_default="${2:-app}"
+
+	__update_user_login \
+		"${user_default}" \
+		"${user}"
+	__update_group_name \
+		"${user_default}" \
+		"${user}"
+}
+
+function __set_loopback_hosts_entry ()
+{
+	local server_name="${1:-"$(
+		__get_apache_server_name
+	)"}"
+	local server_alias="${2:-"$(
+		__get_apache_server_alias
+	)"}"
+
+	__add_hosts_entry \
+		"127.0.0.1" \
+		"$(
+			printf -- \
+				'%s%s%s' \
+				"${apache_server_name}" \
+				"${apache_server_alias:+ }" \
+				"${apache_server_alias}"
+		)"
+}
+
 function __set_php_fpm_pool ()
 {
-	local -r user="${1:-app}"
-	local -r group="${2:-app-www}"
+	local -r user="${1:-"$(
+		__get_apache_run_user
+	)"}"
+	local -r group="${2:-"$(
+		__get_apache_run_group
+	)"}"
 
 	if [[ -f /etc/php-fpm.d/www.conf.template ]]
 	then
@@ -1144,8 +1191,6 @@ function __update_user_login ()
 
 function main ()
 {
-	local -r apache_run_user_default="app-www"
-	local -r apache_system_user_default="app"
 	local -r lock_file="/var/lock/subsys/httpd-bootstrap"
 	local -r ssl_certificate_fingerprint_digest="sha1"
 	local -r timer_start="$(
@@ -1153,6 +1198,18 @@ function main ()
 	)"
 
 	local HOSTNAME
+	local apache_content_root
+	local apache_extended_status_enabled
+	local apache_header_x_service_uid
+	local apache_mod_ssl_enabled
+	local apache_mpm
+	local apache_run_group
+	local apache_run_user
+	local apache_server_alias
+	local apache_server_name
+	local apache_ssl_certificate
+	local apache_system_user
+	local document_root
 	local document_root_file_system
 	local modules_enabled_list
 	local package_path
@@ -1167,44 +1224,56 @@ function main ()
 		hostname
 	)"
 
-	OPTS_APACHE_CONTENT_ROOT="$(
+	apache_content_root="$(
 		__get_apache_content_root
 	)"
-	OPTS_APACHE_DOCUMENT_ROOT="${OPTS_APACHE_CONTENT_ROOT}/$(
-		__get_apache_public_directory
-	)"
-	OPTS_APACHE_EXTENDED_STATUS_ENABLED="$(
+	apache_extended_status_enabled="$(
 		__get_apache_extended_status_enabled
 	)"
-	OPTS_APACHE_HEADER_X_SERVICE_UID="$(
+	apache_header_x_service_uid="$(
 		__get_apache_header_x_service_uid
 	)"
-	OPTS_APACHE_MOD_SSL_ENABLED="$(
+	apache_mod_ssl_enabled="$(
 		__get_apache_mod_ssl_enabled
 	)"
-	OPTS_APACHE_MPM="$(
+	apache_mpm="$(
 		__get_apache_mpm
 	)"
-	OPTS_APACHE_RUN_GROUP="$(
-		__get_apache_run_group \
-			"${apache_run_user_default}"
+	apache_run_group="$(
+		__get_apache_run_group
 	)"
-	OPTS_APACHE_RUN_USER="$(
-		__get_apache_run_user \
-			"${apache_run_user_default}"
+	apache_run_user="$(
+		__get_apache_run_user
 	)"
-	OPTS_APACHE_SERVER_ALIAS="$(
+	apache_server_alias="$(
 		__get_apache_server_alias
 	)"
-	OPTS_APACHE_SERVER_NAME="$(
+	apache_server_name="$(
 		__get_apache_server_name
 	)"
-	OPTS_APACHE_SSL_CERTIFICATE="$(
+	apache_ssl_certificate="$(
 		__get_apache_ssl_certificate
 	)"
-	OPTS_APACHE_SYSTEM_USER="$(
-		__get_apache_system_user \
-			"${apache_system_user_default}"
+	apache_system_user="$(
+		__get_apache_system_user
+	)"
+
+	# TODO
+	# - APACHE_CUSTOM_LOG_FORMAT
+	# - APACHE_CUSTOM_LOG_LOCATION
+	# - APACHE_ERROR_LOG_LOCATION
+	# - APACHE_ERROR_LOG_LEVEL
+	# - APACHE_LOAD_MODULES
+	# - APACHE_OPERATING_MODE
+	# - APACHE_SSL_CIPHER_SUITE
+	# - APACHE_SSL_PROTOCOL
+	# - PHP_OPTIONS_DATE_TIMEZONE
+	# - PHP_OPTIONS_SESSION_NAME
+	# - PHP_OPTIONS_SESSION_SAVE_HANDLER
+	# - PHP_OPTIONS_SESSION_SAVE_PATH
+
+	document_root="${apache_content_root}/$(
+		__get_apache_public_directory
 	)"
 	package_path="$(
 		__get_package_path
@@ -1220,19 +1289,18 @@ function main ()
 	fi
 
 	# Populate SSL certificate file.
-	if [[ ${OPTS_APACHE_MOD_SSL_ENABLED} == true ]] \
-		&& [[ -n ${OPTS_APACHE_SSL_CERTIFICATE} ]]
+	if [[ ${apache_mod_ssl_enabled} == true ]] \
+		&& [[ -n ${apache_ssl_certificate} ]]
 	then
 		__set_apache_ssl_certificate \
-			"${OPTS_APACHE_SSL_CERTIFICATE}" \
+			"${apache_ssl_certificate}" \
 			&
 		pids[1]="${!}"
-	elif [[ ${OPTS_APACHE_MOD_SSL_ENABLED} == true ]] \
-		&& [[ -z ${OPTS_APACHE_SSL_CERTIFICATE} ]]
+	elif [[ ${apache_mod_ssl_enabled} == true ]]
 	then
 		__make_self_signed_san_certificate \
-			"${OPTS_APACHE_SERVER_NAME}" \
-			"${OPTS_APACHE_SERVER_ALIAS}" \
+			"${apache_server_name}" \
+			"${apache_server_alias}" \
 			&> /dev/null \
 			&
 		pids[1]="${!}"
@@ -1241,40 +1309,50 @@ function main ()
 	__load_php_ini_scan_files \
 		"${package_path}"
 	__set_php_fpm_pool \
-		"${OPTS_APACHE_RUN_USER}" \
-		"${OPTS_APACHE_RUN_GROUP}"
+		"${apache_run_user}" \
+		"${apache_run_group}"
 	__set_apache_mpm \
-		"${OPTS_APACHE_MPM}"
+		"${apache_mpm}"
 	__load_httpd_conf_scan_files \
 		"${package_path}"
 	__set_apache_header_x_service_uid \
-		"${OPTS_APACHE_HEADER_X_SERVICE_UID}"
+		"${apache_header_x_service_uid}"
 	__set_apache_server_name \
-		"${OPTS_APACHE_SERVER_NAME}" \
-		"80"
+		"${apache_server_name}"
 	__set_apache_mod_ssl_enabled \
-		"${OPTS_APACHE_MOD_SSL_ENABLED}"
+		"${apache_mod_ssl_enabled}"
 	__set_apache_extended_status \
-		"${OPTS_APACHE_EXTENDED_STATUS_ENABLED}"
+		"${apache_extended_status_enabled}"
+
 	modules_enabled_list="$(
 		__enable_apache_modules \
 			"${APACHE_LOAD_MODULES}"
 	)"
+
+	# Set ownership for fcgid php-wrapper and socket if necessary
+	if [[ -d /var/run/mod_fcgid ]] \
+		&& [[ -d ${package_path}/bin ]]
+	then
+		chown -R \
+			"${apache_run_user}":"${apache_run_group}" \
+			{"${package_path}"/bin,/var/run/mod_fcgid}
+	fi
+
 	__init_datadir \
 		"${package_path}" \
-		"${OPTS_APACHE_CONTENT_ROOT}"
+		"${apache_content_root}"
 
 	# Verify Apache DocumentRoot directory exists
-	if [[ ! -d ${OPTS_APACHE_DOCUMENT_ROOT} ]]
+	if [[ ! -d ${document_root} ]]
 	then
 		>&2 printf -- \
 			'ERROR: %s not found.\n' \
-			"${OPTS_APACHE_DOCUMENT_ROOT}"
+			"${document_root}"
 		exit 1
 	fi
 
 	document_root_file_system="$(
-		df -PT "${OPTS_APACHE_DOCUMENT_ROOT}" \
+		df -PT "${document_root}" \
 			| awk 'NR>1 { print $2 }'
 	)"
 	if [[ ${document_root_file_system} == nfs ]]
@@ -1283,45 +1361,19 @@ function main ()
 			'Disabling EnableSendfile.'
 		__set_apache_enable_sendfile \
 			"false"
-	else
-		__set_apache_enable_sendfile \
-			"true"
 	fi
 
-	# Set ownership for fcgid php-wrapper and socket if necessary
-	if [[ -d ${package_path}/bin ]] \
-		&& [[ -d /var/run/mod_fcgid ]]
-	then
-		chown -R \
-			"${OPTS_APACHE_RUN_USER}":"${OPTS_APACHE_RUN_GROUP}" \
-			{"${package_path}"/bin,/var/run/mod_fcgid}
-	fi
+	__set_apache_system_user \
+		"${apache_system_user}"
+	__set_apache_run_user \
+		"${apache_run_user}"
+	__set_apache_run_group \
+		"${apache_run_group}"
+	__set_loopback_hosts_entry \
+		"${apache_server_name}" \
+		"${apache_server_alias}"
 
-	# Set the system user's login names and groups
-	__update_user_login \
-		"${apache_system_user_default}" \
-		"${OPTS_APACHE_SYSTEM_USER}"
-	__update_group_name \
-		"${apache_system_user_default}" \
-		"${OPTS_APACHE_SYSTEM_USER}"
-	__update_user_login \
-		"${apache_run_user_default}" \
-		"${OPTS_APACHE_RUN_USER}"
-	__update_group_name \
-		"${apache_run_user_default}" \
-		"${OPTS_APACHE_RUN_GROUP}"
-
-	__add_hosts_entry \
-		"127.0.0.1" \
-		"$(
-			printf -- \
-				'%s%s%s' \
-				"${OPTS_APACHE_SERVER_NAME}" \
-				"${OPTS_APACHE_SERVER_ALIAS:+ }" \
-				"${OPTS_APACHE_SERVER_ALIAS}"
-		)"
-
-	if [[ ${OPTS_APACHE_MOD_SSL_ENABLED} == true ]]
+	if [[ ${apache_mod_ssl_enabled} == true ]]
 	then
 		# Wait for certificate generation if necessary
 		if [[ -n ${pids[1]} ]]
@@ -1355,14 +1407,14 @@ function main ()
 		================================================================================
 		Apache Details
 		--------------------------------------------------------------------------------
-		system user : ${OPTS_APACHE_SYSTEM_USER}
-		run user : ${OPTS_APACHE_RUN_USER}
-		run group : ${OPTS_APACHE_RUN_GROUP}
-		server name : ${OPTS_APACHE_SERVER_NAME}
-		server alias : ${OPTS_APACHE_SERVER_ALIAS}
-		header x-service-uid : ${OPTS_APACHE_HEADER_X_SERVICE_UID:-unset}
-		document root : ${OPTS_APACHE_DOCUMENT_ROOT} (${document_root_file_system})
-		server mpm : ${OPTS_APACHE_MPM,,}
+		system user : ${apache_system_user}
+		run user : ${apache_run_user}
+		run group : ${apache_run_group}
+		server name : ${apache_server_name}
+		server alias : ${apache_server_alias}
+		header x-service-uid : ${apache_header_x_service_uid:-unset}
+		document root : ${document_root} (${document_root_file_system})
+		server mpm : ${apache_mpm,,}
 		modules enabled :
 		${modules_enabled_list}${ssl_certificate_fingerprint_details}
 		--------------------------------------------------------------------------------
