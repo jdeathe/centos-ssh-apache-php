@@ -350,7 +350,7 @@ function __get_apache_document_root ()
 	)"}"
 
 	printf -- \
-		'%s/%s'
+		'%s/%s' \
 		"${content_root}" \
 		"${public_directory}"
 }
