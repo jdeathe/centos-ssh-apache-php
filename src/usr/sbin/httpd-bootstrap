@@ -340,6 +340,21 @@ function __get_apache_content_root ()
 	printf -- '%s' "${value}"
 }
 
+function __get_apache_document_root ()
+{
+	local -r content_root="${1:-"$(
+		__get_apache_content_root
+	)"}"
+	local -r public_directory="${2:-"$(
+		__get_apache_public_directory
+	)"}"
+
+	printf -- \
+		'%s/%s'
+		"${content_root}" \
+		"${public_directory}"
+}
+
 function __get_apache_extended_status_enabled ()
 {
 	local -r default_value="${1:-false}"
@@ -1280,8 +1295,8 @@ function main ()
 	# - PHP_OPTIONS_SESSION_SAVE_HANDLER
 	# - PHP_OPTIONS_SESSION_SAVE_PATH
 
-	document_root="${apache_content_root}/$(
-		__get_apache_public_directory
+	document_root="$(
+		__get_apache_document_root
 	)"
 	package_path="$(
 		__get_package_path
