@@ -1084,13 +1084,33 @@ function __set_apache_server_name ()
 
 function __set_apache_ssl_certificate ()
 {
-	local -r certificate="${1}"
-	local -r certificate_path="${2:-/etc/pki/tls/certs/localhost.crt}"
+	local -r certificate="${1:-"$(
+		__get_apache_ssl_certificate
+	)"}"
+	local -r certificate_path="/etc/pki/tls/certs/localhost.crt"
 
-	printf -- \
-		'%s' \
-		"${certificate}" \
-		> "${certificate_path}"
+	local server_name
+	local server_alias
+
+	if [[ -z ${certificate} ]]
+	then
+		server_name="${2:-"$(
+			__get_apache_server_name
+		)"}"
+		server_alias="${3:-"$(
+			__get_apache_server_alias
+		)"}"
+
+		__make_self_signed_san_certificate \
+			"${server_name}" \
+			"${server_alias}" \
+			&> /dev/null
+	else
+		printf -- \
+			'%s' \
+			"${certificate}" \
+			> "${certificate_path}"
+	fi
 
 	if ! __is_valid_apache_ssl_certificate_file "${certificate_path}"
 	then
@@ -1311,20 +1331,12 @@ function main ()
 		exit 1
 	fi
 
-	# Populate SSL certificate file.
-	if [[ ${apache_mod_ssl_enabled} == true ]] \
-		&& [[ -n ${apache_ssl_certificate} ]]
+	if [[ ${apache_mod_ssl_enabled} == true ]]
 	then
 		__set_apache_ssl_certificate \
 			"${apache_ssl_certificate}" \
-			&
-		pids[1]="${!}"
-	elif [[ ${apache_mod_ssl_enabled} == true ]]
-	then
-		__make_self_signed_san_certificate \
 			"${apache_server_name}" \
 			"${apache_server_alias}" \
-			&> /dev/null \
 			&
 		pids[1]="${!}"
 	fi
