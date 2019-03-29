@@ -1292,10 +1292,10 @@ function main ()
 	local apache_server_name
 	local apache_ssl_certificate
 	local apache_system_user
+	local details_modules_enabled_list
 	local details_ssl_certificate_fingerprint
 	local document_root
 	local document_root_file_system
-	local modules_enabled_list
 	local package_path
 	local -a pids
 
@@ -1398,7 +1398,7 @@ function main ()
 	__set_apache_extended_status \
 		"${apache_extended_status_enabled}"
 
-	modules_enabled_list="$(
+	details_modules_enabled_list="$(
 		__enable_apache_modules
 	)"
 
@@ -1478,7 +1478,7 @@ function main ()
 		document root : ${document_root} (${document_root_file_system})
 		server mpm : ${apache_mpm,,}
 		modules enabled :
-		${modules_enabled_list}${details_ssl_certificate_fingerprint}
+		${details_modules_enabled_list}${details_ssl_certificate_fingerprint}
 		--------------------------------------------------------------------------------
 		${timer_total}
 
