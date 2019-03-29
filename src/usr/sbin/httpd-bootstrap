@@ -577,6 +577,31 @@ function __get_ssl_certificate_fingerprint ()
 	printf -- '%s' "${value}"
 }
 
+function __get_timer_total ()
+{
+	local -r timer_end="$(
+		date +%s.%N
+	)"
+	local -r timer_start="${1}"
+
+	if [[ -z ${timer_start} ]] \
+		|| [[ ${timer_start//.} -gt ${timer_end//.} ]]
+	then
+		>&2 printf -- \
+			'ERROR: invalid timer start: %s\n' \
+			"${timer_start}"
+		printf -- \
+			'0.000000'
+	else
+		awk \
+			-v timer_end="${timer_end}" \
+			-v timer_start="${timer_start}" \
+			'BEGIN { print \
+				timer_end - timer_start;
+			}'
+	fi
+}
+
 function __init_datadir ()
 {
 	local -r content_root="${2:-"$(
@@ -1435,14 +1460,8 @@ function main ()
 	fi
 
 	timer_total="$(
-		awk \
-			-v timer_end="$(
-				date +%s.%N
-			)" \
-			-v timer_start="${timer_start}" \
-			'BEGIN { print \
-				timer_end - timer_start;
-			}'
+		__get_timer_total \
+			"${timer_start}"
 	)"
 
 	cat <<-EOT
