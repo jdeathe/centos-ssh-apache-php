@@ -517,6 +517,20 @@ function __get_apache_system_user ()
 	printf -- '%s' "${value}"
 }
 
+function __get_details_ssl_certificate_fingerprint ()
+{
+	local -r digest="${1:-sha1}"
+	local -r fingerprint="$(
+		__get_ssl_certificate_fingerprint \
+			"${digest}"
+	)"
+
+	printf -- \
+		'\nssl certificate %s fingerprint : \n%s' \
+		"${digest}" \
+		"${fingerprint}"
+}
+
 function __get_package_path ()
 {
 	local -r default_value="${1:-/opt/app}"
@@ -1253,12 +1267,12 @@ function main ()
 	local apache_server_name
 	local apache_ssl_certificate
 	local apache_system_user
+	local details_ssl_certificate_fingerprint
 	local document_root
 	local document_root_file_system
 	local modules_enabled_list
 	local package_path
 	local -a pids
-	local ssl_certificate_fingerprint_details
 
 	# Create lock
 	touch \
@@ -1415,14 +1429,9 @@ function main ()
 			wait ${pids[1]}
 		fi
 
-		printf -v \
-			ssl_certificate_fingerprint_details \
-			-- '\nssl certificate %s fingerprint : \n%s' \
-			"${ssl_certificate_fingerprint_digest}" \
-			"$(
-				__get_ssl_certificate_fingerprint \
-					"${ssl_certificate_fingerprint_digest}"
-			)"
+		details_ssl_certificate_fingerprint="$(
+			__get_details_ssl_certificate_fingerprint
+		)"
 	fi
 
 	timer_total="$(
@@ -1450,7 +1459,7 @@ function main ()
 		document root : ${document_root} (${document_root_file_system})
 		server mpm : ${apache_mpm,,}
 		modules enabled :
-		${modules_enabled_list}${ssl_certificate_fingerprint_details}
+		${modules_enabled_list}${details_ssl_certificate_fingerprint}
 		--------------------------------------------------------------------------------
 		${timer_total}
 
