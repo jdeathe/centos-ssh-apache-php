@@ -54,6 +54,10 @@ function __add_hosts_entry ()
 
 function __enable_apache_modules ()
 {
+	local -r apache_version="$(
+		__get_apache_server_version
+	)"
+
 	local config_file
 	local -a config_files=(
 		'00-base.conf'
@@ -72,10 +76,8 @@ function __enable_apache_modules ()
 	local enabled
 	local sed_command
 
-	if [[ -f /etc/httpd/conf.modules.d/00-base.conf ]]
+	if [[ ${apache_version} =~ ^2\.4\. ]]
 	then
-		# Apache 2.4
-
 		# Default DSO Modules
 		identifiers_default=(
 			'authz_core_module'
@@ -183,8 +185,6 @@ function __enable_apache_modules ()
 			'proxy_wstunnel_module'
 		)
 	else
-		# Apache 2.2
-
 		# Default DSO Modules
 		identifiers_default=(
 			'authz_user_module'
@@ -369,6 +369,20 @@ function __get_apache_document_root ()
 		"${public_directory}"
 }
 
+function __get_apache_error_log_level ()
+{
+	local -r default_value="${1:-warn}"
+
+	local value="${APACHE_ERROR_LOG_LEVEL}"
+
+	if ! __is_valid_apache_error_log_level "${value}"
+	then
+		value="${default_value}"
+	fi
+
+	printf -- '%s' "${value}"
+}
+
 function __get_apache_extended_status_enabled ()
 {
 	local -r default_value="${1:-false}"
@@ -529,6 +543,26 @@ function __get_apache_system_user ()
 	fi
 
 	printf -- '%s' "${value}"
+}
+
+function __get_apache_server_version ()
+{
+	local semantic_version
+
+	if ! command -v httpd &> /dev/null
+	then
+		>&2 printf -- \
+			'ERROR: Apache Server binary not installed.\n'
+		return 1
+	fi
+
+	semantic_version="$(
+		httpd -v \
+		| grep -E -o 'Server version: Apache\/[0-9]+\.[0-9]+\.[0-9]+' \
+		| awk -F/ '{ print $NF; }'
+	)"
+
+	printf -- '%s' "${semantic_version}"
 }
 
 function __get_details_ssl_certificate_fingerprint ()
@@ -730,6 +764,27 @@ function __is_valid_apache_custom_log_format ()
 			return 0
 		fi
 	done
+
+	return 1
+}
+
+function __is_valid_apache_error_log_level ()
+{
+	local -r apache_version="$(
+		__get_apache_server_version
+	)"
+	local -r valid_loglevel='^(emerg|alert|crit|error|warn|notice|info|debug)$'
+	local -r valid_loglevel_24='^trace[1-8]$'
+	local -r value="${1}"
+
+	if [[ ${value} =~ ${valid_loglevel} ]]
+	then
+		return 0
+	elif [[ ${apache_version} =~ ^2\.4\. ]] \
+		&& [[ ${value} =~ ${valid_loglevel_24} ]]
+	then
+		return 0
+	fi
 
 	return 1
 }
@@ -1343,6 +1398,7 @@ function main ()
 	local HOSTNAME
 	local apache_content_root
 	local apache_custom_log_format
+	local apache_error_log_level
 	local apache_extended_status_enabled
 	local apache_header_x_service_uid
 	local apache_mod_ssl_enabled
@@ -1373,6 +1429,9 @@ function main ()
 	)"
 	apache_custom_log_format="$(
 		__get_apache_custom_log_format
+	)"
+	apache_error_log_level="$(
+		__get_apache_error_log_level
 	)"
 	apache_extended_status_enabled="$(
 		__get_apache_extended_status_enabled
@@ -1408,7 +1467,6 @@ function main ()
 	# TODO
 	# - APACHE_CUSTOM_LOG_LOCATION
 	# - APACHE_ERROR_LOG_LOCATION
-	# - APACHE_ERROR_LOG_LEVEL
 	# - APACHE_OPERATING_MODE
 	# - APACHE_SSL_CIPHER_SUITE
 	# - APACHE_SSL_PROTOCOL
@@ -1540,6 +1598,7 @@ function main ()
 		header x-service-uid : ${apache_header_x_service_uid:-unset}
 		document root : ${document_root} (${document_root_file_system})
 		server mpm : ${apache_mpm,,}
+		log level : ${apache_error_log_level}
 		custom log format : ${apache_custom_log_format}
 		modules enabled :
 		${details_modules_enabled_list}${details_ssl_certificate_fingerprint}
