@@ -441,6 +441,20 @@ function __get_apache_mpm ()
 	printf -- '%s' "${value}"
 }
 
+function __get_apache_operating_mode ()
+{
+	local -r default_value="${1:-production}"
+
+	local value="${APACHE_OPERATING_MODE}"
+
+	if ! __is_valid_apache_operating_mode "${value}"
+	then
+		value="${default_value}"
+	fi
+
+	printf -- '%s' "${value}"
+}
+
 function __get_apache_public_directory ()
 {
 	local -r default_value="${1:-public_html}"
@@ -802,6 +816,19 @@ function __is_valid_apache_mod_ssl_enabled ()
 function __is_valid_apache_mpm ()
 {
 	local -r valid_value='^(prefork|worker|event)$'
+	local -r value="${1}"
+
+	if [[ ${value} =~ ${valid_value} ]]
+	then
+		return 0
+	fi
+
+	return 1
+}
+
+function __is_valid_apache_operating_mode ()
+{
+	local -r valid_value='^(production|development|debug)$'
 	local -r value="${1}"
 
 	if [[ ${value} =~ ${valid_value} ]]
@@ -1403,6 +1430,7 @@ function main ()
 	local apache_header_x_service_uid
 	local apache_mod_ssl_enabled
 	local apache_mpm
+	local apache_operating_mode
 	local apache_run_group
 	local apache_run_user
 	local apache_server_alias
@@ -1445,6 +1473,9 @@ function main ()
 	apache_mpm="$(
 		__get_apache_mpm
 	)"
+	apache_operating_mode="$(
+		__get_apache_operating_mode
+	)"
 	apache_run_group="$(
 		__get_apache_run_group
 	)"
@@ -1467,7 +1498,6 @@ function main ()
 	# TODO
 	# - APACHE_CUSTOM_LOG_LOCATION
 	# - APACHE_ERROR_LOG_LOCATION
-	# - APACHE_OPERATING_MODE
 	# - APACHE_SSL_CIPHER_SUITE
 	# - APACHE_SSL_PROTOCOL
 	# - PHP_OPTIONS_DATE_TIMEZONE
@@ -1590,6 +1620,7 @@ function main ()
 		================================================================================
 		Apache Details
 		--------------------------------------------------------------------------------
+		operating mode : ${apache_operating_mode}
 		system user : ${apache_system_user}
 		run user : ${apache_run_user}
 		run group : ${apache_run_group}
