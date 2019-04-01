@@ -354,6 +354,27 @@ function __get_apache_custom_log_format ()
 	printf -- '%s' "${value}"
 }
 
+function __get_apache_custom_log_location ()
+{
+	local -r content_root="${2:-"$(
+		__get_apache_content_root
+	)"}"
+	local -r default_value="${1:-var/log/apache_access_log}"
+
+	local value="${APACHE_CUSTOM_LOG_LOCATION:-${default_value}}"
+
+	if [[ ! ${value} =~ ^[\.]{,2}/ ]]
+	then
+		printf -v \
+			value \
+			-- '%s/%s' \
+			"${content_root}" \
+			"${value}"
+	fi
+
+	printf -- '%s' "${value}"
+}
+
 function __get_apache_document_root ()
 {
 	local -r content_root="${1:-"$(
@@ -1425,6 +1446,7 @@ function main ()
 	local HOSTNAME
 	local apache_content_root
 	local apache_custom_log_format
+	local apache_custom_log_location
 	local apache_error_log_level
 	local apache_extended_status_enabled
 	local apache_header_x_service_uid
@@ -1457,6 +1479,9 @@ function main ()
 	)"
 	apache_custom_log_format="$(
 		__get_apache_custom_log_format
+	)"
+	apache_custom_log_location="$(
+		__get_apache_custom_log_location
 	)"
 	apache_error_log_level="$(
 		__get_apache_error_log_level
@@ -1496,7 +1521,6 @@ function main ()
 	)"
 
 	# TODO
-	# - APACHE_CUSTOM_LOG_LOCATION
 	# - APACHE_ERROR_LOG_LOCATION
 	# - APACHE_SSL_CIPHER_SUITE
 	# - APACHE_SSL_PROTOCOL
@@ -1631,6 +1655,7 @@ function main ()
 		server mpm : ${apache_mpm,,}
 		log level : ${apache_error_log_level}
 		custom log format : ${apache_custom_log_format}
+		custom log location : ${apache_custom_log_location}
 		modules enabled :
 		${details_modules_enabled_list}${details_ssl_certificate_fingerprint}
 		--------------------------------------------------------------------------------
