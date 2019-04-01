@@ -340,6 +340,20 @@ function __get_apache_content_root ()
 	printf -- '%s' "${value}"
 }
 
+function __get_apache_custom_log_format ()
+{
+	local -r default_value="${1:-combined}"
+
+	local value="${APACHE_CUSTOM_LOG_FORMAT}"
+
+	if ! __is_valid_apache_custom_log_format "${value}"
+	then
+		value="${default_value}"
+	fi
+
+	printf -- '%s' "${value}"
+}
+
 function __get_apache_document_root ()
 {
 	local -r content_root="${1:-"$(
@@ -679,6 +693,47 @@ function __is_valid_apache_content_root ()
 	return 1
 }
 
+function __is_valid_apache_custom_log_format ()
+{
+	local -r format="${1}"
+	local -r package_path="${2:-"$(
+		__get_package_path
+	)"}"
+
+	local defined_format
+	local defined_formats
+
+	if [[ -z ${format} ]]
+	then
+		return 1
+	fi
+
+	defined_formats="$(
+		find \
+			/etc/httpd \
+			"${package_path}"/etc/httpd \
+			-type f \
+			-name *.conf \
+			| xargs \
+				sed \
+				-e ':a;N;$!ba;s/\\\n//g' \
+			| grep 'LogFormat' \
+			| awk '{ print $NF; }' \
+			| sort \
+			| uniq
+	)"
+
+	for defined_format in ${defined_formats}
+	do
+		if [[ ${defined_format} == "${format}" ]]
+		then
+			return 0
+		fi
+	done
+
+	return 1
+}
+
 function __is_valid_apache_extended_status_enabled ()
 {
 	__is_valid_boolean "${@}"
@@ -799,8 +854,11 @@ function __is_valid_user_login ()
 
 function __load_httpd_conf_scan_files ()
 {
+	local -r package_path="${1:-"$(
+		__get_package_path
+	)"}"
+
 	local file_path
-	local package_path="${1}"
 
 	if [[ -n ${package_path} ]] \
 		&& [[ -d ${package_path}/etc/httpd/conf.d ]]
@@ -849,7 +907,9 @@ function __load_php_ini_scan_file ()
 
 function __load_php_ini_scan_files ()
 {
-	local -r package_path="${1}"
+	local -r package_path="${1:-"$(
+		__get_package_path
+	)"}"
 	local -r scan_directory="/etc/php.d"
 
 	local file_path
@@ -1282,6 +1342,7 @@ function main ()
 
 	local HOSTNAME
 	local apache_content_root
+	local apache_custom_log_format
 	local apache_extended_status_enabled
 	local apache_header_x_service_uid
 	local apache_mod_ssl_enabled
@@ -1309,6 +1370,9 @@ function main ()
 
 	apache_content_root="$(
 		__get_apache_content_root
+	)"
+	apache_custom_log_format="$(
+		__get_apache_custom_log_format
 	)"
 	apache_extended_status_enabled="$(
 		__get_apache_extended_status_enabled
@@ -1342,7 +1406,6 @@ function main ()
 	)"
 
 	# TODO
-	# - APACHE_CUSTOM_LOG_FORMAT
 	# - APACHE_CUSTOM_LOG_LOCATION
 	# - APACHE_ERROR_LOG_LOCATION
 	# - APACHE_ERROR_LOG_LEVEL
@@ -1477,6 +1540,7 @@ function main ()
 		header x-service-uid : ${apache_header_x_service_uid:-unset}
 		document root : ${document_root} (${document_root_file_system})
 		server mpm : ${apache_mpm,,}
+		custom log format : ${apache_custom_log_format}
 		modules enabled :
 		${details_modules_enabled_list}${details_ssl_certificate_fingerprint}
 		--------------------------------------------------------------------------------
