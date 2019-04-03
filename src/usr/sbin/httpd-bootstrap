@@ -587,6 +587,34 @@ function __get_apache_ssl_certificate ()
 	printf -- '%s' "${value}"
 }
 
+function __get_apache_ssl_cipher_suite ()
+{
+	local -r default_value="${1:-ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES256-SHA384:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA:ECDHE-RSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA:DHE-RSA-AES256-SHA256:DHE-RSA-AES256-SHA:ECDHE-ECDSA-DES-CBC3-SHA:ECDHE-RSA-DES-CBC3-SHA:EDH-RSA-DES-CBC3-SHA:AES128-GCM-SHA256:AES256-GCM-SHA384:AES128-SHA256:AES256-SHA256:AES128-SHA:AES256-SHA:DES-CBC3-SHA:!DSS}"
+
+	local value="${APACHE_SSL_CIPHER_SUITE}"
+
+	if ! __is_valid_apache_ssl_cipher_suite "${value}"
+	then
+		value="${default_value}"
+	fi
+
+	printf -- '%s' "${value}"
+}
+
+function __get_apache_ssl_protocol ()
+{
+	local -r default_value="${1:-"All -SSLv2 -SSLv3"}"
+
+	local value="${APACHE_SSL_PROTOCOL}"
+
+	if ! __is_valid_apache_ssl_protocol "${value}"
+	then
+		value="${default_value}"
+	fi
+
+	printf -- '%s' "${value}"
+}
+
 function __get_apache_system_user ()
 {
 	local -r default_value="${1:-app}"
@@ -945,6 +973,30 @@ function __is_valid_apache_ssl_certificate_file ()
 	)"
 
 	if [[ ${fingerprint} =~ ${fingerprint_pattern} ]]
+	then
+		return 0
+	fi
+
+	return 1
+}
+
+function __is_valid_apache_ssl_cipher_suite ()
+{
+	local cipher_list="${1}"
+
+	if [[ -n ${cipher_list} ]]
+	then
+		return 0
+	fi
+
+	return 1
+}
+
+function __is_valid_apache_ssl_protocol ()
+{
+	local protocol_list="${1}"
+
+	if [[ -n ${protocol_list} ]]
 	then
 		return 0
 	fi
@@ -1480,6 +1532,8 @@ function main ()
 	local apache_server_alias
 	local apache_server_name
 	local apache_ssl_certificate
+	local apache_ssl_cipher_suite
+	local apache_ssl_protocol
 	local apache_system_user
 	local details_modules_enabled_list
 	local details_ssl_certificate_fingerprint
@@ -1538,16 +1592,11 @@ function main ()
 	apache_server_name="$(
 		__get_apache_server_name
 	)"
-	apache_ssl_certificate="$(
-		__get_apache_ssl_certificate
-	)"
 	apache_system_user="$(
 		__get_apache_system_user
 	)"
 
 	# TODO
-	# - APACHE_SSL_CIPHER_SUITE
-	# - APACHE_SSL_PROTOCOL
 	# - PHP_OPTIONS_DATE_TIMEZONE
 	# - PHP_OPTIONS_SESSION_NAME
 	# - PHP_OPTIONS_SESSION_SAVE_HANDLER
@@ -1571,6 +1620,16 @@ function main ()
 
 	if [[ ${apache_mod_ssl_enabled} == true ]]
 	then
+		apache_ssl_certificate="$(
+			__get_apache_ssl_certificate
+		)"
+		apache_ssl_cipher_suite="$(
+			__get_apache_ssl_cipher_suite
+		)"
+		apache_ssl_protocol="$(
+			__get_apache_ssl_protocol
+		)"
+
 		__set_apache_ssl_certificate \
 			"${apache_ssl_certificate}" \
 			"${apache_server_name}" \
