@@ -429,7 +429,7 @@ If set to a valid container file path the value will be read from the file - thi
 Use the `APACHE_SSL_CIPHER_SUITE` environment variable to define an appropriate Cipher Suite. The default "intermediate" selection should be suitable for most use-cases where support for a wide range browsers is necessary. 
 
 References:
-- [OpenSSL ciphers documentation](https://www.openssl.org/docs/manmaster/apps/ciphers.html).
+- [OpenSSL ciphers documentation](https://www.openssl.org/docs/manmaster/man1/ciphers.html).
 - [Mozilla Security/Server Side TLS guidance](https://wiki.mozilla.org/Security/Server_Side_TLS).
 
 *Note:* The value show is using space separated values to allow for readablity in the documentation; this is valid syntax however using the colon separator is the recommended form.
