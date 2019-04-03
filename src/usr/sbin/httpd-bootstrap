@@ -731,6 +731,48 @@ function __get_php_options_session_save_handler ()
 	printf -- '%s' "${value}"
 }
 
+function __get_php_options_session_save_path ()
+{
+	local -r content_root="${3:-"$(
+		__get_apache_content_root
+	)"}"
+	local -r default_value="${1:-var/session}"
+	local -r default_value_memcached="memcached:11211"
+	local -r default_value_redis="redis:6379"
+	local -r save_handler="${2:-"$(
+		__get_php_options_session_save_handler
+	)"}"
+
+	local value="${PHP_OPTIONS_SESSION_SAVE_PATH}"
+
+	if [[ -z "${value}" ]]
+	then
+		case "${save_handler}" in
+			# memcached)
+			# 	value="${default_value_memcached}"
+			# 	;;
+			# redis)
+			# 	value="${default_value_redis}"
+			# 	;;
+			files|*)
+				value="${default_value}"
+				;;
+		esac
+	fi
+
+	if [[ ${save_handler} == files ]] \
+		&& [[ ! ${value} =~ ^[\.]{,2}/ ]]
+	then
+		printf -v \
+			value \
+			-- '%s/%s' \
+			"${content_root}" \
+			"${value}"
+	fi
+
+	printf -- '%s' "${value}"
+}
+
 function __get_ssl_certificate_fingerprint ()
 {
 	local -r digest="${1:-sha1}"
@@ -1645,6 +1687,7 @@ function main ()
 	local php_options_date_timezone
 	local php_options_session_name
 	local php_options_session_save_handler
+	local php_options_session_save_path
 	local -a pids
 
 	# Create lock
@@ -1709,9 +1752,9 @@ function main ()
 	php_options_session_save_handler="$(
 		__get_php_options_session_save_handler
 	)"
-
-	# TODO
-	# - PHP_OPTIONS_SESSION_SAVE_PATH
+	php_options_session_save_path="$(
+		__get_php_options_session_save_path
+	)"
 
 	document_root="$(
 		__get_apache_document_root
@@ -1860,6 +1903,7 @@ function main ()
 		date.timezone : ${php_options_date_timezone}
 		session.name : ${php_options_session_name}
 		session.save_handler : ${php_options_session_save_handler}
+		session.save_path : ${php_options_session_save_path}
 		--------------------------------------------------------------------------------
 		${timer_total}
 
