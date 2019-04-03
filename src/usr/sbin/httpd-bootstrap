@@ -703,6 +703,20 @@ function __get_php_options_date_timezone ()
 	printf -- '%s' "${value}"
 }
 
+function __get_php_options_session_name ()
+{
+	local -r default_value="${1:-PHPSESSID}"
+
+	local value="${PHP_OPTIONS_SESSION_NAME}"
+
+	if ! __is_valid_php_options_session_name "${value}"
+	then
+		value="${default_value}"
+	fi
+
+	printf -- '%s' "${value}"
+}
+
 function __get_php_options_session_save_handler ()
 {
 	local -r default_value="${1:-files}"
@@ -1045,6 +1059,23 @@ function __is_valid_package_path ()
 function __is_valid_php_options_date_timezone ()
 {
 	__is_valid_timezone "${@}"
+}
+
+# PHP Manual advises short alphanumeric values only however session names with
+# _ and - are in common use.
+function __is_valid_php_options_session_name ()
+{
+	local -r alphanumeric_value='^[A-Za-z0-9_-]{1,16}$'
+	local -r numeric_value='^[0-9]+$'
+	local -r value="${1}"
+
+	if [[ ${value} =~ ${alphanumeric_value} ]] \
+		&& [[ ! ${value} =~ ${numeric_value} ]]
+	then
+		return 0
+	fi
+
+	return 1
 }
 
 function __is_valid_php_options_session_save_handler ()
@@ -1612,6 +1643,7 @@ function main ()
 	local document_root_file_system
 	local package_path
 	local php_options_date_timezone
+	local php_options_session_name
 	local php_options_session_save_handler
 	local -a pids
 
@@ -1671,12 +1703,14 @@ function main ()
 	php_options_date_timezone="$(
 		__get_php_options_date_timezone
 	)"
+	php_options_session_name="$(
+		__get_php_options_session_name
+	)"
 	php_options_session_save_handler="$(
 		__get_php_options_session_save_handler
 	)"
 
 	# TODO
-	# - PHP_OPTIONS_SESSION_NAME
 	# - PHP_OPTIONS_SESSION_SAVE_PATH
 
 	document_root="$(
@@ -1824,6 +1858,7 @@ function main ()
 		PHP Details
 		--------------------------------------------------------------------------------
 		date.timezone : ${php_options_date_timezone}
+		session.name : ${php_options_session_name}
 		session.save_handler : ${php_options_session_save_handler}
 		--------------------------------------------------------------------------------
 		${timer_total}
