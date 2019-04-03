@@ -689,6 +689,20 @@ function __get_password ()
 	printf -- '%s' "${password}"
 }
 
+function __get_php_options_date_timezone ()
+{
+	local -r default_value="${1:-UTC}"
+
+	local value="${PHP_OPTIONS_DATE_TIMEZONE}"
+
+	if ! __is_valid_php_options_date_timezone "${value}"
+	then
+		value="${default_value}"
+	fi
+
+	printf -- '%s' "${value}"
+}
+
 function __get_ssl_certificate_fingerprint ()
 {
 	local -r digest="${1:-sha1}"
@@ -778,19 +792,6 @@ function __init_datadir ()
 			"${package_path}"/. \
 			"${content_root}"
 	fi
-}
-
-function __is_valid_boolean ()
-{
-	local -r boolean_value='^(true|false)$'
-	local -r value="${1}"
-
-	if [[ ${value} =~ ${boolean_value} ]]
-	then
-		return 0
-	fi
-
-	return 1
 }
 
 function __is_valid_apache_content_root ()
@@ -1009,9 +1010,27 @@ function __is_valid_apache_system_user ()
 	__is_valid_user_login "${@}"
 }
 
+function __is_valid_boolean ()
+{
+	local -r boolean_value='^(true|false)$'
+	local -r value="${1}"
+
+	if [[ ${value} =~ ${boolean_value} ]]
+	then
+		return 0
+	fi
+
+	return 1
+}
+
 function __is_valid_package_path ()
 {
 	__is_valid_apache_content_root "${@}"
+}
+
+function __is_valid_php_options_date_timezone ()
+{
+	__is_valid_timezone "${@}"
 }
 
 function __is_valid_user_login ()
@@ -1021,6 +1040,23 @@ function __is_valid_user_login ()
 
 	if [[ ${login} != root ]] \
 		&& [[ ${login} =~ ${valid_login} ]]
+	then
+		return 0
+	fi
+
+	return 1
+}
+
+function __is_valid_timezone ()
+{
+	local -r zone="${1}"
+
+	if [[ -z ${zone} ]]
+	then
+		return 1
+	fi
+
+	if [[ -f /usr/share/zoneinfo/${zone} ]]
 	then
 		return 0
 	fi
@@ -1595,6 +1631,9 @@ function main ()
 	apache_system_user="$(
 		__get_apache_system_user
 	)"
+	php_options_date_timezone="$(
+		__get_php_options_date_timezone
+	)"
 
 	# TODO
 	# - PHP_OPTIONS_DATE_TIMEZONE
@@ -1742,6 +1781,11 @@ function main ()
 		error log level : ${apache_error_log_level}
 		modules enabled :
 		${details_modules_enabled_list}${details_ssl_certificate_fingerprint}
+
+		================================================================================
+		PHP Details
+		--------------------------------------------------------------------------------
+		date.timezone : ${php_options_date_timezone}
 		--------------------------------------------------------------------------------
 		${timer_total}
 
