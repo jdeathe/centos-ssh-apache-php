@@ -1123,7 +1123,9 @@ function __is_valid_php_options_session_name ()
 function __is_valid_php_options_session_save_handler ()
 {
 	local -r registered_save_handlers="$(
-		php -i \
+		php \
+			-d error_reporting=0 \
+			-i \
 		| grep 'Registered save handlers' \
 		| sed -r \
 			-e 's~^.* => ~~' \
@@ -1212,15 +1214,8 @@ function __load_php_ini_scan_file ()
 		&& [[ -n ${file_path} ]] \
 		&& [[ -s ${file_path} ]]
 	then
-		# Replace environment variables
-		printf -- \
-			'%s' \
-			"$(
-				eval \
-					"cat <<-EOF
-						$(<"${file_path}")
-					EOF" 2> /dev/null
-			)" \
+		cat \
+			"${file_path}" \
 			> "${scan_directory}/${file_path##*/}"
 	fi
 }
@@ -1233,13 +1228,6 @@ function __load_php_ini_scan_files ()
 	local -r scan_directory="/etc/php.d"
 
 	local file_path
-
-	for file_path in "${scan_directory}"/*.ini
-	do
-		__load_php_ini_scan_file \
-			"${file_path}" \
-			"${scan_directory}"
-	done
 
 	if [[ -n ${package_path} ]] \
 		&& [[ -d ${package_path}/etc/php.d ]]
@@ -1361,13 +1349,13 @@ function __set_apache_header_x_service_uid ()
 
 	if [[ -n ${header} ]]
 	then
-		sed -i \
-			-e "s~\${APACHE_HEADER_X_SERVICE_UID}~${header}~g" \
+		sed -r -i \
+			-e "s~(\\$\{|\{\{)APACHE_HEADER_X_SERVICE_UID(\}\}|(:-.+)?\})~${header}~g" \
 			/etc/httpd/conf.d/00-headers.conf
 	else
 		# Remove X-Service-UID header if an empty value.
-		sed -i \
-			-e 's~^\([ \t]*\)\(Header set X-Service-UID .*\)$~\1#\2~g' \
+		sed -r -i \
+			-e 's~^([ \t]*)(Header set X-Service-UID .*)$~\1#\2~g' \
 			/etc/httpd/conf.d/00-headers.conf
 	fi
 }
@@ -1671,6 +1659,7 @@ function main ()
 	local apache_mod_ssl_enabled
 	local apache_mpm
 	local apache_operating_mode
+	local apache_public_directory
 	local apache_run_group
 	local apache_run_user
 	local apache_server_alias
@@ -1679,6 +1668,7 @@ function main ()
 	local apache_ssl_cipher_suite
 	local apache_ssl_protocol
 	local apache_system_user
+	local config_files
 	local details_modules_enabled_list
 	local details_ssl_certificate_fingerprint
 	local document_root
@@ -1727,6 +1717,9 @@ function main ()
 	)"
 	apache_operating_mode="$(
 		__get_apache_operating_mode
+	)"
+	apache_public_directory="$(
+		__get_apache_public_directory
 	)"
 	apache_run_group="$(
 		__get_apache_run_group
@@ -1847,6 +1840,39 @@ function main ()
 		__set_apache_enable_sendfile \
 			"false"
 	fi
+
+	config_files="$(
+		find \
+			/etc/httpd \
+			/etc/php.d \
+			-type f \
+			-name *.conf \
+			-o \
+			-name *.ini \
+		| tr '\n' ' '
+	)"
+
+	# Replace both environment variables with optional default values or
+	# mustache style placeholders
+	sed -r -i \
+		-e "s~(\\$\{|\{\{)APACHE_CONTENT_ROOT(\}\}|(:-.+)?\})~${apache_content_root}~g" \
+		-e "s~(\\$\{|\{\{)APACHE_CUSTOM_LOG_FORMAT(\}\}|(:-.+)?\})~${apache_custom_log_format}~g" \
+		-e "s~(\\$\{|\{\{)APACHE_CUSTOM_LOG_LOCATION(\}\}|(:-.+)?\})~${apache_custom_log_location}~g" \
+		-e "s~(\\$\{|\{\{)APACHE_ERROR_LOG_LOCATION(\}\}|(:-.+)?\})~${apache_error_log_location}~g" \
+		-e "s~(\\$\{|\{\{)APACHE_ERROR_LOG_LEVEL(\}\}|(:-.+)?\})~${apache_error_log_level}~g" \
+		-e "s~(\\$\{|\{\{)APACHE_PUBLIC_DIRECTORY(\}\}|(:-.+)?\})~${apache_public_directory}~g" \
+		-e "s~(\\$\{|\{\{)APACHE_RUN_GROUP(\}\}|(:-.+)?\})~${apache_run_group}~g" \
+		-e "s~(\\$\{|\{\{)APACHE_RUN_USER(\}\}|(:-.+)?\})~${apache_run_user}~g" \
+		-e "s~(\\$\{|\{\{)APACHE_SERVER_ALIAS(\}\}|(:-.+)?\})~${apache_server_alias}~g" \
+		-e "s~(\\$\{|\{\{)APACHE_SERVER_NAME(\}\}|(:-.+)?\})~${apache_server_name}~g" \
+		-e "s~(\\$\{|\{\{)APACHE_SSL_CIPHER_SUITE(\}\}|(:-.+)?\})~${apache_ssl_cipher_suite}~g" \
+		-e "s~(\\$\{|\{\{)APACHE_SSL_PROTOCOL(\}\}|(:-.+)?\})~${apache_ssl_protocol}~g" \
+		-e "s~(\\$\{|\{\{)APACHE_SYSTEM_USER(\}\}|(:-.+)?\})~${apache_system_user}~g" \
+		-e "s~(\\$\{|\{\{)PHP_OPTIONS_DATE_TIMEZONE(\}\}|(:-.+)?\})~${php_options_date_timezone}~g" \
+		-e "s~(\\$\{|\{\{)PHP_OPTIONS_SESSION_NAME(\}\}|(:-.+)?\})~${php_options_session_name}~g" \
+		-e "s~(\\$\{|\{\{)PHP_OPTIONS_SESSION_SAVE_HANDLER(\}\}|(:-.+)?\})~${php_options_session_save_handler}~g" \
+		-e "s~(\\$\{|\{\{)PHP_OPTIONS_SESSION_SAVE_PATH(\}\}|(:-.+)?\})~${php_options_session_save_path}~g" \
+		${config_files}
 
 	__set_apache_system_user \
 		"${apache_system_user}"

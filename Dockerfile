@@ -226,7 +226,7 @@ RUN useradd -r -M -d /var/www/app -s /sbin/nologin app \
 		-e "s~{{RELEASE_VERSION}}~${RELEASE_VERSION}~g" \
 		/etc/systemd/system/centos-ssh-apache-php@.service \
 	&& chmod 700 \
-		/usr/{bin/healthcheck,sbin/{httpd-{bootstrap,startup,wrapper},php-fpm-wrapper}}
+		/usr/{bin/healthcheck,sbin/{httpd-{bootstrap,wrapper},php-fpm-wrapper}}
 
 # ------------------------------------------------------------------------------
 # Package installation
@@ -285,8 +285,6 @@ ENV APACHE_AUTOSTART_HTTPD_BOOTSTRAP="true" \
 	APACHE_SSL_CIPHER_SUITE="ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES256-SHA384:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA:ECDHE-RSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA:DHE-RSA-AES256-SHA256:DHE-RSA-AES256-SHA:ECDHE-ECDSA-DES-CBC3-SHA:ECDHE-RSA-DES-CBC3-SHA:EDH-RSA-DES-CBC3-SHA:AES128-GCM-SHA256:AES256-GCM-SHA384:AES128-SHA256:AES256-SHA256:AES128-SHA:AES256-SHA:DES-CBC3-SHA:!DSS" \
 	APACHE_SSL_PROTOCOL="All -SSLv2 -SSLv3" \
 	APACHE_SYSTEM_USER="app" \
-	BASH_ENV="/usr/sbin/httpd-startup" \
-	ENV="/usr/sbin/httpd-startup" \
 	PACKAGE_PATH="${PACKAGE_PATH}" \
 	PHP_OPTIONS_DATE_TIMEZONE="UTC" \
 	PHP_OPTIONS_SESSION_NAME="PHPSESSID" \
@@ -305,8 +303,6 @@ LABEL \
 --rm \
 --privileged \
 --volume /:/media/root \
---env BASH_ENV="" \
---env ENV="" \
 jdeathe/centos-ssh-apache-php:${RELEASE_VERSION} \
 /usr/sbin/scmi install \
 --chroot=/media/root \
@@ -316,8 +312,6 @@ jdeathe/centos-ssh-apache-php:${RELEASE_VERSION} \
 --rm \
 --privileged \
 --volume /:/media/root \
---env BASH_ENV="" \
---env ENV="" \
 jdeathe/centos-ssh-apache-php:${RELEASE_VERSION} \
 /usr/sbin/scmi uninstall \
 --chroot=/media/root \
@@ -337,4 +331,4 @@ HEALTHCHECK \
 	--retries=10 \
 	CMD ["/usr/bin/healthcheck"]
 
-CMD ["/usr/sbin/httpd-startup", "/usr/bin/supervisord", "--configuration=/etc/supervisord.conf"]
+CMD ["/usr/bin/supervisord", "--configuration=/etc/supervisord.conf"]
