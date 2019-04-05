@@ -658,7 +658,7 @@ function __get_details_ssl_certificate_fingerprint ()
 	)"
 
 	printf -- \
-		'\nssl certificate %s fingerprint : \n%s' \
+		'\ntls/ssl certificate %s fingerprint : \n%s' \
 		"${digest}" \
 		"${fingerprint}"
 }
@@ -1907,21 +1907,21 @@ function main ()
 		================================================================================
 		Apache Details
 		--------------------------------------------------------------------------------
-		operating mode : ${apache_operating_mode}
-		system user : ${apache_system_user}
-		run user : ${apache_run_user}
-		run group : ${apache_run_group}
-		server name : ${apache_server_name}
-		server alias : ${apache_server_alias}
-		header x-service-uid : ${apache_header_x_service_uid:-unset}
-		document root : ${document_root} (${document_root_file_system})
-		server mpm : ${apache_mpm,,}
 		custom log location : ${apache_custom_log_location}
 		custom log format : ${apache_custom_log_format}
+		document root : ${document_root} (${document_root_file_system})
 		error log location : ${apache_error_log_location}
 		error log level : ${apache_error_log_level}
+		header x-service-uid : ${apache_header_x_service_uid}
 		modules enabled :
-		${details_modules_enabled_list}${details_ssl_certificate_fingerprint}
+		${details_modules_enabled_list}
+		operating mode : ${apache_operating_mode}
+		run group : ${apache_run_group}
+		run user : ${apache_run_user}
+		server alias : ${apache_server_alias}
+		server mpm : ${apache_mpm,,}
+		server name : ${apache_server_name}
+		system user : ${apache_system_user}${details_ssl_certificate_fingerprint}
 
 		================================================================================
 		PHP Details
