@@ -831,6 +831,8 @@ function __init_datadir ()
 		__get_package_path
 	)"}"
 
+	verbose="${verbose:-false}"
+
 	if [[ ! -d ${content_root_prefix} ]]
 	then
 		mkdir \
@@ -841,10 +843,13 @@ function __init_datadir ()
 
 	if [[ ! -d ${content_root} ]]
 	then
-		printf -- \
-			'Linking install directory %s > %s.\n' \
-			"${package_path}" \
-			"${content_root}"
+		if [[ ${verbose} == true ]]
+		then
+			printf -- \
+				'Linking install directory %s > %s.\n' \
+				"${package_path}" \
+				"${content_root}"
+		fi
 
 		ln -s \
 			"${package_path}" \
@@ -853,10 +858,13 @@ function __init_datadir ()
 		&& [[ ! -h ${content_root} ]] \
 		&& [[ -z "$(find "${content_root}" -maxdepth 1 -type f)" ]]
 	then
-		printf -- \
-			'Populating install directory %s > %s.\n' \
-			"${package_path}" \
-			"${content_root}"
+		if [[ ${verbose} == true ]]
+		then
+			printf -- \
+				'Populating install directory %s > %s.\n' \
+				"${package_path}" \
+				"${content_root}"
+		fi
 
 		cp -rpf \
 			"${package_path}"/. \
@@ -1679,10 +1687,22 @@ function main ()
 	local php_options_session_save_handler
 	local php_options_session_save_path
 	local -a pids
+	local verbose="false"
 
 	# Create lock
 	touch \
 		"${lock_file}"
+
+	# Parse options
+	while [[ "${#}" -gt 0 ]]
+	do
+		case "${1}" in
+			-v|--verbose)
+				verbose="true"
+				shift 1
+				;;
+		esac
+	done
 
 	HOSTNAME="$(
 		hostname
@@ -1835,8 +1855,11 @@ function main ()
 	)"
 	if [[ ${document_root_file_system} == nfs ]]
 	then
-		printf -- \
-			'Disabling EnableSendfile.'
+		if [[ ${verbose} == true ]]
+		then
+			printf -- \
+				'Disabling EnableSendfile.'
+		fi
 		__set_apache_enable_sendfile \
 			"false"
 	fi
@@ -1892,48 +1915,54 @@ function main ()
 			wait ${pids[1]}
 		fi
 
-		details_ssl_certificate_fingerprint="$(
-			__get_details_ssl_certificate_fingerprint
-		)"
+		if [[ ${verbose} == true ]]
+		then
+			details_ssl_certificate_fingerprint="$(
+				__get_details_ssl_certificate_fingerprint
+			)"
+		fi
 	fi
 
-	timer_total="$(
-		__get_timer_total \
-			"${timer_start}"
-	)"
+	if [[ ${verbose} == true ]]
+	then
+		timer_total="$(
+			__get_timer_total \
+				"${timer_start}"
+		)"
 
-	cat <<-EOT
+		cat <<-EOT
 
-		================================================================================
-		Apache Details
-		--------------------------------------------------------------------------------
-		custom log location : ${apache_custom_log_location}
-		custom log format : ${apache_custom_log_format}
-		document root : ${document_root} (${document_root_file_system})
-		error log location : ${apache_error_log_location}
-		error log level : ${apache_error_log_level}
-		header x-service-uid : ${apache_header_x_service_uid}
-		modules enabled :
-		${details_modules_enabled_list}
-		operating mode : ${apache_operating_mode}
-		run group : ${apache_run_group}
-		run user : ${apache_run_user}
-		server alias : ${apache_server_alias}
-		server mpm : ${apache_mpm,,}
-		server name : ${apache_server_name}
-		system user : ${apache_system_user}${details_ssl_certificate_fingerprint}
+			================================================================================
+			Apache Details
+			--------------------------------------------------------------------------------
+			custom log location : ${apache_custom_log_location}
+			custom log format : ${apache_custom_log_format}
+			document root : ${document_root} (${document_root_file_system})
+			error log location : ${apache_error_log_location}
+			error log level : ${apache_error_log_level}
+			header x-service-uid : ${apache_header_x_service_uid}
+			modules enabled :
+			${details_modules_enabled_list}
+			operating mode : ${apache_operating_mode}
+			run group : ${apache_run_group}
+			run user : ${apache_run_user}
+			server alias : ${apache_server_alias}
+			server mpm : ${apache_mpm,,}
+			server name : ${apache_server_name}
+			system user : ${apache_system_user}${details_ssl_certificate_fingerprint}
 
-		================================================================================
-		PHP Details
-		--------------------------------------------------------------------------------
-		date.timezone : ${php_options_date_timezone}
-		session.name : ${php_options_session_name}
-		session.save_handler : ${php_options_session_save_handler}
-		session.save_path : ${php_options_session_save_path}
-		--------------------------------------------------------------------------------
-		${timer_total}
+			================================================================================
+			PHP Details
+			--------------------------------------------------------------------------------
+			date.timezone : ${php_options_date_timezone}
+			session.name : ${php_options_session_name}
+			session.save_handler : ${php_options_session_save_handler}
+			session.save_path : ${php_options_session_save_path}
+			--------------------------------------------------------------------------------
+			${timer_total}
 
-	EOT
+		EOT
+	fi
 
 	# Release lock
 	rm -f \
