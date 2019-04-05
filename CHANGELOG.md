@@ -14,6 +14,7 @@ CentOS-7 7.5.1804 x86_64, Apache 2.4, PHP-FPM 7.2, PHP memcached 3.0, Zend Opcac
 - Updates source image to [2.5.1](https://github.com/jdeathe/centos-ssh/releases/tag/2.5.1).
 - Updates and restructures Dockerfile.
 - Updates container naming conventions and readability of `Makefile`.
+- Updates supervisord program priority of `php-fpm-wrapper` to a lower value than `httpd-wrapper`.
 - Fixes issue with unexpected published port in run templates when `DOCKER_PORT_MAP_TCP_80`, `DOCKER_PORT_MAP_TCP_443` or `DOCKER_PORT_MAP_TCP_8443` is set to an empty string or 0.
 - Fixes binary paths in systemd unit files for compatibility with both EL and Ubuntu hosts.
 - Fixes link to OpenSSL ciphers manual page.
