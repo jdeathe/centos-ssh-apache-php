@@ -9,7 +9,7 @@ CentOS-7 7.5.1804 x86_64, Apache 2.4, PHP-FPM 7.2, PHP memcached 3.0, Zend Opcac
 ### 3.2.0 - Unreleased
 
 - Updates `elinks` package to elinks-0.12-0.37.pre6.el7.0.1.
-- Updates `httpd24u` packages to 2.4.38-1.
+- Updates `httpd24u` packages to 2.4.39-1.
 - Updates `php72u` packages to 7.2.16-1.
 - Updates source image to [2.5.1](https://github.com/jdeathe/centos-ssh/releases/tag/2.5.1).
 - Updates and restructures Dockerfile.
