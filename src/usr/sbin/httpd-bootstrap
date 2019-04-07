@@ -52,6 +52,24 @@ function __add_hosts_entry ()
 		>> /etc/hosts
 }
 
+function __cleanup ()
+{
+	local -r exit_code="${?}"
+	local -r lock_file="${1}"
+	local -r state_file="${2}"
+
+	if [[ -e ${lock_file} ]]
+	then
+		rm -f "${lock_file}"
+	fi
+
+	if [[ ${exit_code} -eq 0 ]]
+	then
+		touch "${state_file}"
+	fi
+
+}
+
 function __enable_apache_modules ()
 {
 	local -r apache_version="$(
@@ -1652,6 +1670,7 @@ function main ()
 {
 	local -r lock_file="/var/lock/subsys/httpd-bootstrap"
 	local -r ssl_certificate_fingerprint_digest="sha1"
+	local -r state_file="/var/lib/misc/httpd-bootstrap"
 	local -r timer_start="$(
 		date +%s.%N
 	)"
@@ -1689,10 +1708,6 @@ function main ()
 	local -a pids
 	local verbose="false"
 
-	# Create lock
-	touch \
-		"${lock_file}"
-
 	# Parse options
 	while [[ "${#}" -gt 0 ]]
 	do
@@ -1703,6 +1718,33 @@ function main ()
 				;;
 		esac
 	done
+
+	if [[ -e ${state_file} ]]
+	then
+		if [[ ${verbose} == true ]]
+		then
+			printf -- \
+				'INFO: %s finished - skipping.\n' \
+				"${0##*/}"
+		fi
+		exit 0
+	fi
+
+	if [[ -e ${lock_file} ]]
+	then
+		>&2 printf -- \
+			'ERROR: %s lock detected - aborting.\n' \
+			"${0##*/}"
+		exit 1
+	fi
+
+	trap \
+		"__cleanup \"${lock_file}\" \"${state_file}\"" \
+		INT TERM EXIT
+
+	# Create lock
+	touch \
+		"${lock_file}"
 
 	HOSTNAME="$(
 		hostname
@@ -1963,10 +2005,6 @@ function main ()
 
 		EOT
 	fi
-
-	# Release lock
-	rm -f \
-		"${lock_file}"
 }
 
 main "${@}"
