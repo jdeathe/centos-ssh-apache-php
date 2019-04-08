@@ -2013,7 +2013,7 @@ function test_custom_configuration ()
 				fi
 
 				apache_ssl_cipher_suite=""
-				for protocol in ssl3 tls1 tls1_1 tls1_2; do
+				for protocol in tls1 tls1_1 tls1_2; do
 					cipher_match="$(
 						echo -n \
 						| openssl s_client \
@@ -2036,7 +2036,7 @@ function test_custom_configuration ()
 
 				assert equal \
 					"${apache_ssl_cipher_suite}" \
-					"0000:0000:0000:DHE-RSA-AES128-SHA"
+					"0000:0000:DHE-RSA-AES128-SHA"
 			end
 		end
 
