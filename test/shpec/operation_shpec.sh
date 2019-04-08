@@ -11,7 +11,7 @@ DOCKER_PORT_MAP_TCP_8443="${DOCKER_PORT_MAP_TCP_8443:-NULL}"
 
 function __destroy ()
 {
-	local -r session_store_name="memcached.pool-1.1.1"
+	local -r session_store_name="memcached.1"
 	local -r session_store_network="bridge_internal_1"
 
 	# Destroy the session store container
@@ -87,9 +87,9 @@ function __is_container_ready ()
 function __setup ()
 {
 	local -r session_store_alias="memcached_1"
-	local -r session_store_name="memcached.pool-1.1.1"
+	local -r session_store_name="memcached.1"
 	local -r session_store_network="bridge_internal_1"
-	local -r session_store_release="1.1.3"
+	local -r session_store_release="1.3.1"
 
 	if [[ -z $(docker network ls -q -f name="${session_store_network}") ]]; then
 		docker network create \
@@ -240,20 +240,20 @@ ${other_required_apache_modules}
 	local status=0
 
 	describe "Basic Apache PHP operations"
-		trap "__terminate_container apache-php.pool-1.1.1 &> /dev/null; \
+		trap "__terminate_container apache-php.1 &> /dev/null; \
 		__destroy; \
 		exit 1" \
 			INT TERM EXIT
 
 		__terminate_container \
-			apache-php.pool-1.1.1 \
+			apache-php.1 \
 		&> /dev/null
 
 		describe "Runs named container"
 			docker run \
 				--detach \
 				--no-healthcheck \
-				--name apache-php.pool-1.1.1 \
+				--name apache-php.1 \
 				--publish ${DOCKER_PORT_MAP_TCP_80}:80 \
 				jdeathe/centos-ssh-apache-php:latest \
 			&> /dev/null
@@ -261,7 +261,7 @@ ${other_required_apache_modules}
 			it "Can publish ${DOCKER_PORT_MAP_TCP_80}:80."
 				container_port_80="$(
 					__get_container_port \
-						apache-php.pool-1.1.1 \
+						apache-php.1 \
 						80/tcp
 				)"
 
@@ -279,7 +279,7 @@ ${other_required_apache_modules}
 		end
 
 		if ! __is_container_ready \
-			apache-php.pool-1.1.1 \
+			apache-php.1 \
 			${STARTUP_TIME} \
 			"/usr/sbin/httpd(\.worker|\.event)? " \
 			"[[ 000 != \$(curl -sI -o /dev/null -w %{http_code} localhost/) ]]"
@@ -289,7 +289,7 @@ ${other_required_apache_modules}
 
 		container_hostname="$(
 			docker exec \
-				apache-php.pool-1.1.1 \
+				apache-php.1 \
 				hostname
 		)"
 
@@ -329,7 +329,7 @@ ${other_required_apache_modules}
 			it "Outputs Apache details."
 				apache_details_title="$(
 					docker logs \
-						apache-php.pool-1.1.1 \
+						apache-php.1 \
 					| grep '^Apache Details' \
 					| tr -d '\r'
 				)"
@@ -343,7 +343,7 @@ ${other_required_apache_modules}
 				it "Has default system user."
 					apache_system_user="$(
 						docker logs \
-							apache-php.pool-1.1.1 \
+							apache-php.1 \
 						| grep '^system user : ' \
 						| cut -c 15- \
 						| tr -d '\r'
@@ -357,7 +357,7 @@ ${other_required_apache_modules}
 				it "Has default run user."
 					apache_run_user="$(
 						docker logs \
-							apache-php.pool-1.1.1 \
+							apache-php.1 \
 						| grep '^run user : ' \
 						| cut -c 12- \
 						| tr -d '\r'
@@ -371,7 +371,7 @@ ${other_required_apache_modules}
 				it "Has default run group."
 					apache_run_group="$(
 						docker logs \
-							apache-php.pool-1.1.1 \
+							apache-php.1 \
 						| grep '^run group : ' \
 						| cut -c 13- \
 						| tr -d '\r'
@@ -385,7 +385,7 @@ ${other_required_apache_modules}
 				it "Has default server name."
 					apache_server_name="$(
 						docker logs \
-							apache-php.pool-1.1.1 \
+							apache-php.1 \
 						| grep '^server name : ' \
 						| cut -c 15- \
 						| tr -d '\r'
@@ -399,7 +399,7 @@ ${other_required_apache_modules}
 				it "Has default server alias."
 					apache_server_alias="$(
 						docker logs \
-							apache-php.pool-1.1.1 \
+							apache-php.1 \
 						| grep '^server alias : ' \
 						| cut -c 16- \
 						| tr -d '\r'
@@ -413,7 +413,7 @@ ${other_required_apache_modules}
 				it "Has default X-Service-UID header."
 					header_x_service_uid="$(
 						docker logs \
-							apache-php.pool-1.1.1 \
+							apache-php.1 \
 						| grep '^header x-service-uid : ' \
 						| cut -c 24- \
 						| tr -d '\r'
@@ -428,7 +428,7 @@ ${other_required_apache_modules}
 				it "Has default document root."
 					apache_document_root="$(
 						docker logs \
-							apache-php.pool-1.1.1 \
+							apache-php.1 \
 						| grep '^document root : ' \
 						| cut -c 17- \
 						| tr -d '\r' \
@@ -444,7 +444,7 @@ ${other_required_apache_modules}
 				it "Has default server mpm."
 					apache_server_mpm="$(
 						docker logs \
-							apache-php.pool-1.1.1 \
+							apache-php.1 \
 						| grep '^server mpm : ' \
 						| cut -c 13- \
 						| tr -d '\r' \
@@ -459,7 +459,7 @@ ${other_required_apache_modules}
 				it "Has default enabled modules."
 					apache_load_modules="$(
 						docker logs \
-							apache-php.pool-1.1.1 \
+							apache-php.1 \
 						| sed -ne \
 							'/^modules enabled :/,/^--+$/ p' \
 							| awk '/^ - /'
@@ -481,7 +481,7 @@ ${other_required_apache_modules}
 
 					apache_access_log_entry="$(
 						docker exec \
-							apache-php.pool-1.1.1 \
+							apache-php.1 \
 							tail -n 1 \
 							/var/www/app/var/log/apache_access_log \
 						| grep -oE \
@@ -495,7 +495,7 @@ ${other_required_apache_modules}
 
 				it "Has entries in combined LogFormat."
 					docker exec \
-						apache-php.pool-1.1.1 \
+						apache-php.1 \
 						tail -n 1 \
 						/var/www/app/var/log/apache_access_log \
 					| grep -qE \
@@ -517,7 +517,7 @@ ${other_required_apache_modules}
 					)"
 
 					docker exec \
-						apache-php.pool-1.1.1 \
+						apache-php.1 \
 						tail -n 1 \
 						/var/www/app/var/log/apache_error_log \
 					&> /dev/null
@@ -532,7 +532,7 @@ ${other_required_apache_modules}
 		describe "Apache server-status"
 			it "Is accessible from localhost."
 				docker exec \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 					curl -s \
 						--header "Host: ${container_hostname}" \
 						http://127.0.0.1/server-status\?auto \
@@ -547,7 +547,7 @@ ${other_required_apache_modules}
 
 			it "Excludes ExtendedStatus information."
 				docker exec \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 					curl -s \
 						--header "Host: ${container_hostname}" \
 						http://127.0.0.1/server-status\?auto \
@@ -593,7 +593,7 @@ ${other_required_apache_modules}
 		describe "Apache modules"
 			all_loaded_apache_modules="$(
 				docker exec \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 					bash -c "apachectl -M 2>&1 \
 						| sed -r \
 							-e '/Loaded Modules:/d' \
@@ -631,7 +631,7 @@ ${other_required_apache_modules}
 			it "Is the service user:group."
 				apache_run_user_group="$(
 					docker exec \
-						apache-php.pool-1.1.1 \
+						apache-php.1 \
 						ps axo user,group,comm \
 					| grep httpd \
 					| tail -n 1 \
@@ -664,7 +664,7 @@ ${other_required_apache_modules}
 		end
 
 		__terminate_container \
-			apache-php.pool-1.1.1 \
+			apache-php.1 \
 		&> /dev/null
 
 		trap - \
@@ -703,7 +703,7 @@ function test_custom_configuration ()
 	local protocol=""
 
 	describe "Customised Apache PHP configuration"
-		trap "__terminate_container apache-php.pool-1.1.1 &> /dev/null; \
+		trap "__terminate_container apache-php.1 &> /dev/null; \
 			__destroy; \
 			exit 1" \
 			INT TERM EXIT
@@ -711,13 +711,13 @@ function test_custom_configuration ()
 		describe "Access log"
 			it "Sets common LogFormat."
 				__terminate_container \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 				&> /dev/null
 
 				docker run \
 					--detach \
 					--no-healthcheck \
-					--name apache-php.pool-1.1.1 \
+					--name apache-php.1 \
 					--publish ${DOCKER_PORT_MAP_TCP_80}:80 \
 					--env APACHE_CUSTOM_LOG_FORMAT="common" \
 					--env APACHE_SERVER_NAME="app-1.local" \
@@ -725,7 +725,7 @@ function test_custom_configuration ()
 				&> /dev/null
 
 				if ! __is_container_ready \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 					${STARTUP_TIME} \
 					"/usr/sbin/httpd(\.worker|\.event)? " \
 					"[[ 000 != \$(curl -sI -o /dev/null -w %{http_code} localhost/) ]]"
@@ -735,7 +735,7 @@ function test_custom_configuration ()
 
 				container_port_80="$(
 					__get_container_port \
-						apache-php.pool-1.1.1 \
+						apache-php.1 \
 						80/tcp
 				)"
 
@@ -745,7 +745,7 @@ function test_custom_configuration ()
 					http://127.0.0.1:${container_port_80}
 
 				docker exec \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 					tail -n 1 \
 					/var/www/app/var/log/apache_access_log \
 				| grep -qE \
@@ -759,13 +759,13 @@ function test_custom_configuration ()
 
 			it "Sets a relative path."
 				__terminate_container \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 				&> /dev/null
 
 				docker run \
 					--detach \
 					--no-healthcheck \
-					--name apache-php.pool-1.1.1 \
+					--name apache-php.1 \
 					--publish ${DOCKER_PORT_MAP_TCP_80}:80 \
 					--env APACHE_CUSTOM_LOG_LOCATION="var/log/access.log" \
 					--env APACHE_SERVER_NAME="app-1.local" \
@@ -773,7 +773,7 @@ function test_custom_configuration ()
 				&> /dev/null
 
 				if ! __is_container_ready \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 					${STARTUP_TIME} \
 					"/usr/sbin/httpd(\.worker|\.event)? " \
 					"[[ 000 != \$(curl -sI -o /dev/null -w %{http_code} localhost/) ]]"
@@ -788,7 +788,7 @@ function test_custom_configuration ()
 
 				apache_access_log_entry="$(
 					docker exec \
-						apache-php.pool-1.1.1 \
+						apache-php.1 \
 						tail -n 1 \
 						/var/www/app/var/log/access.log \
 					| grep -oE \
@@ -802,13 +802,13 @@ function test_custom_configuration ()
 
 			it "Sets an absolute path."
 				__terminate_container \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 				&> /dev/null
 
 				docker run \
 					--detach \
 					--no-healthcheck \
-					--name apache-php.pool-1.1.1 \
+					--name apache-php.1 \
 					--publish ${DOCKER_PORT_MAP_TCP_80}:80 \
 					--env APACHE_CUSTOM_LOG_LOCATION="/var/log/httpd/access.log" \
 					--env APACHE_SERVER_NAME="app-1.local" \
@@ -816,7 +816,7 @@ function test_custom_configuration ()
 				&> /dev/null
 
 				if ! __is_container_ready \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 					${STARTUP_TIME} \
 					"/usr/sbin/httpd(\.worker|\.event)? " \
 					"[[ 000 != \$(curl -sI -o /dev/null -w %{http_code} localhost/) ]]"
@@ -831,7 +831,7 @@ function test_custom_configuration ()
 
 				apache_access_log_entry="$(
 					docker exec \
-						apache-php.pool-1.1.1 \
+						apache-php.1 \
 						tail -n 1 \
 						/var/log/httpd/access.log \
 					| grep -oE \
@@ -847,12 +847,12 @@ function test_custom_configuration ()
 		describe "Error log"
 			it "Sets a relative path."
 				__terminate_container \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 				&> /dev/null
 
 				docker run \
 					--detach \
-					--name apache-php.pool-1.1.1 \
+					--name apache-php.1 \
 					--publish ${DOCKER_PORT_MAP_TCP_80}:80 \
 					--env APACHE_ERROR_LOG_LOCATION="var/log/error.log" \
 					--env APACHE_SERVER_NAME="app-1.local" \
@@ -860,7 +860,7 @@ function test_custom_configuration ()
 				&> /dev/null
 
 				if ! __is_container_ready \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 					${STARTUP_TIME} \
 					"/usr/sbin/httpd(\.worker|\.event)? " \
 					"[[ 000 != \$(curl -sI -o /dev/null -w %{http_code} localhost/) ]]"
@@ -874,7 +874,7 @@ function test_custom_configuration ()
 					http://127.0.0.1:${container_port_80}
 
 				docker exec \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 					tail -n 1 \
 					/var/www/app/var/log/error.log \
 				&> /dev/null
@@ -886,19 +886,19 @@ function test_custom_configuration ()
 
 			it "Sets an absolute path."
 				__terminate_container \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 				&> /dev/null
 
 				docker run \
 					--detach \
-					--name apache-php.pool-1.1.1 \
+					--name apache-php.1 \
 					--publish ${DOCKER_PORT_MAP_TCP_80}:80 \
 					--env APACHE_ERROR_LOG_LOCATION="/var/log/httpd/error.log" \
 					jdeathe/centos-ssh-apache-php:latest \
 				&> /dev/null
 
 				if ! __is_container_ready \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 					${STARTUP_TIME} \
 					"/usr/sbin/httpd(\.worker|\.event)? " \
 					"[[ 000 != \$(curl -sI -o /dev/null -w %{http_code} localhost/) ]]"
@@ -912,7 +912,7 @@ function test_custom_configuration ()
 					http://127.0.0.1:${container_port_80}
 
 				docker exec \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 					tail -n 1 \
 					/var/log/httpd/error.log \
 				&> /dev/null
@@ -924,12 +924,12 @@ function test_custom_configuration ()
 
 			it "Sets log level (e.g debug)."
 				__terminate_container \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 				&> /dev/null
 
 				docker run \
 					--detach \
-					--name apache-php.pool-1.1.1 \
+					--name apache-php.1 \
 					--publish ${DOCKER_PORT_MAP_TCP_80}:80 \
 					--env APACHE_ERROR_LOG_LEVEL="debug" \
 					--env APACHE_SERVER_NAME="app-1.local" \
@@ -937,7 +937,7 @@ function test_custom_configuration ()
 				&> /dev/null
 
 				if ! __is_container_ready \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 					${STARTUP_TIME} \
 					"/usr/sbin/httpd(\.worker|\.event)? " \
 					"[[ 000 != \$(curl -sI -o /dev/null -w %{http_code} localhost/) ]]"
@@ -951,7 +951,7 @@ function test_custom_configuration ()
 					http://127.0.0.1:${container_port_80}
 
 				docker exec \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 					tail -n 1 \
 					/var/www/app/var/log/apache_error_log \
 				| grep -qE \
@@ -967,12 +967,12 @@ function test_custom_configuration ()
 		describe "Apache ExtendedStatus enabled"
 			it "Is accessible from localhost."
 				__terminate_container \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 				&> /dev/null
 
 				docker run \
 					--detach \
-					--name apache-php.pool-1.1.1 \
+					--name apache-php.1 \
 					--publish ${DOCKER_PORT_MAP_TCP_80}:80 \
 					--env APACHE_EXTENDED_STATUS_ENABLED="true" \
 					--env APACHE_SERVER_NAME="app-1.local" \
@@ -980,7 +980,7 @@ function test_custom_configuration ()
 				&> /dev/null
 
 				if ! __is_container_ready \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 					${STARTUP_TIME} \
 					"/usr/sbin/httpd(\.worker|\.event)? " \
 					"[[ 000 != \$(curl -sI -o /dev/null -w %{http_code} localhost/) ]]"
@@ -989,7 +989,7 @@ function test_custom_configuration ()
 				fi
 
 				docker exec \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 					curl -s \
 						--header "Host: app-1.local" \
 						http://127.0.0.1/server-status\?auto \
@@ -1035,12 +1035,12 @@ function test_custom_configuration ()
 		describe "X-Service-UID response header."
 			it "Sets a static value."
 				__terminate_container \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 				&> /dev/null
 
 				docker run \
 					--detach \
-					--name apache-php.pool-1.1.1 \
+					--name apache-php.1 \
 					--publish ${DOCKER_PORT_MAP_TCP_80}:80 \
 					--env APACHE_HEADER_X_SERVICE_UID="host-name@1.2" \
 					--env APACHE_SERVER_NAME="app-1.local" \
@@ -1048,7 +1048,7 @@ function test_custom_configuration ()
 				&> /dev/null
 
 				if ! __is_container_ready \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 					${STARTUP_TIME} \
 					"/usr/sbin/httpd(\.worker|\.event)? " \
 					"[[ 000 != \$(curl -sI -o /dev/null -w %{http_code} localhost/) ]]"
@@ -1072,12 +1072,12 @@ function test_custom_configuration ()
 
 			it "Replaces {{HOSTNAME}}."
 				__terminate_container \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 				&> /dev/null
 
 				docker run \
 					--detach \
-					--name apache-php.pool-1.1.1 \
+					--name apache-php.1 \
 					--publish ${DOCKER_PORT_MAP_TCP_80}:80 \
 					--env APACHE_HEADER_X_SERVICE_UID="{{HOSTNAME}}:${DOCKER_PORT_MAP_TCP_80}" \
 					--hostname app-1.local \
@@ -1085,7 +1085,7 @@ function test_custom_configuration ()
 				&> /dev/null
 
 				if ! __is_container_ready \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 					${STARTUP_TIME} \
 					"/usr/sbin/httpd(\.worker|\.event)? " \
 					"[[ 000 != \$(curl -sI -o /dev/null -w %{http_code} localhost/) ]]"
@@ -1111,18 +1111,18 @@ function test_custom_configuration ()
 		describe "Loading Apache modules"
 			it "Adds rewrite_module."
 				__terminate_container \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 				&> /dev/null
 
 				docker run \
 					--detach \
-					--name apache-php.pool-1.1.1 \
+					--name apache-php.1 \
 					--env APACHE_LOAD_MODULES="rewrite_module" \
 					jdeathe/centos-ssh-apache-php:latest \
 				&> /dev/null
 
 				if ! __is_container_ready \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 					${STARTUP_TIME} \
 					"/usr/sbin/httpd(\.worker|\.event)? " \
 					"[[ 000 != \$(curl -sI -o /dev/null -w %{http_code} localhost/) ]]"
@@ -1131,7 +1131,7 @@ function test_custom_configuration ()
 				fi
 
 				docker exec \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 					bash -c "apachectl -M 2>&1 | grep -q rewrite_module"
 
 				assert equal \
@@ -1143,19 +1143,19 @@ function test_custom_configuration ()
 		describe "Server MPM"
 			it "Sets event MPM."
 				__terminate_container \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 				&> /dev/null
 
 				docker run \
 					--detach \
-					--name apache-php.pool-1.1.1 \
+					--name apache-php.1 \
 					--env APACHE_MPM="event" \
 					--hostname app-1.local \
 					jdeathe/centos-ssh-apache-php:latest \
 				&> /dev/null
 
 				if ! __is_container_ready \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 					${STARTUP_TIME} \
 					"/usr/sbin/httpd(\.worker|\.event)? " \
 					"[[ 000 != \$(curl -sI -o /dev/null -w %{http_code} localhost/) ]]"
@@ -1164,7 +1164,7 @@ function test_custom_configuration ()
 				fi
 
 				docker exec \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 					bash -c "apachectl -V 2>&1 | grep -qiE '^Server MPM:[ ]+event$'"
 
 				assert equal \
@@ -1176,12 +1176,12 @@ function test_custom_configuration ()
 		describe "Operating mode (i.e -D <internal variable>)"
 			it "Sets to development."
 				__terminate_container \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 				&> /dev/null
 
 				docker run \
 					--detach \
-					--name apache-php.pool-1.1.1 \
+					--name apache-php.1 \
 					--publish ${DOCKER_PORT_MAP_TCP_80}:80 \
 					--env APACHE_OPERATING_MODE="development" \
 					--hostname app-1.local \
@@ -1189,7 +1189,7 @@ function test_custom_configuration ()
 				&> /dev/null
 
 				if ! __is_container_ready \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 					${STARTUP_TIME} \
 					"/usr/sbin/httpd(\.worker|\.event)? " \
 					"[[ 000 != \$(curl -sI -o /dev/null -w %{http_code} localhost/) ]]"
@@ -1215,18 +1215,18 @@ function test_custom_configuration ()
 		describe "System user (i.e. application owner)"
 			it "Sets name to 'app-user'."
 				__terminate_container \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 				&> /dev/null
 
 				docker run \
 					--detach \
-					--name apache-php.pool-1.1.1 \
+					--name apache-php.1 \
 					--env APACHE_SYSTEM_USER="app-user" \
 					jdeathe/centos-ssh-apache-php:latest \
 				&> /dev/null
 
 				if ! __is_container_ready \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 					${STARTUP_TIME} \
 					"/usr/sbin/httpd(\.worker|\.event)? " \
 					"[[ 000 != \$(curl -sI -o /dev/null -w %{http_code} localhost/) ]]"
@@ -1236,7 +1236,7 @@ function test_custom_configuration ()
 
 				apache_system_user="$(
 					docker exec \
-						apache-php.pool-1.1.1 \
+						apache-php.1 \
 						stat -c '%U' /var/www/app/public_html
 				)"
 
@@ -1249,18 +1249,18 @@ function test_custom_configuration ()
 		describe "Process runner"
 			it "Sets user."
 				__terminate_container \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 				&> /dev/null
 
 				docker run \
 					--detach \
-					--name apache-php.pool-1.1.1 \
+					--name apache-php.1 \
 					--env APACHE_RUN_USER="runner" \
 					jdeathe/centos-ssh-apache-php:latest \
 				&> /dev/null
 
 				if ! __is_container_ready \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 					${STARTUP_TIME} \
 					"/usr/sbin/httpd(\.worker|\.event)? " \
 					"[[ 000 != \$(curl -sI -o /dev/null -w %{http_code} localhost/) ]]"
@@ -1270,7 +1270,7 @@ function test_custom_configuration ()
 
 				apache_run_user="$(
 					docker exec \
-						apache-php.pool-1.1.1 \
+						apache-php.1 \
 						ps axo user,group,comm \
 					| grep httpd \
 					| tail -n 1 \
@@ -1284,18 +1284,18 @@ function test_custom_configuration ()
 
 			it "Sets group."
 				__terminate_container \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 				&> /dev/null
 
 				docker run \
 					--detach \
-					--name apache-php.pool-1.1.1 \
+					--name apache-php.1 \
 					--env APACHE_RUN_GROUP="runners" \
 					jdeathe/centos-ssh-apache-php:latest \
 				&> /dev/null
 
 				if ! __is_container_ready \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 					${STARTUP_TIME} \
 					"/usr/sbin/httpd(\.worker|\.event)? " \
 					"[[ 000 != \$(curl -sI -o /dev/null -w %{http_code} localhost/) ]]"
@@ -1305,7 +1305,7 @@ function test_custom_configuration ()
 
 				apache_run_group="$(
 					docker exec \
-						apache-php.pool-1.1.1 \
+						apache-php.1 \
 						ps axo user,group,comm \
 					| grep httpd \
 					| tail -n 1 \
@@ -1321,12 +1321,12 @@ function test_custom_configuration ()
 		describe "Apache ServerName/ServerAlias"
 			it "Sets a static ServerName."
 				__terminate_container \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 				&> /dev/null
 
 				docker run \
 					--detach \
-					--name apache-php.pool-1.1.1 \
+					--name apache-php.1 \
 					--publish ${DOCKER_PORT_MAP_TCP_80}:80 \
 					--env APACHE_SERVER_NAME="app-1.local" \
 					--env APACHE_SERVER_ALIAS="www.app-1.local" \
@@ -1335,9 +1335,9 @@ function test_custom_configuration ()
 
 				# Add a default VirtualHost that rejects access (403 response).
 				docker exec -i \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 					tee \
-						/etc/services-config/httpd/conf.d/05-virtual-host.conf \
+						/etc/httpd/conf.d/05-virtual-host.conf \
 						1> /dev/null \
 						<<-CONFIG
 				<VirtualHost *:80 *:8443>
@@ -1358,7 +1358,7 @@ function test_custom_configuration ()
 				CONFIG
 
 				if ! __is_container_ready \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 					${STARTUP_TIME} \
 					"/usr/sbin/httpd(\.worker|\.event)? " \
 					"[[ 000 != \$(curl -sI -o /dev/null -w %{http_code} localhost/) ]]"
@@ -1367,8 +1367,8 @@ function test_custom_configuration ()
 				fi
 
 				docker exec \
-					apache-php.pool-1.1.1 \
-					bash -c 'apachectl graceful'
+					apache-php.1 \
+					bash -c 'httpd -k graceful'
 
 				curl_response_code_default="$(
 					curl -s \
@@ -1408,12 +1408,12 @@ function test_custom_configuration ()
 		describe "Apache ServerName"
 			it "Is container hostname."
 				__terminate_container \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 				&> /dev/null
 
 				docker run \
 					--detach \
-					--name apache-php.pool-1.1.1 \
+					--name apache-php.1 \
 					--publish ${DOCKER_PORT_MAP_TCP_80}:80 \
 					--hostname php-hello-world \
 					jdeathe/centos-ssh-apache-php:latest \
@@ -1421,9 +1421,9 @@ function test_custom_configuration ()
 
 				# Add a default VirtualHost that rejects access (403 response).
 				docker exec -i \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 					tee \
-						/etc/services-config/httpd/conf.d/05-virtual-host.conf \
+						/etc/httpd/conf.d/05-virtual-host.conf \
 						1> /dev/null \
 						<<-CONFIG
 				<VirtualHost *:80 *:8443>
@@ -1444,7 +1444,7 @@ function test_custom_configuration ()
 				CONFIG
 
 				if ! __is_container_ready \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 					${STARTUP_TIME} \
 					"/usr/sbin/httpd(\.worker|\.event)? " \
 					"[[ 000 != \$(curl -sI -o /dev/null -w %{http_code} localhost/) ]]"
@@ -1453,8 +1453,8 @@ function test_custom_configuration ()
 				fi
 
 				docker exec \
-					apache-php.pool-1.1.1 \
-					bash -c 'apachectl graceful'
+					apache-php.1 \
+					bash -c 'httpd -k graceful'
 
 				curl_response_code_default="$(
 					curl -s \
@@ -1478,12 +1478,12 @@ function test_custom_configuration ()
 
 			it "Replaces {{HOSTNAME}}."
 				__terminate_container \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 				&> /dev/null
 
 				docker run \
 					--detach \
-					--name apache-php.pool-1.1.1 \
+					--name apache-php.1 \
 					--publish ${DOCKER_PORT_MAP_TCP_80}:80 \
 					--hostname php-hello-world \
 					--env APACHE_SERVER_NAME="{{HOSTNAME}}.localdomain" \
@@ -1492,9 +1492,9 @@ function test_custom_configuration ()
 
 				# Add a default VirtualHost that rejects access (403 response).
 				docker exec -i \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 					tee \
-						/etc/services-config/httpd/conf.d/05-virtual-host.conf \
+						/etc/httpd/conf.d/05-virtual-host.conf \
 						1> /dev/null \
 						<<-CONFIG
 				<VirtualHost *:80 *:8443>
@@ -1515,7 +1515,7 @@ function test_custom_configuration ()
 				CONFIG
 
 				if ! __is_container_ready \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 					${STARTUP_TIME} \
 					"/usr/sbin/httpd(\.worker|\.event)? " \
 					"[[ 000 != \$(curl -sI -o /dev/null -w %{http_code} localhost/) ]]"
@@ -1524,8 +1524,8 @@ function test_custom_configuration ()
 				fi
 
 				docker exec \
-					apache-php.pool-1.1.1 \
-					bash -c 'apachectl graceful'
+					apache-php.1 \
+					bash -c 'httpd -k graceful'
 
 				curl_response_code_default="$(
 					curl -s \
@@ -1551,12 +1551,12 @@ function test_custom_configuration ()
 		describe "Apache ServerAlias"
 			it "Replaces {{HOSTNAME}}."
 				__terminate_container \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 				&> /dev/null
 
 				docker run \
 					--detach \
-					--name apache-php.pool-1.1.1 \
+					--name apache-php.1 \
 					--publish ${DOCKER_PORT_MAP_TCP_80}:80 \
 					--hostname php-hello-world \
 					--env APACHE_SERVER_ALIAS="{{HOSTNAME}}.localdomain" \
@@ -1566,9 +1566,9 @@ function test_custom_configuration ()
 
 				# Add a default VirtualHost that rejects access (403 response).
 				docker exec -i \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 					tee \
-						/etc/services-config/httpd/conf.d/05-virtual-host.conf \
+						/etc/httpd/conf.d/05-virtual-host.conf \
 						1> /dev/null \
 						<<-CONFIG
 				<VirtualHost *:80 *:8443>
@@ -1589,7 +1589,7 @@ function test_custom_configuration ()
 				CONFIG
 
 				if ! __is_container_ready \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 					${STARTUP_TIME} \
 					"/usr/sbin/httpd(\.worker|\.event)? " \
 					"[[ 000 != \$(curl -sI -o /dev/null -w %{http_code} localhost/) ]]"
@@ -1598,8 +1598,8 @@ function test_custom_configuration ()
 				fi
 
 				docker exec \
-					apache-php.pool-1.1.1 \
-					bash -c 'apachectl graceful'
+					apache-php.1 \
+					bash -c 'httpd -k graceful'
 
 				curl_response_code_default="$(
 					curl -s \
@@ -1625,12 +1625,12 @@ function test_custom_configuration ()
 		describe "Apache public directory"
 			it "Sets to 'web'."
 				__terminate_container \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 				&> /dev/null
 
 				docker run \
 					--detach \
-					--name apache-php.pool-1.1.1 \
+					--name apache-php.1 \
 					--publish ${DOCKER_PORT_MAP_TCP_80}:80 \
 					--env APACHE_PUBLIC_DIRECTORY="web" \
 					--hostname app-1.local \
@@ -1640,15 +1640,15 @@ function test_custom_configuration ()
 				# For the server to start, the public directory needs to match that
 				# which is being configured for the test.
 				docker exec \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 					mv /opt/app/public_html /opt/app/web
 
 				docker restart \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 				&> /dev/null
 
 				if ! __is_container_ready \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 					${STARTUP_TIME} \
 					"/usr/sbin/httpd(\.worker|\.event)? " \
 					"[[ 000 != \$(curl -sI -o /dev/null -w %{http_code} localhost/) ]]"
@@ -1671,12 +1671,12 @@ function test_custom_configuration ()
 		describe "Package path"
 			it "Can be changed."
 				__terminate_container \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 				&> /dev/null
 
 				docker run \
 					--detach \
-					--name apache-php.pool-1.1.1 \
+					--name apache-php.1 \
 					--publish ${DOCKER_PORT_MAP_TCP_80}:80 \
 					--env APACHE_SERVER_NAME="app-1.local" \
 					--env PACKAGE_PATH="/opt/php-hw" \
@@ -1685,11 +1685,11 @@ function test_custom_configuration ()
 
 				# For the server to start, the package directory needs to exist.
 				docker exec \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 					mkdir -p -m 750 /opt/php-hw/{public_html,var/{log,tmp}}
 
 				docker exec -i \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 					tee \
 						/opt/php-hw/public_html/index.php \
 						1> /dev/null \
@@ -1702,27 +1702,27 @@ function test_custom_configuration ()
 				EOT
 
 				docker exec \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 					chown -R app:app-www /opt/php-hw
 
 				docker exec \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 					find /opt/php-hw -type d -exec chmod 750 {} +
 
 				docker exec \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 					find /opt/php-hw/var -type d -exec chmod 770 {} +
 
 				docker exec \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 					find /opt/php-hw -type f -exec chmod 640 {} +
 
 				docker restart \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 				&> /dev/null
 
 				if ! __is_container_ready \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 					${STARTUP_TIME} \
 					"/usr/sbin/httpd(\.worker|\.event)? " \
 					"[[ 000 != \$(curl -sI -o /dev/null -w %{http_code} localhost/) ]]"
@@ -1745,12 +1745,12 @@ function test_custom_configuration ()
 		describe "SSL/TLS (i.e. ssl_module)"
 			it "Can publish ${DOCKER_PORT_MAP_TCP_443}:443."
 				__terminate_container \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 				&> /dev/null
 
 				docker run \
 					--detach \
-					--name apache-php.pool-1.1.1 \
+					--name apache-php.1 \
 					--publish ${DOCKER_PORT_MAP_TCP_443}:443 \
 					--env APACHE_MOD_SSL_ENABLED="true" \
 					--env APACHE_SERVER_NAME="app-1.local" \
@@ -1759,12 +1759,12 @@ function test_custom_configuration ()
 
 				container_port_443="$(
 					__get_container_port \
-						apache-php.pool-1.1.1 \
+						apache-php.1 \
 						443/tcp
 				)"
 
 				if ! __is_container_ready \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 					${STARTUP_TIME} \
 					"/usr/sbin/httpd(\.worker|\.event)? " \
 					"[[ 000 != \$(curl -sI -o /dev/null -w %{http_code} localhost/) ]]"
@@ -1816,12 +1816,12 @@ function test_custom_configuration ()
 
 				it "Sets from base64 encoded value."
 					__terminate_container \
-						apache-php.pool-1.1.1 \
+						apache-php.1 \
 					&> /dev/null
 
 					docker run \
 						--detach \
-						--name apache-php.pool-1.1.1 \
+						--name apache-php.1 \
 						--publish ${DOCKER_PORT_MAP_TCP_443}:443 \
 						--env APACHE_MOD_SSL_ENABLED="true" \
 						--env APACHE_SERVER_NAME="www.app-1.local" \
@@ -1831,12 +1831,12 @@ function test_custom_configuration ()
 
 					container_port_443="$(
 						__get_container_port \
-							apache-php.pool-1.1.1 \
+							apache-php.1 \
 							443/tcp
 					)"
 
 					if ! __is_container_ready \
-						apache-php.pool-1.1.1 \
+						apache-php.1 \
 						${STARTUP_TIME} \
 						"/usr/sbin/httpd(\.worker|\.event)? " \
 						"[[ 000 != \$(curl -sI -o /dev/null -w %{http_code} localhost/) ]]"
@@ -1869,12 +1869,12 @@ function test_custom_configuration ()
 
 				it "Sets from file path value."
 					__terminate_container \
-						apache-php.pool-1.1.1 \
+						apache-php.1 \
 					&> /dev/null
 
 					docker run \
 						--detach \
-						--name apache-php.pool-1.1.1 \
+						--name apache-php.1 \
 						--publish ${DOCKER_PORT_MAP_TCP_443}:443 \
 						--env APACHE_MOD_SSL_ENABLED="true" \
 						--env APACHE_SERVER_NAME="www.app-1.local" \
@@ -1885,12 +1885,12 @@ function test_custom_configuration ()
 
 					container_port_443="$(
 						__get_container_port \
-							apache-php.pool-1.1.1 \
+							apache-php.1 \
 							443/tcp
 					)"
 
 					if ! __is_container_ready \
-						apache-php.pool-1.1.1 \
+						apache-php.1 \
 						${STARTUP_TIME} \
 						"/usr/sbin/httpd(\.worker|\.event)? " \
 						"[[ 000 != \$(curl -sI -o /dev/null -w %{http_code} localhost/) ]]"
@@ -1924,12 +1924,12 @@ function test_custom_configuration ()
 
 			it "Sets cipher suite."
 				__terminate_container \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 				&> /dev/null
 
 				docker run \
 					--detach \
-					--name apache-php.pool-1.1.1 \
+					--name apache-php.1 \
 					--publish ${DOCKER_PORT_MAP_TCP_443}:443 \
 					--env APACHE_MOD_SSL_ENABLED="true" \
 					--env APACHE_SERVER_NAME="www.app-1.local" \
@@ -1940,12 +1940,12 @@ function test_custom_configuration ()
 
 				container_port_443="$(
 					__get_container_port \
-						apache-php.pool-1.1.1 \
+						apache-php.1 \
 						443/tcp
 				)"
 
 				if ! __is_container_ready \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 					${STARTUP_TIME} \
 					"/usr/sbin/httpd(\.worker|\.event)? " \
 					"[[ 000 != \$(curl -sI -o /dev/null -w %{http_code} localhost/) ]]"
@@ -1982,12 +1982,12 @@ function test_custom_configuration ()
 
 			it "Sets protocol (e.g TLSv1.2)."
 				__terminate_container \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 				&> /dev/null
 
 				docker run \
 					--detach \
-					--name apache-php.pool-1.1.1 \
+					--name apache-php.1 \
 					--publish ${DOCKER_PORT_MAP_TCP_443}:443 \
 					--env APACHE_MOD_SSL_ENABLED="true" \
 					--env APACHE_SERVER_NAME="www.app-1.local" \
@@ -1999,12 +1999,12 @@ function test_custom_configuration ()
 
 				container_port_443="$(
 					__get_container_port \
-						apache-php.pool-1.1.1 \
+						apache-php.1 \
 						443/tcp
 				)"
 
 				if ! __is_container_ready \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 					${STARTUP_TIME} \
 					"/usr/sbin/httpd(\.worker|\.event)? " \
 					"[[ 000 != \$(curl -sI -o /dev/null -w %{http_code} localhost/) ]]"
@@ -2013,7 +2013,7 @@ function test_custom_configuration ()
 				fi
 
 				apache_ssl_cipher_suite=""
-				for protocol in ssl3 tls1 tls1_1 tls1_2; do
+				for protocol in tls1 tls1_1 tls1_2; do
 					cipher_match="$(
 						echo -n \
 						| openssl s_client \
@@ -2036,18 +2036,18 @@ function test_custom_configuration ()
 
 				assert equal \
 					"${apache_ssl_cipher_suite}" \
-					"0000:0000:0000:DHE-RSA-AES128-SHA"
+					"0000:0000:DHE-RSA-AES128-SHA"
 			end
 		end
 
 		describe "Configure autostart"
 			__terminate_container \
-				apache-php.pool-1.1.1 \
+				apache-php.1 \
 			&> /dev/null
 
 			docker run \
 				--detach \
-				--name apache-php.pool-1.1.1 \
+				--name apache-php.1 \
 				--env APACHE_AUTOSTART_HTTPD_BOOTSTRAP=false \
 				jdeathe/centos-ssh-apache-php:latest \
 			&> /dev/null
@@ -2060,13 +2060,13 @@ function test_custom_configuration ()
 
 				docker ps \
 					--quiet \
-					--filter "name=apache-php.pool-1.1.1" \
+					--filter "name=apache-php.1" \
 					--filter "health=unhealthy" \
 				&> /dev/null
 				is_up="${?}"
 
 				docker top \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 				&> /dev/null \
 				| grep -qE '/usr/sbin/httpd(\.worker|\.event)? '
 
@@ -2076,12 +2076,12 @@ function test_custom_configuration ()
 			end
 
 			__terminate_container \
-				apache-php.pool-1.1.1 \
+				apache-php.1 \
 			&> /dev/null
 
 			docker run \
 				--detach \
-				--name apache-php.pool-1.1.1 \
+				--name apache-php.1 \
 				--env APACHE_AUTOSTART_HTTPD_WRAPPER=false \
 				jdeathe/centos-ssh-apache-php:latest \
 			&> /dev/null
@@ -2092,13 +2092,13 @@ function test_custom_configuration ()
 				is_up="1"
 
 				docker ps \
-					--filter "name=apache-php.pool-1.1.1" \
+					--filter "name=apache-php.1" \
 					--filter "health=healthy" \
 				&> /dev/null
 				is_up="${?}"
 
 				docker top \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 				&> /dev/null \
 				| grep -qE '/usr/sbin/httpd(\.worker|\.event)? '
 
@@ -2108,12 +2108,12 @@ function test_custom_configuration ()
 			end
 
 			__terminate_container \
-				apache-php.pool-1.1.1 \
+				apache-php.1 \
 			&> /dev/null
 
 			docker run \
 				--detach \
-				--name apache-php.pool-1.1.1 \
+				--name apache-php.1 \
 				--env APACHE_AUTOSTART_PHP_FPM_WRAPPER=false \
 				jdeathe/centos-ssh-apache-php:latest \
 			&> /dev/null
@@ -2125,13 +2125,13 @@ function test_custom_configuration ()
 				is_up="1"
 
 				docker ps \
-					--filter "name=apache-php.pool-1.1.1" \
+					--filter "name=apache-php.1" \
 					--filter "health=unhealthy" \
 				&> /dev/null
 				is_up="${?}"
 
 				docker top \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 				&> /dev/null \
 				| grep -qE 'php-fpm: pool app-www[ ]*$'
 
@@ -2141,26 +2141,26 @@ function test_custom_configuration ()
 			end
 
 			__terminate_container \
-				apache-php.pool-1.1.1 \
+				apache-php.1 \
 			&> /dev/null
 		end
 
 		describe "PHP date.timezone"
 			it "Sets to 'Europe/London'."
 				__terminate_container \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 				&> /dev/null
 
 				docker run \
 					--detach \
-					--name apache-php.pool-1.1.1 \
+					--name apache-php.1 \
 					--publish ${DOCKER_PORT_MAP_TCP_80}:80 \
 					--env PHP_OPTIONS_DATE_TIMEZONE="Europe/London" \
 					jdeathe/centos-ssh-apache-php:latest \
 				&> /dev/null
 
 				if ! __is_container_ready \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 					${STARTUP_TIME} \
 					"/usr/sbin/httpd(\.worker|\.event)? " \
 					"[[ 000 != \$(curl -sI -o /dev/null -w %{http_code} localhost/) ]]"
@@ -2170,7 +2170,7 @@ function test_custom_configuration ()
 
 				php_date_timezone="$(
 					docker exec \
-						apache-php.pool-1.1.1 \
+						apache-php.1 \
 						php \
 							-r \
 							"printf('%s', ini_get('date.timezone'));"
@@ -2184,19 +2184,19 @@ function test_custom_configuration ()
 
 		describe "PHP session.name"
 			__terminate_container \
-				apache-php.pool-1.1.1 \
+				apache-php.1 \
 			&> /dev/null
 
 			docker run \
 				--detach \
-				--name apache-php.pool-1.1.1 \
+				--name apache-php.1 \
 				--publish ${DOCKER_PORT_MAP_TCP_80}:80 \
 				--env PHP_OPTIONS_SESSION_NAME="app-session" \
 				jdeathe/centos-ssh-apache-php:latest \
 			&> /dev/null
 
 			if ! __is_container_ready \
-				apache-php.pool-1.1.1 \
+				apache-php.1 \
 				${STARTUP_TIME} \
 				"/usr/sbin/httpd(\.worker|\.event)? " \
 				"[[ 000 != \$(curl -sI -o /dev/null -w %{http_code} localhost/) ]]"
@@ -2206,7 +2206,7 @@ function test_custom_configuration ()
 
 			container_port_80="$(
 				__get_container_port \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 					80/tcp
 			)"
 
@@ -2228,18 +2228,18 @@ function test_custom_configuration ()
 			end
 
 			__terminate_container \
-				apache-php.pool-1.1.1 \
+				apache-php.1 \
 			&> /dev/null
 		end
 
 		describe "PHP memcached session store"
 			__terminate_container \
-				apache-php.pool-1.1.1 \
+				apache-php.1 \
 			&> /dev/null
 
 			docker run \
 				--detach \
-				--name apache-php.pool-1.1.1 \
+				--name apache-php.1 \
 				--publish ${DOCKER_PORT_MAP_TCP_80}:80 \
 				--env PHP_OPTIONS_SESSION_SAVE_HANDLER="memcached" \
 				--env PHP_OPTIONS_SESSION_SAVE_PATH="${session_store_alias}:11211" \
@@ -2248,10 +2248,10 @@ function test_custom_configuration ()
 
 			docker network connect \
 				${session_store_network} \
-				apache-php.pool-1.1.1
+				apache-php.1
 
 			if ! __is_container_ready \
-				apache-php.pool-1.1.1 \
+				apache-php.1 \
 				${STARTUP_TIME} \
 				"/usr/sbin/httpd(\.worker|\.event)? " \
 				"[[ 000 != \$(curl -sI -o /dev/null -w %{http_code} localhost/) ]]"
@@ -2261,11 +2261,11 @@ function test_custom_configuration ()
 
 			# Create scripts that write / read session data.
 			docker exec \
-				apache-php.pool-1.1.1 \
+				apache-php.1 \
 				mkdir -p -m 750 /opt/app/public_html/session
 
 			docker exec -i \
-				apache-php.pool-1.1.1 \
+				apache-php.1 \
 				tee \
 					/opt/app/public_html/session/write.php \
 					1> /dev/null \
@@ -2280,7 +2280,7 @@ function test_custom_configuration ()
 			EOT
 
 			docker exec -i \
-				apache-php.pool-1.1.1 \
+				apache-php.1 \
 				tee \
 					/opt/app/public_html/session/read.php \
 					1> /dev/null \
@@ -2291,23 +2291,23 @@ function test_custom_configuration ()
 			EOT
 
 			docker exec \
-				apache-php.pool-1.1.1 \
+				apache-php.1 \
 				chown -R app:app-www /opt/app/public_html/session
 
 			docker exec \
-				apache-php.pool-1.1.1 \
+				apache-php.1 \
 				find /opt/app/public_html/session -type d -exec chmod 750 {} +
 
 			docker exec \
-				apache-php.pool-1.1.1 \
+				apache-php.1 \
 				find /opt/app/public_html/session -type f -exec chmod 640 {} +
 
 			docker restart \
-				apache-php.pool-1.1.1 \
+				apache-php.1 \
 			&> /dev/null
 
 			if ! __is_container_ready \
-				apache-php.pool-1.1.1 \
+				apache-php.1 \
 				${STARTUP_TIME} \
 				"/usr/sbin/httpd(\.worker|\.event)? " \
 				"[[ 000 != \$(curl -sI -o /dev/null -w %{http_code} localhost/) ]]"
@@ -2317,7 +2317,7 @@ function test_custom_configuration ()
 
 			container_port_80="$(
 				__get_container_port \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 					80/tcp
 			)"
 
@@ -2380,7 +2380,7 @@ function test_custom_configuration ()
 			end
 
 			__terminate_container \
-				apache-php.pool-1.1.1 \
+				apache-php.1 \
 			&> /dev/null
 		end
 
@@ -2391,32 +2391,45 @@ function test_custom_configuration ()
 
 function test_healthcheck ()
 {
+	local -r event_lag_seconds=2
 	local -r interval_seconds=1
 	local -r retries=10
-	local health_status=""
+	local container_id
+	local events_since_timestamp
+	local health_status
 
 	describe "Healthcheck"
-		trap "__terminate_container apache-php.pool-1.1.1 &> /dev/null; \
+		trap "__terminate_container apache-php.1 &> /dev/null; \
 			__destroy; \
 			exit 1" \
 			INT TERM EXIT
 
 		describe "Default configuration"
 			__terminate_container \
-				apache-php.pool-1.1.1 \
+				apache-php.1 \
 			&> /dev/null
 
 			docker run \
 				--detach \
-				--name apache-php.pool-1.1.1 \
+				--name apache-php.1 \
 				jdeathe/centos-ssh-apache-php:latest \
 			&> /dev/null
+
+			events_since_timestamp="$(
+				date +%s
+			)"
+
+			container_id="$(
+				docker ps \
+					--quiet \
+					--filter "name=apache-php.1"
+			)"
 
 			it "Returns a valid status on starting."
 				health_status="$(
 					docker inspect \
 						--format='{{json .State.Health.Status}}' \
-						apache-php.pool-1.1.1
+						apache-php.1
 				)"
 
 				assert __shpec_matcher_egrep \
@@ -2424,59 +2437,68 @@ function test_healthcheck ()
 					"\"(starting|healthy|unhealthy)\""
 			end
 
-			sleep $(
-				awk \
-					-v interval_seconds="${interval_seconds}" \
-					-v startup_time="${STARTUP_TIME}" \
-					'BEGIN { print 1 + interval_seconds + startup_time; }'
-			)
-
 			it "Returns healthy after startup."
+				events_timeout="$(
+					awk \
+						-v event_lag="${event_lag_seconds}" \
+						-v interval="${interval_seconds}" \
+						-v startup_time="${STARTUP_TIME}" \
+						'BEGIN { print event_lag + startup_time + interval; }'
+				)"
+
 				health_status="$(
-					docker inspect \
-						--format='{{json .State.Health.Status}}' \
-						apache-php.pool-1.1.1
+					test/health_status \
+						--container="${container_id}" \
+						--since="${events_since_timestamp}" \
+						--timeout="${events_timeout}" \
+						--monochrome \
+					2>&1
 				)"
 
 				assert equal \
 					"${health_status}" \
-					"\"healthy\""
+					"✓ healthy"
 			end
 
 			it "Returns unhealthy on failure."
-				# sshd-wrapper failure
 				docker exec -t \
-					apache-php.pool-1.1.1 \
+					apache-php.1 \
 					bash -c "mv \
 						/usr/sbin/httpd \
 						/usr/sbin/httpd2" \
 				&& docker exec -t \
-					apache-php.pool-1.1.1 \
-					bash -c "if [[ -n \$(pgrep -f '^/usr/sbin/httpd ') ]]; then \
-						kill -9 \$(pgrep -f '^/usr/sbin/httpd '); \
-					fi"
+					apache-php.1 \
+					bash -c '/usr/sbin/httpd2 -k stop'
 
-				sleep $(
+				events_since_timestamp="$(
+					date +%s
+				)"
+
+				events_timeout="$(
 					awk \
-						-v interval_seconds="${interval_seconds}" \
+						-v event_lag="${event_lag_seconds}" \
+						-v interval="${interval_seconds}" \
 						-v retries="${retries}" \
-						'BEGIN { print 1 + interval_seconds * retries; }'
-				)
+						'BEGIN { print (2 * event_lag) + (interval * retries); }'
+				)"
 
 				health_status="$(
-					docker inspect \
-						--format='{{json .State.Health.Status}}' \
-						apache-php.pool-1.1.1
+					test/health_status \
+						--container="${container_id}" \
+						--since="$(( ${event_lag_seconds} + ${events_since_timestamp} ))" \
+						--timeout="${events_timeout}" \
+						--monochrome \
+					2>&1
 				)"
 
 				assert equal \
 					"${health_status}" \
-					"\"unhealthy\""
+					"✗ unhealthy"
 			end
 		end
 
 		__terminate_container \
-			apache-php.pool-1.1.1 \
+			apache-php.1 \
 		&> /dev/null
 
 		trap - \

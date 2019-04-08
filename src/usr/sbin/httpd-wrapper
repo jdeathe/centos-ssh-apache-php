@@ -1,39 +1,112 @@
 #!/usr/bin/env bash
 
-source /etc/httpd-bootstrap.conf
+set -e
 
-function get_httpd_bin ()
+function __get_apache_autostart_httpd_bootstrap ()
 {
-	local -r HTTPD=/usr/sbin/httpd
+	local -r default_value="${1:-true}"
 
-	if [[ -n ${APACHE_MPM} ]] \
-		&& [[ -f ${HTTPD}.${APACHE_MPM,,} ]]
+	local value="${APACHE_AUTOSTART_HTTPD_BOOTSTRAP}"
+
+	if ! __is_valid_apache_autostart_httpd_bootstrap "${value}"
+	then
+		value="${default_value}"
+	fi
+
+	printf -- '%s' "${value}"
+}
+
+function __get_apache_operating_mode ()
+{
+	local -r default_value="${1:-production}"
+
+	local value="${APACHE_OPERATING_MODE}"
+
+	if ! __is_valid_apache_operating_mode "${value}"
+	then
+		value="${default_value}"
+	fi
+
+	printf -- '%s' "${value}"
+}
+
+function __get_httpd_bin ()
+{
+	local -r bin="/usr/sbin/httpd"
+	local mpm="${APACHE_MPM:-prefork}"
+
+	if [[ -f ${bin}.${mpm,,} ]]
 	then
 		printf -- \
 			'%s.%s' \
-			"${HTTPD}" \
-			"${APACHE_MPM,,}"
+			"${bin}" \
+			"${mpm,,}"
 	else
 		printf -- \
 			'%s' \
-			"${HTTPD}"
+			"${bin}"
 	fi
 }
 
-readonly HTTPD="$(
-	get_httpd_bin
-)"
-readonly NICE=/bin/nice
-readonly NICENESS="${APACHE_NICENESS:-10}"
+function __is_valid_apache_autostart_httpd_bootstrap ()
+{
+	local -r boolean_value='^(true|false)$'
+	local -r value="${1}"
 
-while true; do
-	sleep 0.1
-	[[ -e /var/lock/subsys/httpd-bootstrap ]] || break
-done
+	if [[ ${value} =~ ${boolean_value} ]]
+	then
+		return 0
+	fi
 
-exec ${NICE} \
-	-n ${NICENESS} \
-	${HTTPD} \
-	-c "ErrorLog /dev/stdout" \
-	-DFOREGROUND \
-	-D ${APACHE_OPERATING_MODE:-production}
+	return 1
+}
+
+function __is_valid_apache_operating_mode ()
+{
+	local -r valid_pattern='^(production|development|debug)$'
+	local -r value="${1}"
+
+	if [[ ${value} =~ ${valid_pattern} ]]
+	then
+		return 0
+	fi
+
+	return 1
+}
+
+function main ()
+{
+	local -r autostart_bootstrap="$(
+		__get_apache_autostart_httpd_bootstrap
+	)"
+	local -r bin="$(
+		__get_httpd_bin
+	)"
+	local -r bootstrap_state_file="/var/lib/misc/httpd-bootstrap"
+	local -r nice="/bin/nice"
+	local -r niceness="10"
+	local -r mode="$(
+		__get_apache_operating_mode
+	)"
+
+	local options="-c \"ErrorLog /dev/stdout\" -D FOREGROUND -D ${mode}"
+
+	if [[ ${autostart_bootstrap} == false ]]
+	then
+		# block.
+		sleep infinity
+	fi
+
+	until [[ -e ${bootstrap_state_file} ]]
+	do
+		sleep 0.1
+	done
+
+	# Process via eval to allow for quoted option values.
+	eval "exec ${nice} \
+		-n ${niceness} \
+		${bin} \
+		${options}"
+}
+
+main "${@}"
