@@ -1027,12 +1027,8 @@ function __is_valid_apache_public_directory ()
 	local -r valid_directory='^\/(?!\/|bin|dev|etc|lib|lib64|lost+found|media|proc|root|sbin|sys|tmp|usr).+$'
 	local -r valid_subdirectory='^[^\/\\].+$'
 
-	if grep -qoP "${valid_directory}" <<< "${directory_absolute}"
-	then
-		return 0
-	fi
-
-	if grep -qoP "${valid_subdirectory}" <<< "${directory}"
+	if grep -qoP "${valid_directory}" <<< "${directory_absolute}" \
+		&& grep -qoP "${valid_subdirectory}" <<< "${directory}"
 	then
 		return 0
 	fi
