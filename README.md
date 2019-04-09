@@ -47,11 +47,11 @@ For cases where access to docker exec is not possible the preferred method is to
 
 ## Quick Example
 
-Run up a container named `apache-php.pool-1.1.1` from the docker image `jdeathe/centos-ssh-apache-php` on port 8080 of your docker host.
+Run up a container named `apache-php.1` from the docker image `jdeathe/centos-ssh-apache-php` on port 8080 of your docker host.
 
 ```
 $ docker run -d \
-  --name apache-php.pool-1.1.1 \
+  --name apache-php.1 \
   -p 8080:80 \
   -e "APACHE_SERVER_NAME=app-1.local" \
   jdeathe/centos-ssh-apache-php:1.11.1
@@ -64,7 +64,7 @@ Now point your browser to `http://{docker-host}:8080` where `{docker-host}` is t
 To be able to access the server using the "app-1.local" domain name you need to add a hosts file entry locally; such that the IP address of the Docker host resolves to the name "app-1.local". Alternatively, you can use the elinks browser installed in the container. Note that because you are using the browser from the container you access the site over port 80.
 
 ```
-$ docker exec -it apache-php.pool-1.1.1 \
+$ docker exec -it apache-php.1 \
   elinks http://app-1.local
 ```
 
@@ -73,7 +73,7 @@ $ docker exec -it apache-php.pool-1.1.1 \
 To verify the container is initialised and running successfully by inspecting the container's logs.
 
 ```
-$ docker logs apache-php.pool-1.1.1
+$ docker logs apache-php.1
 ```
 
 On first run, the bootstrap script, ([/usr/sbin/httpd-bootstrap](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6/src/usr/sbin/httpd-bootstrap)), will check if the DocumentRoot directory is empty and, if so, will populate it with the example app scripts and app specific configuration files.
@@ -81,7 +81,7 @@ On first run, the bootstrap script, ([/usr/sbin/httpd-bootstrap](https://github.
 The `apachectl` command can be accessed as follows.
 
 ```
-$ docker exec -it apache-php.pool-1.1.1 \
+$ docker exec -it apache-php.1 \
 	bash -c "apachectl -h"
 ```
 
@@ -93,7 +93,7 @@ To run the a docker container from this image you can use the standard docker co
 
 #### SCMI Installation Examples
 
-The following example uses docker to run the SCMI install command to create and start a container named `apache-php.pool-1.1.1`. To use SCMI it requires the use of the `--privileged` docker run parameter and the docker host's root directory mounted as a volume with the container's mount directory also being set in the `scmi` `--chroot` option. The `--setopt` option is used to add extra parameters to the default docker run command template; in the following example a named configuration volume is added which allows the SSH host keys to persist after the first container initialisation. Not that the placeholder `{{NAME}}` can be used in this option and is replaced with the container's name.
+The following example uses docker to run the SCMI install command to create and start a container named `apache-php.1`. To use SCMI it requires the use of the `--privileged` docker run parameter and the docker host's root directory mounted as a volume with the container's mount directory also being set in the `scmi` `--chroot` option. The `--setopt` option is used to add extra parameters to the default docker run command template; in the following example a named configuration volume is added which allows the SSH host keys to persist after the first container initialisation. Not that the placeholder `{{NAME}}` can be used in this option and is replaced with the container's name.
 
 ##### SCMI Install
 
@@ -108,7 +108,7 @@ $ docker run \
   /usr/sbin/scmi install \
     --chroot=/media/root \
     --tag=1.11.1 \
-    --name=apache-php.pool-1.1.1
+    --name=apache-php.1
 ```
 
 ##### SCMI Uninstall
@@ -126,7 +126,7 @@ $ docker run \
   /usr/sbin/scmi uninstall \
     --chroot=/media/root \
     --tag=1.11.1 \
-    --name=apache-php.pool-1.1.1
+    --name=apache-php.1
 ```
 
 ##### SCMI Systemd Support
@@ -144,7 +144,7 @@ $ docker run \
   /usr/sbin/scmi install \
     --chroot=/media/root \
     --tag=1.11.1 \
-    --name=apache-php.pool-1.1.1 \
+    --name=apache-php.1 \
     --manager=systemd \
     --register \
     --env='APACHE_MOD_SSL_ENABLED=true' \
@@ -177,14 +177,14 @@ $ eval "sudo -E $(
   ) --info"
 ```
 
-To perform an installation using the docker name `apache-php.pool-1.2.1` simply use the `--name` or `-n` option.
+To perform an installation using the docker name `apache-php.2` simply use the `--name` or `-n` option.
 
 ```
 $ eval "sudo -E $(
     docker inspect \
     -f "{{.ContainerConfig.Labels.install}}" \
     jdeathe/centos-ssh-apache-php:1.11.1
-  ) --name=apache-php.pool-1.2.1"
+  ) --name=apache-php.2"
 ```
 
 To uninstall use the *same command* that was used to install but with the `uninstall` Label.
@@ -194,7 +194,7 @@ $ eval "sudo -E $(
     docker inspect \
     -f "{{.ContainerConfig.Labels.uninstall}}" \
     jdeathe/centos-ssh-apache-php:1.11.1
-  ) --name=apache-php.pool-1.2.1"
+  ) --name=apache-php.2"
 ```
 
 ##### SCMI on Atomic Host
@@ -205,16 +205,16 @@ To see detailed information about the image run `scmi` with the `--info` option.
 
 ```
 $ sudo -E atomic install \
-  -n apache-php.pool-1.3.1 \
+  -n apache-php.3 \
   jdeathe/centos-ssh-apache-php:1.11.1 \
   --info
 ```
 
-To perform an installation using the docker name `apache-php.pool-1.3.1` simply use the `-n` option of the `atomic install` command.
+To perform an installation using the docker name `apache-php.3` simply use the `-n` option of the `atomic install` command.
 
 ```
 $ sudo -E atomic install \
-  -n apache-php.pool-1.3.1 \
+  -n apache-php.3 \
   jdeathe/centos-ssh-apache-php:1.11.1
 ```
 
@@ -223,14 +223,14 @@ Alternatively, you could use the `scmi` options `--name` or `-n` for naming the 
 ```
 $ sudo -E atomic install \
   jdeathe/centos-ssh-apache-php:1.11.1 \
-  --name apache-php.pool-1.3.1
+  --name apache-php.3
 ```
 
 To uninstall use the *same command* that was used to install but with the `uninstall` Label.
 
 ```
 $ sudo -E atomic uninstall \
-  -n apache-php.pool-1.3.1 \
+  -n apache-php.3 \
   jdeathe/centos-ssh-apache-php:1.11.1
 ```
 
@@ -318,7 +318,7 @@ The variable `APACHE_EXTENDED_STATUS_ENABLED` allows you to turn ExtendedStatus 
 You can view the output from Apache server-status either using the elinks browser from onboard the container or by using `watch` and `curl` to monitor status over time. The following command shows the server-status updated at a 1 second interval given an `APACHE_SERVER_NAME` or `APACHE_SERVER_ALIAS` of "app-1.local".
 
 ```
-$ docker exec -it apache-php.pool-1.1.1 \
+$ docker exec -it apache-php.1 \
   env TERM=xterm \
   watch -n 1 \
   -d "curl -sH 'Host: app-1.local' http://127.0.0.1/server-status?auto"
@@ -349,16 +349,16 @@ By default, the image loads a minimal set of required Apache modules. To load ad
 By default SSL support is disabled but a second port, (mapped to 8443), is available for traffic that has been been through upstream SSL termination (SSL Offloading). If you want the container to support SSL directly then set `APACHE_MOD_SSL_ENABLED=true` this will then generate a self signed certificate and will update Apache to accept traffic on port 443.
 
 ```
-$ docker stop apache-php.pool-1.1.1 && \
-  docker rm apache-php.pool-1.1.1
+$ docker stop apache-php.1 && \
+  docker rm apache-php.1
 $ docker run -d \
-  --name apache-php.pool-1.1.1 \
+  --name apache-php.1 \
   --publish 8080:80 \
   --publish 9443:443 \
   --env "APACHE_SERVER_ALIAS=app-1" \
   --env "APACHE_SERVER_NAME=app-1.local" \
   --env "APACHE_MOD_SSL_ENABLED=true" \
-  --volume apache-php.pool-1.1.1.data-ssl:/etc/services-config/ssl \
+  --volume apache-php.1.data-ssl:/etc/services-config/ssl \
   jdeathe/centos-ssh-apache-php:1.11.1
 ```
 
@@ -429,7 +429,7 @@ If set to a valid container file path the value will be read from the file - thi
 Use the `APACHE_SSL_CIPHER_SUITE` environment variable to define an appropriate Cipher Suite. The default "intermediate" selection should be suitable for most use-cases where support for a wide range browsers is necessary. 
 
 References:
-- [OpenSSL ciphers documentation](https://www.openssl.org/docs/manmaster/apps/ciphers.html).
+- [OpenSSL ciphers documentation](https://www.openssl.org/docs/manmaster/man1/ciphers.html).
 - [Mozilla Security/Server Side TLS guidance](https://wiki.mozilla.org/Security/Server_Side_TLS).
 
 *Note:* The value show is using space separated values to allow for readablity in the documentation; this is valid syntax however using the colon separator is the recommended form.
