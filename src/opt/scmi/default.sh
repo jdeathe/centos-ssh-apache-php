@@ -1,15 +1,39 @@
 
 # Handle incrementing the docker host port for instances unless a port range is defined.
 DOCKER_PUBLISH=
-if [[ ${DOCKER_PORT_MAP_TCP_80} != NULL ]]; then
-	if grep -qE '^([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}:)?[0-9]*$' <<< "${DOCKER_PORT_MAP_TCP_80}" \
-		&& grep -qE '^.+\.([0-9]+)\.([0-9]+)$' <<< "${DOCKER_NAME}"; then
+if [[ ${DOCKER_PORT_MAP_TCP_80} != NULL ]]
+then
+	if grep -qE \
+			'^([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}:)?[1-9][0-9]*$' \
+			<<< "${DOCKER_PORT_MAP_TCP_80}" \
+		&& grep -qE \
+			'^.+\.[0-9]+(\.[0-9]+)?$' \
+			<<< "${DOCKER_NAME}"
+	then
 		printf -v \
 			DOCKER_PUBLISH \
 			-- '%s --publish %s%s:80' \
 			"${DOCKER_PUBLISH}" \
-			"$(grep -o '^[0-9\.]*:' <<< "${DOCKER_PORT_MAP_TCP_80}")" \
-			"$(( $(grep -o '[0-9]*$' <<< "${DOCKER_PORT_MAP_TCP_80}") + $(sed 's~\.[0-9]*$~~' <<< "${DOCKER_NAME}" | awk -F. '{ print $NF; }') - 1 ))"
+			"$(
+				grep -o \
+					'^[0-9\.]*:' \
+					<<< "${DOCKER_PORT_MAP_TCP_80}"
+			)" \
+			"$(( 
+				$(
+					grep -oE \
+						'[0-9]+$' \
+						<<< "${DOCKER_PORT_MAP_TCP_80}"
+				) \
+				+ $(
+					grep -oE \
+						'([0-9]+)(\.[0-9]+)?$' \
+						<<< "${DOCKER_NAME}" \
+					| awk -F. \
+						'{ print $1; }'
+				) \
+				- 1
+			))"
 	else
 		printf -v \
 			DOCKER_PUBLISH \
@@ -19,16 +43,40 @@ if [[ ${DOCKER_PORT_MAP_TCP_80} != NULL ]]; then
 	fi
 fi
 
-if [[ ${DOCKER_PORT_MAP_TCP_443} != NULL ]] \
-	&& [[ ${APACHE_MOD_SSL_ENABLED} == true ]]; then
-	if grep -qE '^([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}:)?[0-9]*$' <<< "${DOCKER_PORT_MAP_TCP_443}" \
-		&& grep -qE '^.+\.([0-9]+)\.([0-9]+)$' <<< "${DOCKER_NAME}"; then
+if [[ ${APACHE_MOD_SSL_ENABLED} == true ]] \
+	&& [[ ${DOCKER_PORT_MAP_TCP_443} != NULL ]]
+then
+	if grep -qE \
+			'^([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}:)?[1-9][0-9]*$' \
+			<<< "${DOCKER_PORT_MAP_TCP_443}" \
+		&& grep -qE \
+			'^.+\.[0-9]+(\.[0-9]+)?$' \
+			<<< "${DOCKER_NAME}"
+	then
 		printf -v \
 			DOCKER_PUBLISH \
 			-- '%s --publish %s%s:443' \
 			"${DOCKER_PUBLISH}" \
-			"$(grep -o '^[0-9\.]*:' <<< "${DOCKER_PORT_MAP_TCP_443}")" \
-			"$(( $(grep -o '[0-9]*$' <<< "${DOCKER_PORT_MAP_TCP_443}") + $(sed 's~\.[0-9]*$~~' <<< "${DOCKER_NAME}" | awk -F. '{ print $NF; }') - 1 ))"
+			"$(
+				grep -o \
+					'^[0-9\.]*:' \
+					<<< "${DOCKER_PORT_MAP_TCP_443}"
+			)" \
+			"$(( 
+				$(
+					grep -oE \
+						'[0-9]+$' \
+						<<< "${DOCKER_PORT_MAP_TCP_443}"
+				) \
+				+ $(
+					grep -oE \
+						'([0-9]+)(\.[0-9]+)?$' \
+						<<< "${DOCKER_NAME}" \
+					| awk -F. \
+						'{ print $1; }'
+				) \
+				- 1
+			))"
 	else
 		printf -v \
 			DOCKER_PUBLISH \
@@ -38,15 +86,39 @@ if [[ ${DOCKER_PORT_MAP_TCP_443} != NULL ]] \
 	fi
 fi
 
-if [[ ${DOCKER_PORT_MAP_TCP_8443} != NULL ]]; then
-	if grep -qE '^([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}:)?[0-9]*$' <<< "${DOCKER_PORT_MAP_TCP_8443}" \
-		&& grep -qE '^.+\.([0-9]+)\.([0-9]+)$' <<< "${DOCKER_NAME}"; then
+if [[ ${DOCKER_PORT_MAP_TCP_8443} != NULL ]]
+then
+	if grep -qE \
+			'^([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}:)?[1-9][0-9]*$' \
+			<<< "${DOCKER_PORT_MAP_TCP_8443}" \
+		&& grep -qE \
+			'^.+\.[0-9]+(\.[0-9]+)?$' \
+			<<< "${DOCKER_NAME}"
+	then
 		printf -v \
 			DOCKER_PUBLISH \
 			-- '%s --publish %s%s:8443' \
 			"${DOCKER_PUBLISH}" \
-			"$(grep -o '^[0-9\.]*:' <<< "${DOCKER_PORT_MAP_TCP_8443}")" \
-			"$(( $(grep -o '[0-9]*$' <<< "${DOCKER_PORT_MAP_TCP_8443}") + $(sed 's~\.[0-9]*$~~' <<< "${DOCKER_NAME}" | awk -F. '{ print $NF; }') - 1 ))"
+			"$(
+				grep -o \
+					'^[0-9\.]*:' \
+					<<< "${DOCKER_PORT_MAP_TCP_8443}"
+			)" \
+			"$(( 
+				$(
+					grep -oE \
+						'[0-9]+$' \
+						<<< "${DOCKER_PORT_MAP_TCP_8443}"
+				) \
+				+ $(
+					grep -oE \
+						'([0-9]+)(\.[0-9]+)?$' \
+						<<< "${DOCKER_NAME}" \
+					| awk -F. \
+						'{ print $1; }'
+				) \
+				- 1
+			))"
 	else
 		printf -v \
 			DOCKER_PUBLISH \
