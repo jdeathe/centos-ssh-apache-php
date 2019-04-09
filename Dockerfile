@@ -151,7 +151,7 @@ RUN useradd -r -M -d /var/www/app -s /sbin/nologin app \
 		> /etc/httpd/conf.d/ssl.conf.off \
 	&& truncate -s 0 \
 		/etc/httpd/conf.d/ssl.conf \
-	&& chmod 444 \
+	&& chmod 644 \
 		/etc/httpd/conf.d/ssl.conf \
 	&& cp -pf \
 		/etc/php-fpm.conf \
