@@ -1,7 +1,11 @@
+.env
+.env.example
 .git
 .gitignore
 dist
+images
 test
+docker-compose.yml
 LICENSE
 README-short.txt
 *.md
