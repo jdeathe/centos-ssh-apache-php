@@ -1392,7 +1392,7 @@ function __set_apache_mod_ssl_enabled ()
 	then
 		cat \
 			/etc/httpd/conf.d/ssl.conf.off \
-			> /etc/httpd/conf.d/ssl.conf
+			> /etc/httpd/conf.d/00-ssl.conf
 
 		if [[ -f /etc/httpd/conf.d/10-ssl-vhost.conf.off ]]
 		then
@@ -1410,6 +1410,12 @@ function __set_apache_mod_ssl_enabled ()
 	else
 		truncate -s 0 \
 			/etc/httpd/conf.d/ssl.conf
+
+		if [[ -f /etc/httpd/conf.d/10-ssl.conf ]]
+		then
+			truncate -s 0 \
+				/etc/httpd/conf.d/10-ssl.conf
+		fi
 
 		if [[ -f /etc/httpd/conf.d/10-ssl-vhost.conf ]]
 		then

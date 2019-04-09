@@ -6,9 +6,9 @@ ARG PACKAGE_PATH="/opt/${PACKAGE_NAME}"
 ARG PACKAGE_RELEASE_VERSION="0.11.0"
 ARG RELEASE_VERSION="2.3.1"
 
-# -----------------------------------------------------------------------------
-# IUS Apache 2.4, PHP-FPM 5.6
-# -----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+# - Base install of required packages
+# ------------------------------------------------------------------------------
 RUN rpm --rebuilddb \
 	&& yum -y install \
 		--setopt=tsflags=nodocs \
@@ -144,9 +144,9 @@ RUN useradd -r -M -d /var/www/app -s /sbin/nologin app \
 	&& cat \
 		/etc/httpd/conf.d/ssl.conf \
 		> /etc/httpd/conf.d/ssl.conf.off \
-	&& > \
+	&& truncate -s 0 \
 		/etc/httpd/conf.d/ssl.conf \
-	&& chmod 444 \
+	&& chmod 644 \
 		/etc/httpd/conf.d/ssl.conf \
 	&& cp -pf \
 		/etc/php-fpm.conf \
