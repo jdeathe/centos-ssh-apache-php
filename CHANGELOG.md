@@ -27,6 +27,7 @@ CentOS-6 6.10 x86_64, Apache 2.4, PHP-FPM 5.6, PHP memcached 2.2, Zend Opcache 7
 - Adds images directory `.dockerignore` to reduce size of build context.
 - Adds docker-compose configuration example.
 - Adds improved lock/state file implementation between bootstrap and wrapper scripts.
+- Adds graceful stop signals the supervisord configuration for `httpd-wrapper` and `php-fpm-wrapper`.
 - Removes use of `/etc/services-config` paths.
 - Removes the unused group element from the default container name.
 - Removes the node element from the default container name.
