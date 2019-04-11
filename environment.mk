@@ -16,7 +16,7 @@ DOCKER_IMAGE_RELEASE_TAG_PATTERN := ^(1|2|3|centos-(6-1|6-httpd24u-php56u-2|7-ht
 # Docker image/container settings
 DOCKER_CONTAINER_OPTS ?=
 DOCKER_IMAGE_TAG ?= latest
-DOCKER_NAME ?= apache-php.pool-1.1.1
+DOCKER_NAME ?= apache-php.1
 DOCKER_PORT_MAP_TCP_22 ?= NULL
 DOCKER_PORT_MAP_TCP_80 ?= 8080
 DOCKER_PORT_MAP_TCP_443 ?= 9443
@@ -34,20 +34,6 @@ STARTUP_TIME ?= 2
 
 # ------------------------------------------------------------------------------
 # Application container configuration
-# ------------------------------------------------------------------------------
-SSH_AUTHORIZED_KEYS ?=
-SSH_AUTOSTART_SSHD ?= false
-SSH_AUTOSTART_SSHD_BOOTSTRAP ?= false
-SSH_CHROOT_DIRECTORY ?= %h
-SSH_INHERIT_ENVIRONMENT ?= false
-SSH_SUDO ?= ALL=(ALL) ALL
-SSH_USER ?= app-admin
-SSH_USER_FORCE_SFTP ?= false
-SSH_USER_HOME ?= /home/%u
-SSH_USER_PASSWORD ?=
-SSH_USER_PASSWORD_HASHED ?= false
-SSH_USER_SHELL ?= /bin/bash
-SSH_USER_ID ?= 500:500
 # ------------------------------------------------------------------------------
 APACHE_AUTOSTART_HTTPD_BOOTSTRAP ?= true
 APACHE_AUTOSTART_HTTPD_WRAPPER ?= true

@@ -1,0 +1,59 @@
+# ------------------------------------------------------------------------------
+# Ref: https://docs.docker.com/compose/compose-file/
+#
+# Setup:
+# Copy .env.example to .env and modify values as required.
+# docker-compose build
+# docker-compose down
+#
+# Run Default example:
+# docker-compose up -d
+#
+# Check service logs:
+# docker-compose logs apache-php
+#
+# Usage:
+# docker-compose exec apache-php bash -c "apachectl -V"
+# docker-compose exec apache-php bash -c "apachectl -M"
+# docker-compose exec apache-php bash -c "apachectl -S"
+# docker-compose exec apache-php bash -c "apachectl -t -D DUMP_INCLUDES"
+# docker-compose exec apache-php elinks http://localhost
+# ------------------------------------------------------------------------------
+version: "3.0"
+services:
+  apache-php:
+    build:
+      context: "."
+      dockerfile: "Dockerfile"
+    environment:
+      APACHE_CONTENT_ROOT: "${APACHE_CONTENT_ROOT}"
+      APACHE_CUSTOM_LOG_FORMAT: "${APACHE_CUSTOM_LOG_FORMAT}"
+      APACHE_CUSTOM_LOG_LOCATION: "${APACHE_CUSTOM_LOG_LOCATION}"
+      APACHE_ERROR_LOG_LOCATION: "${APACHE_ERROR_LOG_LOCATION}"
+      APACHE_ERROR_LOG_LEVEL: "${APACHE_ERROR_LOG_LEVEL}"
+      APACHE_EXTENDED_STATUS_ENABLED: "${APACHE_EXTENDED_STATUS_ENABLED}"
+      APACHE_HEADER_X_SERVICE_UID: "${APACHE_HEADER_X_SERVICE_UID}"
+      APACHE_LOAD_MODULES: "${APACHE_LOAD_MODULES}"
+      APACHE_MOD_SSL_ENABLED: "${APACHE_MOD_SSL_ENABLED}"
+      APACHE_MPM: "${APACHE_MPM}"
+      APACHE_OPERATING_MODE: "${APACHE_OPERATING_MODE}"
+      APACHE_PUBLIC_DIRECTORY: "${APACHE_PUBLIC_DIRECTORY}"
+      APACHE_RUN_GROUP: "${APACHE_RUN_GROUP}"
+      APACHE_RUN_USER: "${APACHE_RUN_USER}"
+      APACHE_SERVER_ALIAS: "${APACHE_SERVER_ALIAS}"
+      APACHE_SERVER_NAME: "${APACHE_SERVER_NAME}"
+      APACHE_SSL_CERTIFICATE: "${APACHE_SSL_CERTIFICATE}"
+      APACHE_SSL_CIPHER_SUITE: "${APACHE_SSL_CIPHER_SUITE}"
+      APACHE_SSL_PROTOCOL: "${APACHE_SSL_PROTOCOL}"
+      APACHE_SYSTEM_USER: "${APACHE_SYSTEM_USER}"
+      PACKAGE_PATH: "${PACKAGE_PATH}"
+      PHP_OPTIONS_DATE_TIMEZONE: "${PHP_OPTIONS_DATE_TIMEZONE}"
+      PHP_OPTIONS_SESSION_NAME: "${PHP_OPTIONS_SESSION_NAME}"
+      PHP_OPTIONS_SESSION_SAVE_HANDLER: "${PHP_OPTIONS_SESSION_SAVE_HANDLER}"
+      PHP_OPTIONS_SESSION_SAVE_PATH: "${PHP_OPTIONS_SESSION_SAVE_PATH}"
+    image: "jdeathe/centos-ssh-apache-php:latest"
+    ports:
+      - "8080:80"
+      - "9443:443"
+      - "8443:8443"
+    restart: "always"
