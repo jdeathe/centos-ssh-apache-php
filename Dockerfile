@@ -4,7 +4,7 @@ FROM jdeathe/centos-ssh:2.5.1
 ARG PACKAGE_NAME="app"
 ARG PACKAGE_PATH="/opt/${PACKAGE_NAME}"
 ARG PACKAGE_RELEASE_VERSION="0.11.0"
-ARG RELEASE_VERSION="3.1.1"
+ARG RELEASE_VERSION="3.2.0"
 
 # ------------------------------------------------------------------------------
 # - Base install of required packages
