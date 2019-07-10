@@ -1944,6 +1944,7 @@ function main ()
 		-e "s~(\\$\{|\{\{)APACHE_SSL_CIPHER_SUITE(\}\}|(:-.+)?\})~${apache_ssl_cipher_suite}~g" \
 		-e "s~(\\$\{|\{\{)APACHE_SSL_PROTOCOL(\}\}|(:-.+)?\})~${apache_ssl_protocol}~g" \
 		-e "s~(\\$\{|\{\{)APACHE_SYSTEM_USER(\}\}|(:-.+)?\})~${apache_system_user}~g" \
+		-e "s~(\\$\{|\{\{)PACKAGE_PATH(\}\}|(:-.+)?\})~${package_path}~g" \
 		-e "s~(\\$\{|\{\{)PHP_OPTIONS_DATE_TIMEZONE(\}\}|(:-.+)?\})~${php_options_date_timezone}~g" \
 		-e "s~(\\$\{|\{\{)PHP_OPTIONS_SESSION_NAME(\}\}|(:-.+)?\})~${php_options_session_name}~g" \
 		-e "s~(\\$\{|\{\{)PHP_OPTIONS_SESSION_SAVE_HANDLER(\}\}|(:-.+)?\})~${php_options_session_save_handler}~g" \
