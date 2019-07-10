@@ -1843,15 +1843,14 @@ function main ()
 		pids[1]="${!}"
 	fi
 
-	__load_php_ini_scan_files \
-		"${package_path}"
-	__set_php_fpm_pool \
-		"${apache_run_user}" \
+	__set_apache_system_user \
+		"${apache_system_user}"
+	__set_apache_run_user \
+		"${apache_run_user}"
+	__set_apache_run_group \
 		"${apache_run_group}"
 	__set_apache_mpm \
 		"${apache_mpm}"
-	__load_httpd_conf_scan_files \
-		"${package_path}"
 	__set_apache_header_x_service_uid \
 		"${apache_header_x_service_uid}"
 	__set_apache_server_name \
@@ -1860,6 +1859,16 @@ function main ()
 		"${apache_mod_ssl_enabled}"
 	__set_apache_extended_status \
 		"${apache_extended_status_enabled}"
+	__set_php_fpm_pool \
+		"${apache_run_user}" \
+		"${apache_run_group}"
+	__set_loopback_hosts_entry \
+		"${apache_server_name}" \
+		"${apache_server_alias}"
+	__load_httpd_conf_scan_files \
+		"${package_path}"
+	__load_php_ini_scan_files \
+		"${package_path}"
 
 	details_modules_enabled_list="$(
 		__enable_apache_modules
@@ -1934,16 +1943,6 @@ function main ()
 		-e "s~(\\$\{|\{\{)PHP_OPTIONS_SESSION_SAVE_HANDLER(\}\}|(:-.+)?\})~${php_options_session_save_handler}~g" \
 		-e "s~(\\$\{|\{\{)PHP_OPTIONS_SESSION_SAVE_PATH(\}\}|(:-.+)?\})~${php_options_session_save_path}~g" \
 		${config_files}
-
-	__set_apache_system_user \
-		"${apache_system_user}"
-	__set_apache_run_user \
-		"${apache_run_user}"
-	__set_apache_run_group \
-		"${apache_run_group}"
-	__set_loopback_hosts_entry \
-		"${apache_server_name}" \
-		"${apache_server_alias}"
 
 	if [[ ${apache_mod_ssl_enabled} == true ]]
 	then
