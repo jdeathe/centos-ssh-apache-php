@@ -148,7 +148,7 @@ $ docker run \
     --manager=systemd \
     --register \
     --env='APACHE_MOD_SSL_ENABLED=true' \
-    --setopt='--volume {{NAME}}.data-ssl:/etc/services-config/ssl'
+    --setopt='--volume {{NAME}}.data-tls:/etc/pki/tls'
 ```
 
 ##### SCMI Fleet Support
@@ -359,7 +359,7 @@ $ docker run -d \
   --env "APACHE_SERVER_ALIAS=app-1" \
   --env "APACHE_SERVER_NAME=app-1.local" \
   --env "APACHE_MOD_SSL_ENABLED=true" \
-  --volume apache-php.pool-1.1.1.data-ssl:/etc/services-config/ssl \
+  --volume apache-php.1.data-tls:/etc/pki/tls \
   jdeathe/centos-ssh-apache-php:2.4.0
 ```
 
