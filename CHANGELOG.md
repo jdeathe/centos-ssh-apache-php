@@ -10,6 +10,7 @@ CentOS-7 7.5.1804 x86_64, Apache 2.4, PHP-FPM 7.2, PHP memcached 3.0, Zend Opcac
 
 - Updates `php72u` packages to 7.2.18-1.
 - Updates Dockerfile `org.deathe.description` metadata LABEL to include PHP redis module.
+- Updates description in centos-ssh-apache-php.register@.service.
 
 ### 3.2.0 - 2019-04-11
 
