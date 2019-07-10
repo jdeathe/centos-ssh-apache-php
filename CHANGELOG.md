@@ -9,6 +9,7 @@ CentOS-6 6.10 x86_64, Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1.
 ### 1.13.0 - Unreleased
 
 - Fixes php_uname to gethostname replacment regex quoting.
+- Fixes README SSL/TLS data volume names/paths in examples.
 
 ### 1.12.0 - 2019-04-11
 
