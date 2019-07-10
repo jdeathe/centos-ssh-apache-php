@@ -9,6 +9,7 @@ CentOS-6 6.10 x86_64, Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1.
 ### 1.13.0 - Unreleased
 
 - Updates Dockerfile `org.deathe.description` metadata LABEL to include PHP redis module.
+- Updates description in centos-ssh-apache-php.register@.service.
 - Fixes php_uname to gethostname replacment regex quoting.
 - Fixes README SSL/TLS data volume names/paths in examples.
 

@@ -35,12 +35,13 @@
 #
 # To uninstall:
 #     sudo systemctl disable -f {service-unit-instance-name}
+#     sudo systemctl daemon-reload
 #     sudo rm /etc/systemd/system/{service-unit-template-name}
 #     sudo systemctl daemon-reload
 # ------------------------------------------------------------------------------
 
 [Unit]
-Description=centos-apache-php etcd registration // %p@%i
+Description=centos-ssh-apache-php etcd registration // %p@%i
 After=etcd.service
 After=etcd2.service
 After={{SERVICE_UNIT_NAME}}@%i.service
