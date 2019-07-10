@@ -14,6 +14,7 @@ CentOS-6 6.10 x86_64, Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1.
 - Fixes php_uname to gethostname replacment regex quoting.
 - Fixes README SSL/TLS data volume names/paths in examples.
 - Fixes bootstrap; ensure user creation occurs before setting ownership with user.
+- Adds `PACKAGE_PATH` placeholder/variable replacement in bootstrap of configuration files.
 - Removes unused `DOCKER_PORT_MAP_TCP_22` variable from environment includes.
 
 ### 1.12.0 - 2019-04-11
