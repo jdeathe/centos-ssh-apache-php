@@ -6,6 +6,10 @@ Summary of release changes for Version 2.
 
 CentOS-6 6.10 x86_64, Apache 2.4, PHP-FPM 5.6, PHP memcached 2.2, Zend Opcache 7.0.
 
+### 2.5.0 - Unreleased
+
+- Fixes README SSL/TLS data volume names/paths in examples.
+
 ### 2.4.0 - 2019-04-11
 
 - Updates `httpd24u` packages to 2.4.39-1.
