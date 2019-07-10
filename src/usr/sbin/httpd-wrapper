@@ -89,7 +89,7 @@ function main ()
 		__get_apache_operating_mode
 	)"
 
-	local options="-c \"ErrorLog /dev/stdout\" -D FOREGROUND -D ${mode}"
+	local options="-c \"ErrorLog /dev/stderr\" -D FOREGROUND -D ${mode}"
 
 	if [[ ${autostart_bootstrap} == false ]]
 	then
