@@ -1,10 +1,8 @@
 # Change Log
 
-## centos-6
+## 1 - centos-6
 
-Summary of release changes for Version 1.
-
-CentOS-6 6.10 x86_64, Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1.
+Summary of release changes.
 
 ### 1.13.0 - Unreleased
 
@@ -12,6 +10,9 @@ CentOS-6 6.10 x86_64, Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1.
 - Updates description in centos-ssh-apache-php.register@.service.
 - Updates wrapper to set httpd ErrorLog to `/dev/stderr` instead of `/dev/stdout`.
 - Updates Apache configuration to use DSO Module identifiers for consistency.
+- Updates CHANGELOG.md to simplify maintenance.
+- Updates README.md to simplify contents and improve readability.
+- Updates README-short.txt to apply to all image variants.
 - Fixes php_uname to gethostname replacment regex quoting.
 - Fixes README SSL/TLS data volume names/paths in examples.
 - Fixes bootstrap; ensure user creation occurs before setting ownership with user.
