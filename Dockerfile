@@ -325,7 +325,7 @@ jdeathe/centos-ssh-apache-php:${RELEASE_VERSION} \
 	org.deathe.license="MIT" \
 	org.deathe.vendor="jdeathe" \
 	org.deathe.url="https://github.com/jdeathe/centos-ssh-apache-php" \
-	org.deathe.description="CentOS-6 6.10 x86_64 - IUS Apache 2.4, IUS PHP-FPM 5.6, PHP memcached 2.2, PHP redis 3.1, Zend Opcache 7.0."
+	org.deathe.description="IUS Apache 2.4, IUS PHP-FPM 5.6, PHP memcached 2.2, PHP redis 3.1, Zend Opcache 7.0 - CentOS-6 6.10 x86_64."
 
 HEALTHCHECK \
 	--interval=1s \

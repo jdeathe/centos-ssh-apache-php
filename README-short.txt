@@ -1,1 +1,1 @@
-CentOS-6 6.10 x86_64 - Apache / PHP-FPM / PHP memcached / Zend OPcache.
+Apache PHP - CentOS.
