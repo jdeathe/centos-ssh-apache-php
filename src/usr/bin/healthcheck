@@ -56,6 +56,7 @@ function __is_valid_zone ()
 function __last_check_passed ()
 {
 	local -i status=0
+	local status_path="${status_path:-/var/lib/healthcheck/status}"
 
 	if [[ ! -f ${status_path} ]]
 	then
@@ -117,9 +118,10 @@ function __print_message ()
 function __record_exit_status ()
 {
 	local -i status=${1:-${?}}
-	local status_directory="$(
-		dirname "${status_path}"
-	)"
+	local status_directory
+	local status_path="${status_path:-/var/lib/healthcheck/status}"
+
+	status_directory="${status_path%/*}"
 
 	if [[ ! -d ${status_directory} ]]
 	then
@@ -188,9 +190,8 @@ function main ()
 {
 	local -r pattern_host='^([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])(\.([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]{0,61}[a-zA-Z0-9]))*$'
 	local -r pattern_local_url='^https?://(127\.0\.0\.1|localhost)/'
-	local -r pattern_max_time='^(0\.[1-9]|[1-9][0-9]*)$'
+	local -r pattern_max_time='^[1-9][0-9]*$'
 	local -r pattern_seconds_in_minute='^([1-9]|[1-5][0-9]|60)$'
-	local -r status_path="/var/lib/healthcheck/status"
 	local -r system_timezone="$(
 		__get_system_timezone
 	)"
@@ -200,11 +201,12 @@ function main ()
 
 	local host="localhost.localdomain"
 	local -i interval=10
-	local max_time=0.5
+	local max_time=1
 	local quiet="false"
+	local status_path="/var/lib/healthcheck/status"
 	local url="http://127.0.0.1/"
 
-	trap "__record_exit_status \${?}" \
+	trap "__record_exit_status" \
 		EXIT
 
 	while [[ "${#}" -gt 0 ]]
