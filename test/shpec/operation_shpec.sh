@@ -329,6 +329,7 @@ ${other_required_apache_modules}
 				apache_details_title="$(
 					docker logs \
 						apache-php.1 \
+						2> /dev/null \
 					| grep '^Apache Details' \
 					| tr -d '\r'
 				)"
@@ -343,6 +344,7 @@ ${other_required_apache_modules}
 					apache_system_user="$(
 						docker logs \
 							apache-php.1 \
+							2> /dev/null \
 						| grep '^system user : ' \
 						| cut -c 15- \
 						| tr -d '\r'
@@ -357,6 +359,7 @@ ${other_required_apache_modules}
 					apache_run_user="$(
 						docker logs \
 							apache-php.1 \
+							2> /dev/null \
 						| grep '^run user : ' \
 						| cut -c 12- \
 						| tr -d '\r'
@@ -371,6 +374,7 @@ ${other_required_apache_modules}
 					apache_run_group="$(
 						docker logs \
 							apache-php.1 \
+							2> /dev/null \
 						| grep '^run group : ' \
 						| cut -c 13- \
 						| tr -d '\r'
@@ -385,6 +389,7 @@ ${other_required_apache_modules}
 					apache_server_name="$(
 						docker logs \
 							apache-php.1 \
+							2> /dev/null \
 						| grep '^server name : ' \
 						| cut -c 15- \
 						| tr -d '\r'
@@ -399,6 +404,7 @@ ${other_required_apache_modules}
 					apache_server_alias="$(
 						docker logs \
 							apache-php.1 \
+							2> /dev/null \
 						| grep '^server alias : ' \
 						| cut -c 16- \
 						| tr -d '\r'
@@ -413,6 +419,7 @@ ${other_required_apache_modules}
 					header_x_service_uid="$(
 						docker logs \
 							apache-php.1 \
+							2> /dev/null \
 						| grep '^header x-service-uid : ' \
 						| cut -c 24- \
 						| tr -d '\r'
@@ -428,6 +435,7 @@ ${other_required_apache_modules}
 					apache_document_root="$(
 						docker logs \
 							apache-php.1 \
+							2> /dev/null \
 						| grep '^document root : ' \
 						| cut -c 17- \
 						| tr -d '\r' \
@@ -444,6 +452,7 @@ ${other_required_apache_modules}
 					apache_server_mpm="$(
 						docker logs \
 							apache-php.1 \
+							2> /dev/null \
 						| grep '^server mpm : ' \
 						| cut -c 13- \
 						| tr -d '\r' \
@@ -459,6 +468,7 @@ ${other_required_apache_modules}
 					apache_load_modules="$(
 						docker logs \
 							apache-php.1 \
+							2> /dev/null \
 						| sed -ne \
 							'/^modules enabled :/,/^--+$/ p' \
 							| awk '/^ - /'
