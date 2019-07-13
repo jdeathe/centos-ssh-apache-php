@@ -1,18 +1,15 @@
 # ------------------------------------------------------------------------------
 # Constants
 # ------------------------------------------------------------------------------
-readonly DOCKER_USER=jdeathe
 readonly DOCKER_IMAGE_NAME=centos-ssh-apache-php
-
-# Tag validation patterns
-readonly DOCKER_IMAGE_TAG_PATTERN='^(latest|centos-[6-7]|centos-6-httpd24u-php56u|(([1-3]|centos-(6-1|6-httpd24u-php56u-2|7-httpd24u-php72u-3))\.[0-9]+\.[0-9]+))$'
-readonly DOCKER_IMAGE_RELEASE_TAG_PATTERN='^(1|2|3|centos-(6-1|6-httpd24u-php56u-2|7-httpd24u-php72u-3))\.[0-9]+\.[0-9]+$'
+readonly DOCKER_IMAGE_RELEASE_TAG_PATTERN='^[1-3]\.[0-9]+\.[0-9]+$'
+readonly DOCKER_IMAGE_TAG_PATTERN='^(latest|[1-3]\.[0-9]+\.[0-9]+)$'
+readonly DOCKER_USER=jdeathe
 
 # ------------------------------------------------------------------------------
 # Variables
 # ------------------------------------------------------------------------------
-
-# Docker image/container settings
+DIST_PATH="${DIST_PATH:-./dist}"
 DOCKER_CONTAINER_OPTS="${DOCKER_CONTAINER_OPTS:-}"
 DOCKER_IMAGE_TAG="${DOCKER_IMAGE_TAG:-latest}"
 DOCKER_NAME="${DOCKER_NAME:-apache-php.1}"
@@ -20,27 +17,18 @@ DOCKER_PORT_MAP_TCP_80="${DOCKER_PORT_MAP_TCP_80:-8080}"
 DOCKER_PORT_MAP_TCP_443="${DOCKER_PORT_MAP_TCP_443:-9443}"
 DOCKER_PORT_MAP_TCP_8443="${DOCKER_PORT_MAP_TCP_8443:-NULL}"
 DOCKER_RESTART_POLICY="${DOCKER_RESTART_POLICY:-always}"
-
-# Docker build --no-cache parameter
 NO_CACHE="${NO_CACHE:-false}"
-
-# Directory path for release packages
-DIST_PATH="${DIST_PATH:-./dist}"
-
-# Number of seconds expected to complete container startup including bootstrap.
-STARTUP_TIME="${STARTUP_TIME:-2}"
-
-# ETCD register service settings
 REGISTER_ETCD_PARAMETERS="${REGISTER_ETCD_PARAMETERS:-}"
 REGISTER_TTL="${REGISTER_TTL:-60}"
 REGISTER_UPDATE_INTERVAL="${REGISTER_UPDATE_INTERVAL:-55}"
+STARTUP_TIME="${STARTUP_TIME:-2}"
 
 # ------------------------------------------------------------------------------
 # Application container configuration
 # ------------------------------------------------------------------------------
-APACHE_AUTOSTART_HTTPD_BOOTSTRAP="${APACHE_AUTOSTART_HTTPD_BOOTSTRAP:-true}"
-APACHE_AUTOSTART_HTTPD_WRAPPER="${APACHE_AUTOSTART_HTTPD_WRAPPER:-true}"
-APACHE_AUTOSTART_PHP_FPM_WRAPPER="${APACHE_AUTOSTART_PHP_FPM_WRAPPER:-true}"
+ENABLE_HTTPD_BOOTSTRAP="${ENABLE_HTTPD_BOOTSTRAP:-true}"
+ENABLE_HTTPD_WRAPPER="${ENABLE_HTTPD_WRAPPER:-true}"
+ENABLE_PHP_FPM_WRAPPER="${ENABLE_PHP_FPM_WRAPPER:-true}"
 APACHE_CONTENT_ROOT="${APACHE_CONTENT_ROOT:-/var/www/app}"
 APACHE_CUSTOM_LOG_FORMAT="${APACHE_CUSTOM_LOG_FORMAT:-combined}"
 APACHE_CUSTOM_LOG_LOCATION="${APACHE_CUSTOM_LOG_LOCATION:-var/log/apache_access_log}"

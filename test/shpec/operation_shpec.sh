@@ -2047,7 +2047,7 @@ function test_custom_configuration ()
 			docker run \
 				--detach \
 				--name apache-php.1 \
-				--env APACHE_AUTOSTART_HTTPD_BOOTSTRAP=false \
+				--env ENABLE_HTTPD_BOOTSTRAP=false \
 				jdeathe/centos-ssh-apache-php:latest \
 			&> /dev/null
 
@@ -2081,7 +2081,7 @@ function test_custom_configuration ()
 			docker run \
 				--detach \
 				--name apache-php.1 \
-				--env APACHE_AUTOSTART_HTTPD_WRAPPER=false \
+				--env ENABLE_HTTPD_WRAPPER=false \
 				jdeathe/centos-ssh-apache-php:latest \
 			&> /dev/null
 
@@ -2113,7 +2113,7 @@ function test_custom_configuration ()
 			docker run \
 				--detach \
 				--name apache-php.1 \
-				--env APACHE_AUTOSTART_PHP_FPM_WRAPPER=false \
+				--env ENABLE_PHP_FPM_WRAPPER=false \
 				jdeathe/centos-ssh-apache-php:latest \
 			&> /dev/null
 

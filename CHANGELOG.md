@@ -6,6 +6,8 @@ Summary of release changes.
 
 ### 3.3.0 - Unreleased
 
+- Updates source image to [2.6.0](https://github.com/jdeathe/centos-ssh/releases/tag/2.6.0).
+- Updates `httpd24u` packages to 2.4.39-2.
 - Updates `php72u` packages to 7.2.18-1.
 - Updates Dockerfile `org.deathe.description` metadata LABEL to include PHP redis module.
 - Updates description in centos-ssh-apache-php.register@.service.
@@ -15,9 +17,24 @@ Summary of release changes.
 - Updates README.md to simplify contents and improve readability.
 - Updates README-short.txt to apply to all image variants.
 - Updates Dockerfile `org.deathe.description` metadata LABEL for consistency.
+- Updates supervisord configuration to send error log output to stderr.
+- Updates bootstrap timer to use UTC date timestamps.
+- Updates bootstrap supervisord configuration file/priority to `20-httpd-bootstrap.conf`/`20`.
+- Updates php-fpm wrapper supervisord configuration file/priority to `50-php-fpm-wrapper.conf`/`50`.
+- Updates httpd wrapper supervisord configuration file/priority to `70-httpd-wrapper.conf`/`70`.
 - Fixes bootstrap; ensure user creation occurs before setting ownership with user.
+- Fixes docker host connection status check in Makefile.
 - Adds `PACKAGE_PATH` placeholder/variable replacement in bootstrap of configuration files.
+- Adds `inspect`, `reload` and `top` Makefile targets.
+- Adds improved `clean` Makefile target; includes exited containers and dangling images.
+- Adds `SYSTEM_TIMEZONE` handling to Makefile, scmi, systemd unit and docker-compose templates.
+- Adds system time zone validation to healthcheck.
+- Adds lock/state file to bootstrap/wrapper scripts.
 - Removes unused `DOCKER_PORT_MAP_TCP_22` variable from environment includes.
+- Removes support for long image tags (i.e. centos-7-httpd24u-php72u-3.x.x).
+- Removes `APACHE_AUTOSTART_HTTPD_BOOTSTRAP`, replaced with `ENABLE_HTTPD_BOOTSTRAP`.
+- Removes `APACHE_AUTOSTART_HTTPD_WRAPPER`, replaced with `ENABLE_HTTPD_WRAPPER`.
+- Removes `APACHE_AUTOSTART_PHP_FPM_WRAPPER`, replaced with `ENABLE_PHP_FPM_WRAPPER`.
 
 ### 3.2.0 - 2019-04-11
 
