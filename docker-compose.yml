@@ -13,10 +13,10 @@
 # docker-compose logs apache-php
 #
 # Usage:
-# docker-compose exec apache-php bash -c "apachectl -V"
-# docker-compose exec apache-php bash -c "apachectl -M"
-# docker-compose exec apache-php bash -c "apachectl -S"
-# docker-compose exec apache-php bash -c "apachectl -t -D DUMP_INCLUDES"
+# docker-compose exec apache-php apachectl -V
+# docker-compose exec apache-php apachectl -M
+# docker-compose exec apache-php apachectl -S
+# docker-compose exec apache-php apachectl -t -D DUMP_INCLUDES
 # docker-compose exec apache-php elinks http://localhost
 # ------------------------------------------------------------------------------
 version: "3.0"

@@ -1,8 +1,8 @@
 ### Tags and respective `Dockerfile` links
 
-- `centos-7-httpd24u-php72u`, `centos-7-httpd24u-php72u-3.2.0`, `3.2.0` [(centos-7-httpd24u-php72u/Dockerfile)](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-7-httpd24u-php72u/Dockerfile)
-- `centos-6-httpd24u-php56u`, `centos-6-httpd24u-php56u-2.4.0`, `2.4.0` [(centos-6-httpd24u-php56u/Dockerfile)](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6-httpd24u-php56u/Dockerfile)
-- `centos-6`, `centos-6-1.12.0`, `1.12.0` [(centos-6/Dockerfile)](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6/Dockerfile)
+- `centos-7-httpd24u-php72u`, `3.2.0` [(centos-7-httpd24u-php72u/Dockerfile)](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-7-httpd24u-php72u/Dockerfile)
+- `centos-6-httpd24u-php56u`, `2.4.0` [(centos-6-httpd24u-php56u/Dockerfile)](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6-httpd24u-php56u/Dockerfile)
+- `centos-6`, `1.12.0` [(centos-6/Dockerfile)](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6/Dockerfile)
 
 ## Overview
 
@@ -93,7 +93,6 @@ $ docker stop apache-php.1 && \
   --env "APACHE_SERVER_NAME=app-1.local" \
   --env "APACHE_SSL_PROTOCOL=All -SSLv2 -SSLv3 -TLSv1 -TLSv1.1" \
   --env "PHP_OPTIONS_DATE_TIMEZONE=Europe/London" \
-  --volume apache-php.1.data-tls:/etc/pki/tls \
   jdeathe/centos-ssh-apache-php:3.2.0
 ```
 
@@ -101,9 +100,9 @@ $ docker stop apache-php.1 && \
 
 There are environmental variables available which allows the operator to customise the running container.
 
-##### APACHE_AUTOSTART_HTTPD_BOOTSTRAP, APACHE_AUTOSTART_HTTPD_WRAPPER & APACHE_AUTOSTART_PHP_FPM_WRAPPER
+##### ENABLE_HTTPD_BOOTSTRAP, ENABLE_HTTPD_WRAPPER & ENABLE_PHP_FPM_WRAPPER
 
-It may be desirable to prevent the startup of the `httpd-bootstrap`, `httpd-wrapper`, and/or, `php-fpm-wrapper` scripts. For example, when using an image built from this Dockerfile as the source for another Dockerfile you could disable services from startup by setting `APACHE_AUTOSTART_HTTPD_WRAPPER` and `APACHE_AUTOSTART_PHP_FPM_WRAPPER` to `false`. The benefit of this is to reduce the number of running processes in the final container. Another use for this would be to make use of the packages installed in the image such as `ab`, `curl`, `elinks`, `php-cli` etc.
+It may be desirable to prevent the startup of the `httpd-bootstrap`, `httpd-wrapper`, and/or, `php-fpm-wrapper` scripts. For example, when using an image built from this Dockerfile as the source for another Dockerfile you could disable services from startup by setting `ENABLE_HTTPD_WRAPPER` and `ENABLE_PHP_FPM_WRAPPER` to `false`. The benefit of this is to reduce the number of running processes in the final container. Another use for this would be to make use of the packages installed in the image such as `ab`, `curl`, `elinks`, `php-cli` etc.
 
 ##### APACHE_CONTENT_ROOT
 
@@ -208,7 +207,6 @@ $ docker stop apache-php.1 && \
   --env "APACHE_SERVER_ALIAS=app-1" \
   --env "APACHE_SERVER_NAME=app-1.local" \
   --env "APACHE_MOD_SSL_ENABLED=true" \
-  --volume apache-php.1.data-tls:/etc/pki/tls \
   jdeathe/centos-ssh-apache-php:3.2.0
 ```
 
