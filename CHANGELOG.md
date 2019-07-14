@@ -4,7 +4,7 @@
 
 Summary of release changes.
 
-### 3.3.0 - Unreleased
+### 3.3.0 - 2019-07-15
 
 - Updates source image to [2.6.0](https://github.com/jdeathe/centos-ssh/releases/tag/2.6.0).
 - Updates php-hello-world to [0.12.0](https://github.com/jdeathe/php-hello-world/releases/tag/0.12.0).
