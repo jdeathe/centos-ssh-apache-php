@@ -88,7 +88,7 @@ function __setup ()
 	local -r session_store_alias="memcached_1"
 	local -r session_store_name="memcached.1"
 	local -r session_store_network="bridge_internal_1"
-	local -r session_store_release="1.3.1"
+	local -r session_store_release="1.4.0"
 
 	if [[ -z $(docker network ls -q -f name="${session_store_network}") ]]; then
 		docker network create \
@@ -317,6 +317,7 @@ ${other_required_apache_modules}
 				apache_details_title="$(
 					docker logs \
 						apache-php.1 \
+						2> /dev/null \
 					| grep '^Apache Details' \
 					| tr -d '\r'
 				)"
@@ -331,6 +332,7 @@ ${other_required_apache_modules}
 					apache_system_user="$(
 						docker logs \
 							apache-php.1 \
+							2> /dev/null \
 						| grep '^system user : ' \
 						| cut -c 15- \
 						| tr -d '\r'
@@ -345,6 +347,7 @@ ${other_required_apache_modules}
 					apache_run_user="$(
 						docker logs \
 							apache-php.1 \
+							2> /dev/null \
 						| grep '^run user : ' \
 						| cut -c 12- \
 						| tr -d '\r'
@@ -359,6 +362,7 @@ ${other_required_apache_modules}
 					apache_run_group="$(
 						docker logs \
 							apache-php.1 \
+							2> /dev/null \
 						| grep '^run group : ' \
 						| cut -c 13- \
 						| tr -d '\r'
@@ -373,6 +377,7 @@ ${other_required_apache_modules}
 					apache_server_name="$(
 						docker logs \
 							apache-php.1 \
+							2> /dev/null \
 						| grep '^server name : ' \
 						| cut -c 15- \
 						| tr -d '\r'
@@ -387,6 +392,7 @@ ${other_required_apache_modules}
 					apache_server_alias="$(
 						docker logs \
 							apache-php.1 \
+							2> /dev/null \
 						| grep '^server alias : ' \
 						| cut -c 16- \
 						| tr -d '\r'
@@ -401,6 +407,7 @@ ${other_required_apache_modules}
 					header_x_service_uid="$(
 						docker logs \
 							apache-php.1 \
+							2> /dev/null \
 						| grep '^header x-service-uid : ' \
 						| cut -c 24- \
 						| tr -d '\r'
@@ -416,6 +423,7 @@ ${other_required_apache_modules}
 					apache_document_root="$(
 						docker logs \
 							apache-php.1 \
+							2> /dev/null \
 						| grep '^document root : ' \
 						| cut -c 17- \
 						| tr -d '\r' \
@@ -432,6 +440,7 @@ ${other_required_apache_modules}
 					apache_server_mpm="$(
 						docker logs \
 							apache-php.1 \
+							2> /dev/null \
 						| grep '^server mpm : ' \
 						| cut -c 13- \
 						| tr -d '\r' \
@@ -447,6 +456,7 @@ ${other_required_apache_modules}
 					apache_load_modules="$(
 						docker logs \
 							apache-php.1 \
+							2> /dev/null \
 						| sed -ne \
 							'/^modules enabled :/,/^--+$/ p' \
 							| awk '/^ - /'
@@ -2035,7 +2045,7 @@ function test_custom_configuration ()
 			docker run \
 				--detach \
 				--name apache-php.1 \
-				--env APACHE_AUTOSTART_HTTPD_BOOTSTRAP=false \
+				--env ENABLE_HTTPD_BOOTSTRAP=false \
 				jdeathe/centos-ssh-apache-php:latest \
 			&> /dev/null
 
@@ -2069,7 +2079,7 @@ function test_custom_configuration ()
 			docker run \
 				--detach \
 				--name apache-php.1 \
-				--env APACHE_AUTOSTART_HTTPD_WRAPPER=false \
+				--env ENABLE_HTTPD_WRAPPER=false \
 				jdeathe/centos-ssh-apache-php:latest \
 			&> /dev/null
 

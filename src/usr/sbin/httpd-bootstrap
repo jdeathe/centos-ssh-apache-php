@@ -55,19 +55,37 @@ function __add_hosts_entry ()
 function __cleanup ()
 {
 	local -r exit_code="${?}"
-	local -r lock_file="${1}"
-	local -r state_file="${2}"
 
-	if [[ -e ${lock_file} ]]
-	then
-		rm -f "${lock_file}"
-	fi
+	__delete_lock
 
 	if [[ ${exit_code} -eq 0 ]]
 	then
+		__create_state
+	fi
+}
+
+function __create_lock ()
+{
+	if [[ -n ${lock_file} ]]
+	then
+		touch "${lock_file}"
+	fi
+}
+
+function __create_state ()
+{
+	if [[ -n ${state_file} ]]
+	then
 		touch "${state_file}"
 	fi
+}
 
+function __delete_lock ()
+{
+	if [[ -f ${lock_file} ]]
+	then
+		rm -f "${lock_file}"
+	fi
 }
 
 function __enable_apache_modules ()
@@ -654,7 +672,8 @@ function __get_apache_server_version ()
 	if ! command -v httpd &> /dev/null
 	then
 		>&2 printf -- \
-			'ERROR: Apache Server binary not installed.\n'
+			'ERROR: %s httpd binary not installed\n'
+			"${0##*/}"
 		return 1
 	fi
 
@@ -814,7 +833,7 @@ function __get_ssl_certificate_fingerprint ()
 function __get_timer_total ()
 {
 	local -r timer_end="$(
-		date +%s.%N
+		date -u +%s.%N
 	)"
 	local -r timer_start="${1}"
 
@@ -822,7 +841,8 @@ function __get_timer_total ()
 		|| [[ ${timer_start//.} -gt ${timer_end//.} ]]
 	then
 		>&2 printf -- \
-			'ERROR: invalid timer start: %s\n' \
+			'ERROR: %s invalid timer start: %s\n' \
+			"${0##*/}" \
 			"${timer_start}"
 		printf -- \
 			'0.000000'
@@ -864,7 +884,8 @@ function __init_datadir ()
 		if [[ ${verbose} == true ]]
 		then
 			printf -- \
-				'Linking install directory %s > %s.\n' \
+				'INFO: %s linking install directory %s -> %s\n' \
+				"${0##*/}" \
 				"${package_path}" \
 				"${content_root}"
 		fi
@@ -879,7 +900,8 @@ function __init_datadir ()
 		if [[ ${verbose} == true ]]
 		then
 			printf -- \
-				'Populating install directory %s > %s.\n' \
+				'INFO: %s populating install directory %s -> %s\n' \
+				"${0##*/}" \
 				"${package_path}" \
 				"${content_root}"
 		fi
@@ -1447,7 +1469,8 @@ function __set_apache_mpm ()
 					/etc/sysconfig/httpd
 			else
 				>&2 printf -- \
-					'ERROR: Invalid Apache Server MPM: %s\n' \
+					'ERROR: %s invalid mpm: %s\n' \
+					"${0##*/}" \
 					"${apache_mpm}"
 				exit 1
 			fi
@@ -1466,7 +1489,8 @@ function __set_apache_mpm ()
 					/etc/sysconfig/httpd
 			else
 				>&2 printf -- \
-					'ERROR: Invalid Apache Server MPM: %s\n' \
+					'ERROR: %s invalid mpm: %s\n' \
+					"${0##*/}" \
 					"${apache_mpm}"
 				exit 1
 			fi
@@ -1485,14 +1509,16 @@ function __set_apache_mpm ()
 					/etc/sysconfig/httpd
 			else
 				>&2 printf -- \
-					'ERROR: Invalid Apache Server MPM: %s\n' \
+					'ERROR: %s invalid mpm: %s\n' \
+					"${0##*/}" \
 					"${apache_mpm}"
 				exit 1
 			fi
 			;;
 		*)
 			>&2 printf -- \
-				'ERROR: Invalid Apache Server MPM: %s\n' \
+				'ERROR: %s invalid mpm: %s\n' \
+				"${0##*/}" \
 				"${apache_mpm}"
 			exit 1
 			;;
@@ -1544,7 +1570,8 @@ function __set_apache_ssl_certificate ()
 	if ! __is_valid_apache_ssl_certificate_file "${certificate_path}"
 	then
 		>&2 printf -- \
-			'ERROR: Invalid APACHE_SSL_CERTIFICATE\n'
+			'ERROR: %s invalid APACHE_SSL_CERTIFICATE\n' \
+			"${0##*/}"
 		exit 1
 	fi
 }
@@ -1668,7 +1695,7 @@ function main ()
 	local -r ssl_certificate_fingerprint_digest="sha1"
 	local -r state_file="/var/lib/misc/httpd-bootstrap"
 	local -r timer_start="$(
-		date +%s.%N
+		date -u +%s.%N
 	)"
 
 	local HOSTNAME
@@ -1704,7 +1731,6 @@ function main ()
 	local -a pids
 	local verbose="false"
 
-	# Parse options
 	while [[ "${#}" -gt 0 ]]
 	do
 		case "${1}" in
@@ -1715,37 +1741,32 @@ function main ()
 		esac
 	done
 
-	if [[ -e ${state_file} ]]
+	if [[ -f ${state_file} ]]
 	then
 		if [[ ${verbose} == true ]]
 		then
 			printf -- \
-				'INFO: %s finished - skipping.\n' \
+				'INFO: %s finished - skipping\n' \
 				"${0##*/}"
 		fi
 		exit 0
 	fi
 
-	if [[ -e ${lock_file} ]]
+	if [[ -f ${lock_file} ]]
 	then
 		>&2 printf -- \
-			'ERROR: %s lock detected - aborting.\n' \
+			'ERROR: %s lock detected - aborting\n' \
 			"${0##*/}"
 		exit 1
 	fi
 
-	trap \
-		"__cleanup \"${lock_file}\" \"${state_file}\"" \
-		INT TERM EXIT
-
-	# Create lock
-	touch \
-		"${lock_file}"
+	trap "__cleanup" \
+		EXIT INT TERM
+	__create_lock
 
 	HOSTNAME="$(
 		hostname
 	)"
-
 	apache_content_root="$(
 		__get_apache_content_root
 	)"
@@ -1806,7 +1827,6 @@ function main ()
 	php_options_session_save_path="$(
 		__get_php_options_session_save_path
 	)"
-
 	document_root="$(
 		__get_apache_document_root
 	)"
@@ -1814,11 +1834,11 @@ function main ()
 		__get_package_path
 	)"
 
-	# Verify package installation directory exists
 	if [[ ! -d ${package_path} ]]
 	then
 		>&2 printf -- \
-			'ERROR: %s not found.\n' \
+			'ERROR: %s PACKAGE_PATH not found: %s\n' \
+			"${0##*/}" \
 			"${package_path}"
 		exit 1
 	fi
@@ -1887,11 +1907,11 @@ function main ()
 		"${package_path}" \
 		"${apache_content_root}"
 
-	# Verify Apache DocumentRoot directory exists
 	if [[ ! -d ${document_root} ]]
 	then
 		>&2 printf -- \
-			'ERROR: %s not found.\n' \
+			'ERROR: %s DocumentRoot path not found: %s\n' \
+			"${0##*/}" \
 			"${document_root}"
 		exit 1
 	fi
@@ -1905,7 +1925,8 @@ function main ()
 		if [[ ${verbose} == true ]]
 		then
 			printf -- \
-				'Disabling EnableSendfile.'
+				'INFO: %s disabling EnableSendfile\n' \
+				"${0##*/}"
 		fi
 		__set_apache_enable_sendfile \
 			"false"
@@ -2001,6 +2022,9 @@ function main ()
 
 		EOT
 	fi
+
+	# Trigger cleanup trap.
+	exit 0
 }
 
 main "${@}"
