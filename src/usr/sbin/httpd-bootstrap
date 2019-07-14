@@ -62,7 +62,6 @@ function __cleanup ()
 	then
 		__create_state
 	fi
-
 }
 
 function __create_lock ()
@@ -1578,7 +1577,7 @@ function __set_apache_ssl_certificate ()
 	then
 		>&2 printf -- \
 			'ERROR: %s invalid APACHE_SSL_CERTIFICATE\n' \
-			"${0##*/}" \
+			"${0##*/}"
 		exit 1
 	fi
 }
