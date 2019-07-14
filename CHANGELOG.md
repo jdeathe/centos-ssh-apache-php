@@ -6,6 +6,7 @@ Summary of release changes.
 
 ### 1.13.0 - Unreleased
 
+- Updates source image to [1.11.0](https://github.com/jdeathe/centos-ssh/releases/tag/1.11.0).
 - Updates Dockerfile `org.deathe.description` metadata LABEL to include PHP redis module.
 - Updates description in centos-ssh-apache-php.register@.service.
 - Updates wrapper to set httpd ErrorLog to `/dev/stderr` instead of `/dev/stdout`.
@@ -13,11 +14,25 @@ Summary of release changes.
 - Updates CHANGELOG.md to simplify maintenance.
 - Updates README.md to simplify contents and improve readability.
 - Updates README-short.txt to apply to all image variants.
+- Updates Dockerfile `org.deathe.description` metadata LABEL for consistency.
+- Updates supervisord configuration to send error log output to stderr.
+- Updates bootstrap timer to use UTC date timestamps.
+- Updates bootstrap supervisord configuration file/priority to `20-httpd-bootstrap.conf`/`20`.
+- Updates httpd wrapper supervisord configuration file/priority to `70-httpd-wrapper.conf`/`70`.
 - Fixes php_uname to gethostname replacment regex quoting.
 - Fixes README SSL/TLS data volume names/paths in examples.
 - Fixes bootstrap; ensure user creation occurs before setting ownership with user.
+- Fixes docker host connection status check in Makefile.
 - Adds `PACKAGE_PATH` placeholder/variable replacement in bootstrap of configuration files.
+- Adds `inspect`, `reload` and `top` Makefile targets.
+- Adds improved `clean` Makefile target; includes exited containers and dangling images.
+- Adds `SYSTEM_TIMEZONE` handling to Makefile, scmi, systemd unit and docker-compose templates.
+- Adds system time zone validation to healthcheck.
+- Adds lock/state file to bootstrap/wrapper scripts.
 - Removes unused `DOCKER_PORT_MAP_TCP_22` variable from environment includes.
+- Removes support for long image tags (i.e. centos-6-1.x.x).
+- Removes `APACHE_AUTOSTART_HTTPD_BOOTSTRAP`, replaced with `ENABLE_HTTPD_BOOTSTRAP`.
+- Removes `APACHE_AUTOSTART_HTTPD_WRAPPER`, replaced with `ENABLE_HTTPD_WRAPPER`.
 
 ### 1.12.0 - 2019-04-11
 
