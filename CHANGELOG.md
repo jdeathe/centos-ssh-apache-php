@@ -7,7 +7,6 @@ Summary of release changes.
 ### 1.13.0 - Unreleased
 
 - Updates source image to [1.11.0](https://github.com/jdeathe/centos-ssh/releases/tag/1.11.0).
-- Updates `httpd24u` packages to 2.4.39-2.
 - Updates Dockerfile `org.deathe.description` metadata LABEL to include PHP redis module.
 - Updates description in centos-ssh-apache-php.register@.service.
 - Updates wrapper to set httpd ErrorLog to `/dev/stderr` instead of `/dev/stdout`.
