@@ -85,6 +85,7 @@ Environment="PHP_OPTIONS_DATE_TIMEZONE=UTC"
 Environment="PHP_OPTIONS_SESSION_NAME=PHPSESSID"
 Environment="PHP_OPTIONS_SESSION_SAVE_HANDLER=files"
 Environment="PHP_OPTIONS_SESSION_SAVE_PATH=var/session"
+Environment="SYSTEM_TIMEZONE=UTC"
 
 # Initialisation: Load image from local storage if available, otherwise pull.
 ExecStartPre=/bin/bash -c \
@@ -168,6 +169,7 @@ ExecStart=/bin/bash -c \
     --env \"PHP_OPTIONS_SESSION_NAME=${PHP_OPTIONS_SESSION_NAME}\" \
     --env \"PHP_OPTIONS_SESSION_SAVE_HANDLER=${PHP_OPTIONS_SESSION_SAVE_HANDLER}\" \
     --env \"PHP_OPTIONS_SESSION_SAVE_PATH=${PHP_OPTIONS_SESSION_SAVE_PATH}\" \
+    --env \"SYSTEM_TIMEZONE=${SYSTEM_TIMEZONE}\" \
     $(if [[ ${DOCKER_PORT_MAP_TCP_80} != NULL ]]; \
     then \
       if /bin/grep -qE \
