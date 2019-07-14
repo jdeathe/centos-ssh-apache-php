@@ -1,5 +1,21 @@
 #!/usr/bin/env bash
 
+set -e
+
+function __get_system_timezone ()
+{
+	local -r default_value="${1:-UTC}"
+
+	local value="${SYSTEM_TIMEZONE}"
+
+	if ! __is_valid_system_timezone "${value}"
+	then
+		value="${default_value}"
+	fi
+
+	printf -- '%s' "${value}"
+}
+
 function __is_throttled_interval ()
 {
 	local -i interval="${1:-10}"
@@ -19,18 +35,36 @@ function __is_throttled_interval ()
 	fi
 }
 
+function __is_valid_system_timezone ()
+{
+	__is_valid_zone "${@}"
+}
+
+function __is_valid_zone ()
+{
+	local zone="${1}"
+
+	if [[ -n ${zone} ]] \
+		&& [[ -f /usr/share/zoneinfo/${zone} ]]
+	then
+		return 0
+	fi
+
+	return 1
+}
+
 function __last_check_passed ()
 {
 	local -i status=0
 
-	if [[ ! -f ${STATUS_PATH} ]]
+	if [[ ! -f ${status_path} ]]
 	then
 		return ${status}
 	else
 		read \
 			-n 1 \
 			status \
-			< "${STATUS_PATH}"
+			< "${status_path}"
 
 		if [[ ${status} =~ ^[01]$ ]]
 		then
@@ -43,17 +77,18 @@ function __last_check_passed ()
 
 function __print_message ()
 {
-	local -r type="${1:-}"
-	local -r quiet="${QUIET:-false}"
-	local message="${2:-}"
-	local prefix=""
+	local -r quiet="${quiet:-false}"
+	local -r type="${1}"
+
+	local message="${2}"
+	local prefix
 
 	case "${type}" in
 		error)
-			prefix="[ERROR] "
+			prefix="ERROR: "
 			;;
 		info)
-			prefix="[INFO] "
+			prefix="INFO: "
 			;;
 		*)
 			message="${type}"
@@ -81,10 +116,9 @@ function __print_message ()
 
 function __record_exit_status ()
 {
+	local -r status_directory="${status_path%/*}"
+
 	local -i status=${1:-${?}}
-	local status_directory="$(
-		dirname "${STATUS_PATH}"
-	)"
 
 	if [[ ! -d ${status_directory} ]]
 	then
@@ -96,20 +130,20 @@ function __record_exit_status ()
 			"${status_directory}"
 	fi
 
-	if [[ ! -f ${STATUS_PATH} ]]
+	if [[ ! -f ${status_path} ]]
 	then
 		install \
 			-m 0660 \
 			-o root \
 			-g root \
 			/dev/null \
-			"${STATUS_PATH}"
+			"${status_path}"
 	fi
 
 	printf -- \
 		'%d' \
 		"${status}" \
-		> "${STATUS_PATH}"
+		> "${status_path}"
 
 	trap - \
 		EXIT
@@ -121,8 +155,8 @@ function __usage ()
 {
 	cat <<-USAGE
 	
-	Usage: $(basename ${0}) [OPTIONS]
-	       $(basename ${0}) [-h|--help]
+	Usage: ${0##*/} [OPTIONS]
+	       ${0##*/} [-h|--help]
 	
 	Options:
 	  -H, --host=<hostname>               Hostname used in the Host request 
@@ -151,19 +185,24 @@ function __usage ()
 
 function main ()
 {
-	local -r STATUS_PATH="/var/lib/healthcheck/status"
-	local QUITE="false"
+	local -r pattern_host='^([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])(\.([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]{0,61}[a-zA-Z0-9]))*$'
+	local -r pattern_local_url='^https?://(127\.0\.0\.1|localhost)/'
+	local -r pattern_max_time='^[1-9][0-9]*$'
+	local -r pattern_seconds_in_minute='^([1-9]|[1-5][0-9]|60)$'
+	local -r status_path="/var/lib/healthcheck/status"
+	local -r system_timezone="$(
+		__get_system_timezone
+	)"
+	local -r zone="$(
+		system-timezone -qq
+	)"
 
 	local host="localhost.localdomain"
 	local -i interval=10
-	local max_time=0.5
-	local pattern_host='^([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])(\.([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]{0,61}[a-zA-Z0-9]))*$'
-	local pattern_local_url='^https?://(127\.0\.0\.1|localhost)/'
-	local pattern_max_time='^(0\.[1-9]|[1-9][0-9]*)$'
-	local pattern_seconds_in_minute='^([1-9]|[1-5][0-9]|60)$'
+	local max_time=1
+	local quiet="false"
 	local url="http://127.0.0.1/"
 
-	# Trap and record the exit status
 	trap "__record_exit_status \${?}" \
 		EXIT
 
@@ -207,7 +246,7 @@ function main ()
 				shift 1
 				;;
 			-q|--quiet)
-				QUIET=true
+				quiet="true"
 				shift 1
 				;;
 			*)
@@ -257,24 +296,30 @@ function main ()
 		exit 1
 	fi
 
-	if [[ ${APACHE_AUTOSTART_HTTPD_BOOTSTRAP} == false ]] \
-		&& [[ ${APACHE_AUTOSTART_HTTPD_WRAPPER} == false ]]
+	if [[ ${system_timezone} != "${zone}" ]]
+	then
+		__print_message \
+			"error" \
+			"system-timezone zone mismatch."
+		exit 1
+	fi
+
+	if [[ ${ENABLE_HTTPD_BOOTSTRAP} == false ]] \
+		&& [[ ${ENABLE_HTTPD_WRAPPER} == false ]]
 	then
 		exit 0
 	fi
 
-	# httpd-bootstrap
-	if [[ ${APACHE_AUTOSTART_HTTPD_BOOTSTRAP} == true ]] \
-		&& [[ -e /var/lock/subsys/httpd-bootstrap ]]
+	if [[ ${ENABLE_HTTPD_BOOTSTRAP} == true ]] \
+		&& [[ ! -f /var/lib/misc/httpd-bootstrap ]]
 	then
 		__print_message \
 			"error" \
-			"Bootstrap failed to complete."
+			"httpd-bootstrap not completed."
 		exit 1
 	fi
 
-	# httpd-wrapper
-	if [[ ${APACHE_AUTOSTART_HTTPD_WRAPPER} == true ]] \
+	if [[ ${ENABLE_HTTPD_WRAPPER} == true ]] \
 		&& ! ps axo command \
 		| grep -qE '^/usr/sbin/httpd(\.worker|\.event)? '
 	then
@@ -285,7 +330,7 @@ function main ()
 	fi
 
 	# Throttle CURL checks if last check passed.
-	if [[ ${APACHE_AUTOSTART_HTTPD_WRAPPER} == false ]] \
+	if [[ ${ENABLE_HTTPD_WRAPPER} == false ]] \
 		|| __last_check_passed \
 		&& ! __is_throttled_interval \
 			"${interval}"
@@ -323,6 +368,8 @@ function main ()
 			)"
 		exit 1
 	fi
+
+	exit 0
 }
 
 main "${@}"

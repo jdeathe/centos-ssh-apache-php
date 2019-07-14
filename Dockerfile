@@ -1,16 +1,15 @@
-FROM jdeathe/centos-ssh:1.10.1
+FROM jdeathe/centos-ssh:1.11.0
 
 # Use the form ([{fqdn}-]{package-name}|[{fqdn}-]{provider-name})
 ARG PACKAGE_NAME="app"
 ARG PACKAGE_PATH="/opt/${PACKAGE_NAME}"
-ARG PACKAGE_RELEASE_VERSION="0.11.0"
-ARG RELEASE_VERSION="1.12.0"
+ARG PACKAGE_RELEASE_VERSION="0.12.0"
+ARG RELEASE_VERSION="1.13.0"
 
 # ------------------------------------------------------------------------------
-# - Base install of required packages
+# Base install of required packages
 # ------------------------------------------------------------------------------
-RUN rpm --rebuilddb \
-	&& yum -y install \
+RUN yum -y install \
 		--setopt=tsflags=nodocs \
 		--disableplugin=fastestmirror \
 		elinks-0.12-0.21.pre5.el6_3 \
@@ -167,11 +166,13 @@ RUN useradd -r -M -d /var/www/app -s /sbin/nologin app \
 	&& sed -i \
 		-e "s~'ADMIN_PASSWORD','password'~'ADMIN_PASSWORD','apc!123'~g" \
 		-e "s~'DATE_FORMAT', 'Y/m/d H:i:s'~'DATE_FORMAT', 'Y-m-d H:i:s'~g" \
-		-e "s~php_uname(\'n\');~gethostname();~g" \
+		-e "s~php_uname('n');~gethostname();~g" \
 		/usr/share/php-pecl-apc/apc.php \
 	&& sed -i \
 		-e "s~{{RELEASE_VERSION}}~${RELEASE_VERSION}~g" \
 		/etc/systemd/system/centos-ssh-apache-php@.service \
+	&& chmod 644 \
+		/etc/supervisord.d/{20-httpd-bootstrap,70-httpd-wrapper}.conf \
 	&& chmod 700 \
 		/usr/{bin/healthcheck,sbin/httpd-{bootstrap,wrapper}}
 
@@ -209,8 +210,11 @@ EXPOSE 80 443 8443
 # ------------------------------------------------------------------------------
 # Set default environment variables used to configure the service container
 # ------------------------------------------------------------------------------
-ENV APACHE_AUTOSTART_HTTPD_BOOTSTRAP="true" \
-	APACHE_AUTOSTART_HTTPD_WRAPPER="true" \
+ENV \
+	ENABLE_HTTPD_BOOTSTRAP="true" \
+	ENABLE_HTTPD_WRAPPER="true" \
+	ENABLE_SSHD_BOOTSTRAP="false" \
+	ENABLE_SSHD_WRAPPER="false" \
 	APACHE_CONTENT_ROOT="/var/www/${PACKAGE_NAME}" \
 	APACHE_CUSTOM_LOG_FORMAT="combined" \
 	APACHE_CUSTOM_LOG_LOCATION="var/log/apache_access_log" \
@@ -235,10 +239,7 @@ ENV APACHE_AUTOSTART_HTTPD_BOOTSTRAP="true" \
 	PHP_OPTIONS_DATE_TIMEZONE="UTC" \
 	PHP_OPTIONS_SESSION_NAME="PHPSESSID" \
 	PHP_OPTIONS_SESSION_SAVE_HANDLER="files" \
-	PHP_OPTIONS_SESSION_SAVE_PATH="var/session" \
-	SSH_AUTOSTART_SSHD="false" \
-	SSH_AUTOSTART_SSHD_BOOTSTRAP="false" \
-	SSH_AUTOSTART_SUPERVISOR_STDOUT="false"
+	PHP_OPTIONS_SESSION_SAVE_PATH="var/session"
 
 # ------------------------------------------------------------------------------
 # Set image metadata
@@ -269,7 +270,7 @@ jdeathe/centos-ssh-apache-php:${RELEASE_VERSION} \
 	org.deathe.license="MIT" \
 	org.deathe.vendor="jdeathe" \
 	org.deathe.url="https://github.com/jdeathe/centos-ssh-apache-php" \
-	org.deathe.description="CentOS-6 6.10 x86_64 - Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP APC 3.1."
+	org.deathe.description="Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP redis 2.2, PHP APC 3.1 - CentOS-6 6.10 x86_64."
 
 HEALTHCHECK \
 	--interval=1s \
