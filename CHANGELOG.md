@@ -7,6 +7,7 @@ Summary of release changes.
 ### 3.3.0 - Unreleased
 
 - Updates source image to [2.6.0](https://github.com/jdeathe/centos-ssh/releases/tag/2.6.0).
+- Updates php-hello-world to [0.12.0](https://github.com/jdeathe/php-hello-world/releases/tag/0.12.0).
 - Updates `httpd24u` packages to 2.4.39-2.
 - Updates `php72u` packages to 7.2.18-1.
 - Updates Dockerfile `org.deathe.description` metadata LABEL to include PHP redis module.
