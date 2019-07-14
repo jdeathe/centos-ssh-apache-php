@@ -4,7 +4,6 @@ readonly TEST_DIRECTORY="test"
 
 # These should ideally be a static value but hosts might be using this port so 
 # need to allow for alternatives.
-DOCKER_PORT_MAP_TCP_22="${DOCKER_PORT_MAP_TCP_22:-NULL}"
 DOCKER_PORT_MAP_TCP_80="${DOCKER_PORT_MAP_TCP_80:-8080}"
 DOCKER_PORT_MAP_TCP_443="${DOCKER_PORT_MAP_TCP_443:-9443}"
 DOCKER_PORT_MAP_TCP_8443="${DOCKER_PORT_MAP_TCP_8443:-NULL}"
@@ -89,7 +88,7 @@ function __setup ()
 	local -r session_store_alias="memcached_1"
 	local -r session_store_name="memcached.1"
 	local -r session_store_network="bridge_internal_1"
-	local -r session_store_release="2.2.1"
+	local -r session_store_release="2.3.0"
 
 	if [[ -z $(docker network ls -q -f name="${session_store_network}") ]]; then
 		docker network create \
@@ -234,9 +233,9 @@ ${other_required_apache_modules}
 	local container_hostname=""
 	local container_port_80=""
 	local curl_get_request=""
-	local curl_session_name=""
 	local header_server=""
 	local header_x_service_uid=""
+	local php_session_name=""
 	local status=0
 
 	describe "Basic Apache PHP operations"
@@ -330,6 +329,7 @@ ${other_required_apache_modules}
 				apache_details_title="$(
 					docker logs \
 						apache-php.1 \
+						2> /dev/null \
 					| grep '^Apache Details' \
 					| tr -d '\r'
 				)"
@@ -344,6 +344,7 @@ ${other_required_apache_modules}
 					apache_system_user="$(
 						docker logs \
 							apache-php.1 \
+							2> /dev/null \
 						| grep '^system user : ' \
 						| cut -c 15- \
 						| tr -d '\r'
@@ -358,6 +359,7 @@ ${other_required_apache_modules}
 					apache_run_user="$(
 						docker logs \
 							apache-php.1 \
+							2> /dev/null \
 						| grep '^run user : ' \
 						| cut -c 12- \
 						| tr -d '\r'
@@ -372,6 +374,7 @@ ${other_required_apache_modules}
 					apache_run_group="$(
 						docker logs \
 							apache-php.1 \
+							2> /dev/null \
 						| grep '^run group : ' \
 						| cut -c 13- \
 						| tr -d '\r'
@@ -386,6 +389,7 @@ ${other_required_apache_modules}
 					apache_server_name="$(
 						docker logs \
 							apache-php.1 \
+							2> /dev/null \
 						| grep '^server name : ' \
 						| cut -c 15- \
 						| tr -d '\r'
@@ -400,6 +404,7 @@ ${other_required_apache_modules}
 					apache_server_alias="$(
 						docker logs \
 							apache-php.1 \
+							2> /dev/null \
 						| grep '^server alias : ' \
 						| cut -c 16- \
 						| tr -d '\r'
@@ -414,6 +419,7 @@ ${other_required_apache_modules}
 					header_x_service_uid="$(
 						docker logs \
 							apache-php.1 \
+							2> /dev/null \
 						| grep '^header x-service-uid : ' \
 						| cut -c 24- \
 						| tr -d '\r'
@@ -429,6 +435,7 @@ ${other_required_apache_modules}
 					apache_document_root="$(
 						docker logs \
 							apache-php.1 \
+							2> /dev/null \
 						| grep '^document root : ' \
 						| cut -c 17- \
 						| tr -d '\r' \
@@ -445,6 +452,7 @@ ${other_required_apache_modules}
 					apache_server_mpm="$(
 						docker logs \
 							apache-php.1 \
+							2> /dev/null \
 						| grep '^server mpm : ' \
 						| cut -c 13- \
 						| tr -d '\r' \
@@ -460,6 +468,7 @@ ${other_required_apache_modules}
 					apache_load_modules="$(
 						docker logs \
 							apache-php.1 \
+							2> /dev/null \
 						| sed -ne \
 							'/^modules enabled :/,/^--+$/ p' \
 							| awk '/^ - /'
@@ -646,20 +655,16 @@ ${other_required_apache_modules}
 
 		describe "PHP options"
 			it "Has default session.name."
-				curl_session_name="$(
-					curl -s \
-						--header 'Host: localhost.localdomain' \
-						http://127.0.0.1:${container_port_80}/_phpinfo.php \
-						| grep 'session.name' \
-						| sed -E \
-							-e 's~^.*(session.name)~\1~' \
-							-e 's~</t(r|d)>~~g' \
-							-e 's~<td[^>]*>~ ~g'
+				php_session_name="$(
+					docker exec \
+						apache-php.1 \
+						php -r \
+							"printf('%s', ini_get('session.name'));"
 				)"
 
 				assert equal \
-					"${curl_session_name}" \
-					"session.name PHPSESSID PHPSESSID"
+					"${php_session_name}" \
+					"PHPSESSID"
 			end
 		end
 
@@ -695,11 +700,11 @@ function test_custom_configuration ()
 	local curl_response_code_server_alias=""
 	local curl_session_data_write=""
 	local curl_session_data_read=""
-	local curl_session_name=""
 	local header_x_service_operating_mode=""
 	local header_x_service_uid=""
 	local is_up=""
 	local php_date_timezone=""
+	local php_session_name=""
 	local protocol=""
 
 	describe "Customised Apache PHP configuration"
@@ -2048,7 +2053,7 @@ function test_custom_configuration ()
 			docker run \
 				--detach \
 				--name apache-php.1 \
-				--env APACHE_AUTOSTART_HTTPD_BOOTSTRAP=false \
+				--env ENABLE_HTTPD_BOOTSTRAP=false \
 				jdeathe/centos-ssh-apache-php:latest \
 			&> /dev/null
 
@@ -2082,7 +2087,7 @@ function test_custom_configuration ()
 			docker run \
 				--detach \
 				--name apache-php.1 \
-				--env APACHE_AUTOSTART_HTTPD_WRAPPER=false \
+				--env ENABLE_HTTPD_WRAPPER=false \
 				jdeathe/centos-ssh-apache-php:latest \
 			&> /dev/null
 
@@ -2114,7 +2119,7 @@ function test_custom_configuration ()
 			docker run \
 				--detach \
 				--name apache-php.1 \
-				--env APACHE_AUTOSTART_PHP_FPM_WRAPPER=false \
+				--env ENABLE_PHP_FPM_WRAPPER=false \
 				jdeathe/centos-ssh-apache-php:latest \
 			&> /dev/null
 
@@ -2146,33 +2151,32 @@ function test_custom_configuration ()
 		end
 
 		describe "PHP date.timezone"
+			__terminate_container \
+				apache-php.1 \
+			&> /dev/null
+
+			docker run \
+				--detach \
+				--name apache-php.1 \
+				--publish ${DOCKER_PORT_MAP_TCP_80}:80 \
+				--env PHP_OPTIONS_DATE_TIMEZONE="Europe/London" \
+				jdeathe/centos-ssh-apache-php:latest \
+			&> /dev/null
+
+			if ! __is_container_ready \
+				apache-php.1 \
+				${STARTUP_TIME} \
+				"/usr/sbin/httpd(\.worker|\.event)? " \
+				"[[ 000 != \$(curl -sI -o /dev/null -w %{http_code} localhost/) ]]"
+			then
+				exit 1
+			fi
+
 			it "Sets to 'Europe/London'."
-				__terminate_container \
-					apache-php.1 \
-				&> /dev/null
-
-				docker run \
-					--detach \
-					--name apache-php.1 \
-					--publish ${DOCKER_PORT_MAP_TCP_80}:80 \
-					--env PHP_OPTIONS_DATE_TIMEZONE="Europe/London" \
-					jdeathe/centos-ssh-apache-php:latest \
-				&> /dev/null
-
-				if ! __is_container_ready \
-					apache-php.1 \
-					${STARTUP_TIME} \
-					"/usr/sbin/httpd(\.worker|\.event)? " \
-					"[[ 000 != \$(curl -sI -o /dev/null -w %{http_code} localhost/) ]]"
-				then
-					exit 1
-				fi
-
 				php_date_timezone="$(
 					docker exec \
 						apache-php.1 \
-						php \
-							-r \
+						php -r \
 							"printf('%s', ini_get('date.timezone'));"
 				)"
 
@@ -2211,20 +2215,16 @@ function test_custom_configuration ()
 			)"
 
 			it "Sets to app-session."
-				curl_session_name="$(
-					curl -s \
-						--header 'Host: localhost.localdomain' \
-						http://127.0.0.1:${container_port_80}/_phpinfo.php \
-						| grep 'session.name' \
-						| sed -E \
-							-e 's~^.*(session.name)~\1~' \
-							-e 's~</t(r|d)>~~g' \
-							-e 's~<td[^>]*>~ ~g'
+				php_session_name="$(
+					docker exec \
+						apache-php.1 \
+						php -r \
+							"printf('%s', ini_get('session.name'));"
 				)"
 
 				assert equal \
-					"${curl_session_name}" \
-					"session.name app-session app-session"
+					"${php_session_name}" \
+					"app-session"
 			end
 
 			__terminate_container \
@@ -2301,19 +2301,6 @@ function test_custom_configuration ()
 			docker exec \
 				apache-php.1 \
 				find /opt/app/public_html/session -type f -exec chmod 640 {} +
-
-			docker restart \
-				apache-php.1 \
-			&> /dev/null
-
-			if ! __is_container_ready \
-				apache-php.1 \
-				${STARTUP_TIME} \
-				"/usr/sbin/httpd(\.worker|\.event)? " \
-				"[[ 000 != \$(curl -sI -o /dev/null -w %{http_code} localhost/) ]]"
-			then
-				exit 1
-			fi
 
 			container_port_80="$(
 				__get_container_port \

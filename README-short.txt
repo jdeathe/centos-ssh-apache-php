@@ -1,1 +1,1 @@
-CentOS-7 7.5.1804 x86_64 - Apache / PHP-FPM / PHP memcached / Zend OPcache.
+Apache PHP - CentOS.
