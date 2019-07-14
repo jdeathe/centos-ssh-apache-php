@@ -1,10 +1,40 @@
 # Change Log
 
-## centos-6-httpd24u-php56u
+## 2 - centos-6-httpd24u-php56u
 
-Summary of release changes for Version 2.
+Summary of release changes.
 
-CentOS-6 6.10 x86_64, Apache 2.4, PHP-FPM 5.6, PHP memcached 2.2, Zend Opcache 7.0.
+### 2.5.0 - 2019-07-15
+
+- Updates source image to [1.11.0](https://github.com/jdeathe/centos-ssh/releases/tag/1.11.0).
+- Updates php-hello-world to [0.12.0](https://github.com/jdeathe/php-hello-world/releases/tag/0.12.0).
+- Updates `httpd24u` packages to 2.4.39-2.
+- Updates Dockerfile `org.deathe.description` metadata LABEL to include PHP redis module.
+- Updates description in centos-ssh-apache-php.register@.service.
+- Updates wrapper to set httpd ErrorLog to `/dev/stderr` instead of `/dev/stdout`.
+- Updates Apache configuration to use DSO Module identifiers for consistency.
+- Updates CHANGELOG.md to simplify maintenance.
+- Updates README.md to simplify contents and improve readability.
+- Updates README-short.txt to apply to all image variants.
+- Updates Dockerfile `org.deathe.description` metadata LABEL for consistency.
+- Updates supervisord configuration to send error log output to stderr.
+- Updates bootstrap timer to use UTC date timestamps.
+- Updates bootstrap supervisord configuration file/priority to `20-httpd-bootstrap.conf`/`20`.
+- Updates php-fpm wrapper supervisord configuration file/priority to `50-php-fpm-wrapper.conf`/`50`.
+- Updates httpd wrapper supervisord configuration file/priority to `70-httpd-wrapper.conf`/`70`.
+- Fixes bootstrap; ensure user creation occurs before setting ownership with user.
+- Fixes docker host connection status check in Makefile.
+- Adds `PACKAGE_PATH` placeholder/variable replacement in bootstrap of configuration files.
+- Adds `inspect`, `reload` and `top` Makefile targets.
+- Adds improved `clean` Makefile target; includes exited containers and dangling images.
+- Adds `SYSTEM_TIMEZONE` handling to Makefile, scmi, systemd unit and docker-compose templates.
+- Adds system time zone validation to healthcheck.
+- Adds lock/state file to bootstrap/wrapper scripts.
+- Removes unused `DOCKER_PORT_MAP_TCP_22` variable from environment includes.
+- Removes support for long image tags (i.e. centos-6-httpd24u-php56u-2.x.x).
+- Removes `APACHE_AUTOSTART_HTTPD_BOOTSTRAP`, replaced with `ENABLE_HTTPD_BOOTSTRAP`.
+- Removes `APACHE_AUTOSTART_HTTPD_WRAPPER`, replaced with `ENABLE_HTTPD_WRAPPER`.
+- Removes `APACHE_AUTOSTART_PHP_FPM_WRAPPER`, replaced with `ENABLE_PHP_FPM_WRAPPER`.
 
 ### 2.4.0 - 2019-04-11
 
