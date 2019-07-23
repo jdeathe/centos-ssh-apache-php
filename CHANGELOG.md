@@ -4,6 +4,10 @@
 
 Summary of release changes.
 
+### 1.13.1 - Unreleased
+
+- Updates environment variable ordering for consistency.
+
 ### 1.13.0 - 2019-07-15
 
 - Updates source image to [1.11.0](https://github.com/jdeathe/centos-ssh/releases/tag/1.11.0).
