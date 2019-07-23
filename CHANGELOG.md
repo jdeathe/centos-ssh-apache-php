@@ -7,6 +7,7 @@ Summary of release changes.
 ### 1.13.1 - Unreleased
 
 - Updates environment variable ordering for consistency.
+- Removes PHP 5.6 image variant from listing in README; no longer maintained.
 
 ### 1.13.0 - 2019-07-15
 
