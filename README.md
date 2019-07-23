@@ -1,7 +1,6 @@
 ### Tags and respective `Dockerfile` links
 
 - `centos-7-httpd24u-php72u`, `3.3.0` [(centos-7-httpd24u-php72u/Dockerfile)](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-7-httpd24u-php72u/Dockerfile)
-- `centos-6-httpd24u-php56u`, `2.5.0` [(centos-6-httpd24u-php56u/Dockerfile)](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6-httpd24u-php56u/Dockerfile)
 - `centos-6`, `1.13.0` [(centos-6/Dockerfile)](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6/Dockerfile)
 
 ## Overview
@@ -13,7 +12,6 @@ This build uses the base image [jdeathe/centos-ssh](https://github.com/jdeathe/c
 ### Image variants
 
 - [IUS Apache 2.4, IUS PHP-FPM 7.2, PHP memcached 3.0, PHP redis 3.1, Zend Opcache 7.2 - CentOS-7](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-7-httpd24u-php72u)
-- [IUS Apache 2.4, IUS PHP-FPM 5.6, PHP memcached 2.2, PHP redis 3.1, Zend Opcache 7.0 - CentOS-6](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6-httpd24u-php56u)
 - [Apache 2.2, PHP 5.3, PHP memcached 1.0, PHP redis 2.2, PHP APC 3.1 - CentOS-6](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6)
 
 ## Quick start
