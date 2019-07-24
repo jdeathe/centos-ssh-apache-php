@@ -3,7 +3,7 @@ FROM jdeathe/centos-ssh:2.6.0
 # Use the form ([{fqdn}-]{package-name}|[{fqdn}-]{provider-name})
 ARG PACKAGE_NAME="app"
 ARG PACKAGE_PATH="/opt/${PACKAGE_NAME}"
-ARG PACKAGE_RELEASE_VERSION="0.12.0"
+ARG PACKAGE_RELEASE_VERSION="0.13.0"
 ARG RELEASE_VERSION="3.3.0"
 
 # ------------------------------------------------------------------------------
@@ -259,8 +259,7 @@ RUN mkdir -p -m 750 ${PACKAGE_PATH} \
 	&& chown -R app:app-www ${PACKAGE_PATH} \
 	&& find ${PACKAGE_PATH} -type d -exec chmod 750 {} + \
 	&& find ${PACKAGE_PATH}/var -type d -exec chmod 770 {} + \
-	&& find ${PACKAGE_PATH} -type f -exec chmod 640 {} + \
-	&& find ${PACKAGE_PATH}/bin -type f -exec chmod 750 {} +
+	&& find ${PACKAGE_PATH} -type f -exec chmod 640 {} +
 
 EXPOSE 80 443 8443
 
