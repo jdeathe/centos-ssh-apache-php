@@ -197,17 +197,10 @@ RUN useradd -r -M -d /var/www/app -s /sbin/nologin app \
 		-e 's~^;\(opcache.validate_timestamps=\).*$~\10~g' \
 		/etc/php.d/10-opcache.ini.default \
 		> /etc/php.d/10-opcache.ini \
-	&& if [[ ${RELEASE_VERSION%%.*} -ge 3 ]]; \
-		then \
-			sed -r -i \
-				-e 's~^(error_log) *=.*$~\1 = /dev/stderr~' \
-				-e 's~^;?(systemd_interval = ).*$~\10~' \
-				/etc/php-fpm.conf; \
-		else \
-			sed -r -i \
-				-e 's~^(error_log) *=.*$~\1 = /dev/stderr~' \
-				/etc/php-fpm.conf; \
-		fi \
+	&& sed -r -i \
+		-e 's~^(error_log( )?=).*$~\1\2/dev/stderr~' \
+		-e 's~^;?(systemd_interval( )?=).*$~\1\20~' \
+		/etc/php-fpm.conf \
 	&& sed -i \
 		-e 's~^\[www\]$~[{{APACHE_RUN_USER}}]~' \
 		-e 's~^user = php-fpm$~user = {{APACHE_RUN_USER}}~' \
