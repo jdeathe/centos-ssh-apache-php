@@ -8,6 +8,7 @@ Summary of release changes.
 
 - Updates environment variable ordering for consistency.
 - Adds setting PHP `date.timezone` to `PHP_OPTIONS_DATE_TIMEZONE` into service configuration; removes dependency on app package configuration.
+- Adds session PHP settings into service configuration; removes dependency on app package configuration.
 - Removes PHP 5.6 image variant from listing in README; no longer maintained.
 
 ### 1.13.0 - 2019-07-15
