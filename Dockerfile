@@ -145,15 +145,19 @@ RUN useradd -r -M -d /var/www/app -s /sbin/nologin app \
 		/etc/php.d/apc.ini \
 		> /etc/php.d/apc.ini.default \
 	&& sed -r \
-		-e 's~^;(user_ini.filename =)$~\1~g' \
-		-e 's~^;(cgi.fix_pathinfo=1)$~\1~g' \
-		-e 's~^;(date.timezone =)$~\1 "${PHP_OPTIONS_DATE_TIMEZONE:-UTC}"~g' \
-		-e 's~^(expose_php = )On$~\1Off~g' \
-		-e 's~^;(realpath_cache_size = ).*$~\14096k~' \
-		-e 's~^;(realpath_cache_ttl = ).*$~\1600~' \
-		-e 's~^;?(session.name = ).*$~\1"${PHP_OPTIONS_SESSION_NAME:-PHPSESSID}"~' \
-		-e 's~^;?(session.save_handler = ).*$~\1"${PHP_OPTIONS_SESSION_SAVE_HANDLER:-files}"~' \
-		-e 's~^;?(session.save_path = ).*$~\1"${PHP_OPTIONS_SESSION_SAVE_PATH:-/var/lib/php/session}"~' \
+		-e 's~^;?(cgi.fix_pathinfo( )?=).*$~\1\21~g' \
+		-e 's~^;?(date.timezone( )?=).*$~\1\2"${PHP_OPTIONS_DATE_TIMEZONE:-UTC}"~g' \
+		-e 's~^;?(expose_php( )?=).*$~\1\2Off~g' \
+		-e 's~^;?(realpath_cache_size( )?=).*$~\1\24096k~' \
+		-e 's~^;?(realpath_cache_ttl( )?=).*$~\1\2600~' \
+		-e 's~^;?(session.cookie_httponly( )?=).*$~\1\21~' \
+		-e 's~^;?(session.name( )?=).*$~\1\2"${PHP_OPTIONS_SESSION_NAME:-PHPSESSID}"~' \
+		-e 's~^;?(session.save_handler( )?=).*$~\1\2"${PHP_OPTIONS_SESSION_SAVE_HANDLER:-files}"~' \
+		-e 's~^;?(session.save_path( )?=).*$~\1\2"${PHP_OPTIONS_SESSION_SAVE_PATH:-/var/lib/php/session}"~' \
+		-e 's~^;?(session.sid_bits_per_character( )?=).*$~\1\25~' \
+		-e 's~^;?(session.sid_length( )?=).*$~\1\264~' \
+		-e 's~^;?(session.use_strict_mode( )?=).*$~\1\21~' \
+		-e 's~^;?(user_ini.filename( )?=).*$~\1~g' \
 		/etc/php.d/00-php.ini.default \
 		> /etc/php.d/00-php.ini \
 	&& sed \
