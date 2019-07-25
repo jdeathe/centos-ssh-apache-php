@@ -8,6 +8,7 @@ Summary of release changes.
 
 - Updates php-hello-world to [0.13.0](https://github.com/jdeathe/php-hello-world/releases/tag/0.13.0).
 - Updates environment variable ordering for consistency.
+- Updates screenshots in README.
 - Adds setting PHP `date.timezone` to `PHP_OPTIONS_DATE_TIMEZONE` into service configuration; removes dependency on app package configuration.
 - Adds session PHP settings into service configuration; removes dependency on app package configuration.
 - Removes PHP 5.6 image variant from listing in README; no longer maintained.
