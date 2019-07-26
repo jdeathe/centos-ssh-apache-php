@@ -3,8 +3,8 @@ FROM jdeathe/centos-ssh:2.6.0
 # Use the form ([{fqdn}-]{package-name}|[{fqdn}-]{provider-name})
 ARG PACKAGE_NAME="app"
 ARG PACKAGE_PATH="/opt/${PACKAGE_NAME}"
-ARG PACKAGE_RELEASE_VERSION="0.12.0"
-ARG RELEASE_VERSION="3.3.0"
+ARG PACKAGE_RELEASE_VERSION="0.13.0"
+ARG RELEASE_VERSION="3.3.1"
 
 # ------------------------------------------------------------------------------
 # Base install of required packages
@@ -169,15 +169,19 @@ RUN useradd -r -M -d /var/www/app -s /sbin/nologin app \
 		/etc/php.ini \
 		> /etc/php.d/00-php.ini.default \
 	&& sed -r \
-		-e 's~^;(user_ini.filename =)$~\1~g' \
-		-e 's~^;(cgi.fix_pathinfo=1)$~\1~g' \
-		-e 's~^;(date.timezone =)$~\1 UTC~g' \
-		-e 's~^(expose_php = )On$~\1Off~g' \
-		-e 's~^;(realpath_cache_size = ).*$~\14096k~' \
-		-e 's~^;(realpath_cache_ttl = ).*$~\1600~' \
-		-e 's~^;?(session.name = ).*$~\1"${PHP_OPTIONS_SESSION_NAME:-PHPSESSID}"~' \
-		-e 's~^;?(session.save_handler = ).*$~\1"${PHP_OPTIONS_SESSION_SAVE_HANDLER:-files}"~' \
-		-e 's~^;?(session.save_path = ).*$~\1"${PHP_OPTIONS_SESSION_SAVE_PATH:-/var/lib/php/session}"~' \
+		-e 's~^;?(cgi.fix_pathinfo( )?=).*$~\1\21~g' \
+		-e 's~^;?(date.timezone( )?=).*$~\1\2"${PHP_OPTIONS_DATE_TIMEZONE:-UTC}"~g' \
+		-e 's~^;?(expose_php( )?=).*$~\1\2Off~g' \
+		-e 's~^;?(realpath_cache_size( )?=).*$~\1\24096k~' \
+		-e 's~^;?(realpath_cache_ttl( )?=).*$~\1\2600~' \
+		-e 's~^;?(session.cookie_httponly( )?=).*$~\1\21~' \
+		-e 's~^;?(session.name( )?=).*$~\1\2"${PHP_OPTIONS_SESSION_NAME:-PHPSESSID}"~' \
+		-e 's~^;?(session.save_handler( )?=).*$~\1\2"${PHP_OPTIONS_SESSION_SAVE_HANDLER:-files}"~' \
+		-e 's~^;?(session.save_path( )?=).*$~\1\2"${PHP_OPTIONS_SESSION_SAVE_PATH:-/var/lib/php/session}"~' \
+		-e 's~^;?(session.sid_bits_per_character( )?=).*$~\1\25~' \
+		-e 's~^;?(session.sid_length( )?=).*$~\1\264~' \
+		-e 's~^;?(session.use_strict_mode( )?=).*$~\1\21~' \
+		-e 's~^;?(user_ini.filename( )?=).*$~\1~g' \
 		/etc/php.d/00-php.ini.default \
 		> /etc/php.d/00-php.ini \
 	&& sed \
@@ -193,17 +197,10 @@ RUN useradd -r -M -d /var/www/app -s /sbin/nologin app \
 		-e 's~^;\(opcache.validate_timestamps=\).*$~\10~g' \
 		/etc/php.d/10-opcache.ini.default \
 		> /etc/php.d/10-opcache.ini \
-	&& if [[ ${RELEASE_VERSION%%.*} -ge 3 ]]; \
-		then \
-			sed -r -i \
-				-e 's~^(error_log) *=.*$~\1 = /dev/stderr~' \
-				-e 's~^;?(systemd_interval = ).*$~\10~' \
-				/etc/php-fpm.conf; \
-		else \
-			sed -r -i \
-				-e 's~^(error_log) *=.*$~\1 = /dev/stderr~' \
-				/etc/php-fpm.conf; \
-		fi \
+	&& sed -r -i \
+		-e 's~^(error_log( )?=).*$~\1\2/dev/stderr~' \
+		-e 's~^;?(systemd_interval( )?=).*$~\1\20~' \
+		/etc/php-fpm.conf \
 	&& sed -i \
 		-e 's~^\[www\]$~[{{APACHE_RUN_USER}}]~' \
 		-e 's~^user = php-fpm$~user = {{APACHE_RUN_USER}}~' \
@@ -262,8 +259,7 @@ RUN mkdir -p -m 750 ${PACKAGE_PATH} \
 	&& chown -R app:app-www ${PACKAGE_PATH} \
 	&& find ${PACKAGE_PATH} -type d -exec chmod 750 {} + \
 	&& find ${PACKAGE_PATH}/var -type d -exec chmod 770 {} + \
-	&& find ${PACKAGE_PATH} -type f -exec chmod 640 {} + \
-	&& find ${PACKAGE_PATH}/bin -type f -exec chmod 750 {} +
+	&& find ${PACKAGE_PATH} -type f -exec chmod 640 {} +
 
 EXPOSE 80 443 8443
 
@@ -271,11 +267,6 @@ EXPOSE 80 443 8443
 # Set default environment variables used to configure the service container
 # ------------------------------------------------------------------------------
 ENV \
-	ENABLE_HTTPD_BOOTSTRAP="true" \
-	ENABLE_HTTPD_WRAPPER="true" \
-	ENABLE_PHP_FPM_WRAPPER="true" \
-	ENABLE_SSHD_BOOTSTRAP="false" \
-	ENABLE_SSHD_WRAPPER="false" \
 	APACHE_CONTENT_ROOT="/var/www/${PACKAGE_NAME}" \
 	APACHE_CUSTOM_LOG_FORMAT="combined" \
 	APACHE_CUSTOM_LOG_LOCATION="var/log/apache_access_log" \
@@ -296,6 +287,11 @@ ENV \
 	APACHE_SSL_CIPHER_SUITE="ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES256-SHA384:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA:ECDHE-RSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA:DHE-RSA-AES256-SHA256:DHE-RSA-AES256-SHA:ECDHE-ECDSA-DES-CBC3-SHA:ECDHE-RSA-DES-CBC3-SHA:EDH-RSA-DES-CBC3-SHA:AES128-GCM-SHA256:AES256-GCM-SHA384:AES128-SHA256:AES256-SHA256:AES128-SHA:AES256-SHA:DES-CBC3-SHA:!DSS" \
 	APACHE_SSL_PROTOCOL="All -SSLv2 -SSLv3" \
 	APACHE_SYSTEM_USER="app" \
+	ENABLE_HTTPD_BOOTSTRAP="true" \
+	ENABLE_HTTPD_WRAPPER="true" \
+	ENABLE_PHP_FPM_WRAPPER="true" \
+	ENABLE_SSHD_BOOTSTRAP="false" \
+	ENABLE_SSHD_WRAPPER="false" \
 	PACKAGE_PATH="${PACKAGE_PATH}" \
 	PHP_OPTIONS_DATE_TIMEZONE="UTC" \
 	PHP_OPTIONS_SESSION_NAME="PHPSESSID" \
