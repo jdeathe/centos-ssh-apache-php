@@ -4,6 +4,10 @@
 
 Summary of release changes.
 
+### 3.3.2 - Unreleased
+
+- Updates bootstrap script to set ownership of app package binaries in the `bin/` path.
+
 ### 3.3.1 - 2019-07-26
 
 - Updates php-hello-world to [0.13.0](https://github.com/jdeathe/php-hello-world/releases/tag/0.13.0).
