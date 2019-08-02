@@ -1433,6 +1433,12 @@ function __set_apache_mod_ssl_enabled ()
 		truncate -s 0 \
 			/etc/httpd/conf.d/00-ssl.conf
 
+		if [[ -f /etc/httpd/conf.d/10-ssl.conf ]]
+		then
+			truncate -s 0 \
+				/etc/httpd/conf.d/10-ssl.conf
+		fi
+
 		if [[ -f /etc/httpd/conf.d/10-ssl-vhost.conf ]]
 		then
 			truncate -s 0 \
