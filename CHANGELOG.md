@@ -6,7 +6,7 @@ Summary of release changes.
 
 ### 3.3.2 - Unreleased
 
-- Updates bootstrap script to set ownership of app package binaries in the `bin/` path.
+- Updates bootstrap script to set ownership of app package binaries in the `bin/` path irrespective of `mod_fcgid` being installed.
 
 ### 3.3.1 - 2019-07-26
 
