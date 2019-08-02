@@ -1894,13 +1894,20 @@ function main ()
 		__enable_apache_modules
 	)"
 
-	# Set ownership for fcgid php-wrapper and socket if necessary
-	if [[ -d /var/run/mod_fcgid ]] \
-		&& [[ -d ${package_path}/bin ]]
+	# Set ownership for fcgid socket
+	if [[ -d /var/run/mod_fcgid ]]
 	then
 		chown -R \
 			"${apache_run_user}":"${apache_run_group}" \
-			{"${package_path}"/bin,/var/run/mod_fcgid}
+			/var/run/mod_fcgid
+	fi
+
+	# Set ownership for any package binaries
+	if [[ -d ${package_path}/bin ]]
+	then
+		chown -R \
+			"${apache_run_user}":"${apache_run_group}" \
+			"${package_path}"/bin
 	fi
 
 	__init_datadir \
