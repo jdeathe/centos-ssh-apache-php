@@ -9,6 +9,7 @@ Summary of release changes.
 - Updates php-hello-world to [0.14.0](https://github.com/jdeathe/php-hello-world/releases/tag/0.14.0).
 - Updates bootstrap script to set ownership of app package binaries in the `bin/` path irrespective of `mod_fcgid` being installed.
 - Updates bootstrap script to truncate `/etc/httpd/conf.d/10-ssl.conf` if SSL disabled; included for consistency with el7 script.
+- Updates screenshots in README.
 - Adds configuration file replacement of placeholders for Xdebug's `DBGP_IDEKEY`.
 - Adds PHP 5 applicable session settings into service configuration; removes dependency on app package configuration.
 
