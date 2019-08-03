@@ -4,7 +4,7 @@
 
 Summary of release changes.
 
-### 1.13.2 - Unreleased
+### 1.13.2 - 2019-08-03
 
 - Updates php-hello-world to [0.14.0](https://github.com/jdeathe/php-hello-world/releases/tag/0.14.0).
 - Updates bootstrap script to set ownership of app package binaries in the `bin/` path irrespective of `mod_fcgid` being installed.
