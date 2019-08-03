@@ -48,9 +48,11 @@ ADD src /
 # - Disable Apache language based content negotiation
 # - Custom Apache configuration
 # - Disable all Apache modules and enable the minimum
-# - Disable SSL
 # - Disable the default SSL Virtual Host
-# - Global PHP configuration changes
+# - Disable SSL
+# - Add default PHP configuration overrides to 00-php.ini drop-in
+# - PHP OPcache configuration
+# - PHP-FPM configuration
 # - Replace placeholders with values in systemd service unit template
 # - Set permissions
 # ------------------------------------------------------------------------------
@@ -152,15 +154,6 @@ RUN useradd -r -M -d /var/www/app -s /sbin/nologin app \
 		/etc/httpd/conf.d/ssl.conf \
 	&& chmod 644 \
 		/etc/httpd/conf.d/ssl.conf \
-	&& cp -pf \
-		/etc/php-fpm.conf \
-		/etc/php-fpm.conf.default \
-	&& cp -pf \
-		/etc/php-fpm.d/www.conf \
-		/etc/php-fpm.d/www.conf.default \
-	&& cp -pf \
-		/etc/httpd/conf.d/php-fpm.conf \
-		/etc/httpd/conf.d/php-fpm.conf.default \
 	&& sed \
 		-e 's~^; .*$~~' \
 		-e 's~^;*$~~' \
@@ -197,6 +190,15 @@ RUN useradd -r -M -d /var/www/app -s /sbin/nologin app \
 		-e 's~^;\(opcache.validate_timestamps=\).*$~\10~g' \
 		/etc/php.d/10-opcache.ini.default \
 		> /etc/php.d/10-opcache.ini \
+	&& cp -pf \
+		/etc/php-fpm.conf \
+		/etc/php-fpm.conf.default \
+	&& cp -pf \
+		/etc/php-fpm.d/www.conf \
+		/etc/php-fpm.d/www.conf.default \
+	&& cp -pf \
+		/etc/httpd/conf.d/php-fpm.conf \
+		/etc/httpd/conf.d/php-fpm.conf.default \
 	&& sed -r -i \
 		-e 's~^(error_log( )?=).*$~\1\2/dev/stderr~' \
 		-e 's~^;?(systemd_interval( )?=).*$~\1\20~' \
