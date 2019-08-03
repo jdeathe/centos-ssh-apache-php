@@ -151,6 +151,8 @@ RUN useradd -r -M -d /var/www/app -s /sbin/nologin app \
 		-e 's~^;?(realpath_cache_size( )?=).*$~\1\24096k~' \
 		-e 's~^;?(realpath_cache_ttl( )?=).*$~\1\2600~' \
 		-e 's~^;?(session.cookie_httponly( )?=).*$~\1\21~' \
+		-e 's~^;?(session.hash_bits_per_character( )?=).*$~\1\25~' \
+		-e 's~^;?(session.hash_function( )?=).*$~\1\2sha256~' \
 		-e 's~^;?(session.name( )?=).*$~\1\2"${PHP_OPTIONS_SESSION_NAME:-PHPSESSID}"~' \
 		-e 's~^;?(session.save_handler( )?=).*$~\1\2"${PHP_OPTIONS_SESSION_SAVE_HANDLER:-files}"~' \
 		-e 's~^;?(session.save_path( )?=).*$~\1\2"${PHP_OPTIONS_SESSION_SAVE_PATH:-/var/lib/php/session}"~' \
