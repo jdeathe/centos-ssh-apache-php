@@ -686,6 +686,11 @@ function __get_apache_server_version ()
 	printf -- '%s' "${semantic_version}"
 }
 
+function __get_dbgp_idekey ()
+{
+	printf -- '%s' "${DBGP_IDEKEY}"
+}
+
 function __get_details_ssl_certificate_fingerprint ()
 {
 	local -r digest="${1:-sha1}"
@@ -1433,6 +1438,12 @@ function __set_apache_mod_ssl_enabled ()
 		truncate -s 0 \
 			/etc/httpd/conf.d/00-ssl.conf
 
+		if [[ -f /etc/httpd/conf.d/10-ssl.conf ]]
+		then
+			truncate -s 0 \
+				/etc/httpd/conf.d/10-ssl.conf
+		fi
+
 		if [[ -f /etc/httpd/conf.d/10-ssl-vhost.conf ]]
 		then
 			truncate -s 0 \
@@ -1719,6 +1730,7 @@ function main ()
 	local apache_ssl_protocol
 	local apache_system_user
 	local config_files
+	local dbgp_idekey
 	local details_modules_enabled_list
 	local details_ssl_certificate_fingerprint
 	local document_root
@@ -1815,6 +1827,9 @@ function main ()
 	apache_system_user="$(
 		__get_apache_system_user
 	)"
+	dbgp_idekey="$(
+		__get_dbgp_idekey
+	)"
 	php_options_date_timezone="$(
 		__get_php_options_date_timezone
 	)"
@@ -1894,13 +1909,20 @@ function main ()
 		__enable_apache_modules
 	)"
 
-	# Set ownership for fcgid php-wrapper and socket if necessary
-	if [[ -d /var/run/mod_fcgid ]] \
-		&& [[ -d ${package_path}/bin ]]
+	# Set ownership for fcgid socket
+	if [[ -d /var/run/mod_fcgid ]]
 	then
 		chown -R \
 			"${apache_run_user}":"${apache_run_group}" \
-			{"${package_path}"/bin,/var/run/mod_fcgid}
+			/var/run/mod_fcgid
+	fi
+
+	# Set ownership for any package binaries
+	if [[ -d ${package_path}/bin ]]
+	then
+		chown -R \
+			"${apache_run_user}":"${apache_run_group}" \
+			"${package_path}"/bin
 	fi
 
 	__init_datadir \
@@ -1959,6 +1981,7 @@ function main ()
 		-e "s~(\\$\{|\{\{)APACHE_SSL_CIPHER_SUITE(\}\}|(:-.+)?\})~${apache_ssl_cipher_suite}~g" \
 		-e "s~(\\$\{|\{\{)APACHE_SSL_PROTOCOL(\}\}|(:-.+)?\})~${apache_ssl_protocol}~g" \
 		-e "s~(\\$\{|\{\{)APACHE_SYSTEM_USER(\}\}|(:-.+)?\})~${apache_system_user}~g" \
+		-e "s~(\\$\{|\{\{)DBGP_IDEKEY(\}\}|(:-.+)?\})~${dbgp_idekey}~g" \
 		-e "s~(\\$\{|\{\{)PACKAGE_PATH(\}\}|(:-.+)?\})~${package_path}~g" \
 		-e "s~(\\$\{|\{\{)PHP_OPTIONS_DATE_TIMEZONE(\}\}|(:-.+)?\})~${php_options_date_timezone}~g" \
 		-e "s~(\\$\{|\{\{)PHP_OPTIONS_SESSION_NAME(\}\}|(:-.+)?\})~${php_options_session_name}~g" \

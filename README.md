@@ -1,7 +1,7 @@
 ### Tags and respective `Dockerfile` links
 
-- `centos-7-httpd24u-php72u`, `3.3.1` [(centos-7-httpd24u-php72u/Dockerfile)](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-7-httpd24u-php72u/Dockerfile)
-- `centos-6`, `1.13.1` [(centos-6/Dockerfile)](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6/Dockerfile)
+- `centos-7-httpd24u-php72u`, `3.3.2` [(centos-7-httpd24u-php72u/Dockerfile)](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-7-httpd24u-php72u/Dockerfile)
+- `centos-6`, `1.13.2` [(centos-6/Dockerfile)](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6/Dockerfile)
 
 ## Overview
 
@@ -25,12 +25,12 @@ $ docker run -d \
   --name apache-php.1 \
   -p 8080:80 \
   -e "APACHE_SERVER_NAME=app-1.local" \
-  jdeathe/centos-ssh-apache-php:3.3.1
+  jdeathe/centos-ssh-apache-php:3.3.2
 ```
 
 Go to `http://{{docker-host}}:8080` using a browser where `{{docker-host}}` is the host name of your docker server and, if all went well, you should see the "Hello, world!" page.
 
-![PHP "Hello, world!" - Chrome screenshot](https://raw.github.com/jdeathe/centos-ssh-apache-php/centos-7-httpd24u-php72u/images/php-hello-world-chrome-v1.13.1.png)
+![PHP "Hello, world!" - Chrome screenshot](https://raw.github.com/jdeathe/centos-ssh-apache-php/centos-7-httpd24u-php72u/images/php-hello-world-chrome-v3.3.2.png)
 
 To be able to access the server using the "app-1.local" domain name you need to add a hosts file entry locally; such that the IP address of the Docker host resolves to the name "app-1.local". Alternatively, you can use the `elinks` browser installed in the container.
 
@@ -41,7 +41,7 @@ $ docker exec -it apache-php.1 \
   elinks http://app-1.local
 ```
 
-![PHP "Hello, world!" - eLinks screenshot](https://raw.github.com/jdeathe/centos-ssh-apache-php/centos-7-httpd24u-php72u/images/php-hello-world-elinks-v1.13.1.png)
+![PHP "Hello, world!" - eLinks screenshot](https://raw.github.com/jdeathe/centos-ssh-apache-php/centos-7-httpd24u-php72u/images/php-hello-world-elinks-v3.3.2.png)
 
 Verify the named container's process status and health.
 
@@ -91,7 +91,7 @@ $ docker stop apache-php.1 && \
   --env "APACHE_SERVER_NAME=app-1.local" \
   --env "APACHE_SSL_PROTOCOL=All -SSLv2 -SSLv3 -TLSv1 -TLSv1.1" \
   --env "PHP_OPTIONS_DATE_TIMEZONE=Europe/London" \
-  jdeathe/centos-ssh-apache-php:3.3.1
+  jdeathe/centos-ssh-apache-php:3.3.2
 ```
 
 #### Environment Variables
@@ -205,7 +205,7 @@ $ docker stop apache-php.1 && \
   --env "APACHE_SERVER_ALIAS=app-1" \
   --env "APACHE_SERVER_NAME=app-1.local" \
   --env "APACHE_MOD_SSL_ENABLED=true" \
-  jdeathe/centos-ssh-apache-php:3.3.1
+  jdeathe/centos-ssh-apache-php:3.3.2
 ```
 
 ##### APACHE_MPM
