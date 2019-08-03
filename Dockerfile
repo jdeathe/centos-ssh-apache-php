@@ -3,8 +3,8 @@ FROM jdeathe/centos-ssh:2.6.0
 # Use the form ([{fqdn}-]{package-name}|[{fqdn}-]{provider-name})
 ARG PACKAGE_NAME="app"
 ARG PACKAGE_PATH="/opt/${PACKAGE_NAME}"
-ARG PACKAGE_RELEASE_VERSION="0.13.0"
-ARG RELEASE_VERSION="3.3.1"
+ARG PACKAGE_RELEASE_VERSION="0.14.0"
+ARG RELEASE_VERSION="3.3.2"
 
 # ------------------------------------------------------------------------------
 # Base install of required packages
@@ -48,9 +48,11 @@ ADD src /
 # - Disable Apache language based content negotiation
 # - Custom Apache configuration
 # - Disable all Apache modules and enable the minimum
-# - Disable SSL
 # - Disable the default SSL Virtual Host
-# - Global PHP configuration changes
+# - Disable SSL
+# - Add default PHP configuration overrides to 00-php.ini drop-in
+# - PHP OPcache configuration
+# - PHP-FPM configuration
 # - Replace placeholders with values in systemd service unit template
 # - Set permissions
 # ------------------------------------------------------------------------------
@@ -152,15 +154,6 @@ RUN useradd -r -M -d /var/www/app -s /sbin/nologin app \
 		/etc/httpd/conf.d/ssl.conf \
 	&& chmod 644 \
 		/etc/httpd/conf.d/ssl.conf \
-	&& cp -pf \
-		/etc/php-fpm.conf \
-		/etc/php-fpm.conf.default \
-	&& cp -pf \
-		/etc/php-fpm.d/www.conf \
-		/etc/php-fpm.d/www.conf.default \
-	&& cp -pf \
-		/etc/httpd/conf.d/php-fpm.conf \
-		/etc/httpd/conf.d/php-fpm.conf.default \
 	&& sed \
 		-e 's~^; .*$~~' \
 		-e 's~^;*$~~' \
@@ -175,6 +168,8 @@ RUN useradd -r -M -d /var/www/app -s /sbin/nologin app \
 		-e 's~^;?(realpath_cache_size( )?=).*$~\1\24096k~' \
 		-e 's~^;?(realpath_cache_ttl( )?=).*$~\1\2600~' \
 		-e 's~^;?(session.cookie_httponly( )?=).*$~\1\21~' \
+		-e 's~^;?(session.hash_bits_per_character( )?=).*$~\1\25~' \
+		-e 's~^;?(session.hash_function( )?=).*$~\1\2sha256~' \
 		-e 's~^;?(session.name( )?=).*$~\1\2"${PHP_OPTIONS_SESSION_NAME:-PHPSESSID}"~' \
 		-e 's~^;?(session.save_handler( )?=).*$~\1\2"${PHP_OPTIONS_SESSION_SAVE_HANDLER:-files}"~' \
 		-e 's~^;?(session.save_path( )?=).*$~\1\2"${PHP_OPTIONS_SESSION_SAVE_PATH:-/var/lib/php/session}"~' \
@@ -197,6 +192,15 @@ RUN useradd -r -M -d /var/www/app -s /sbin/nologin app \
 		-e 's~^;\(opcache.validate_timestamps=\).*$~\10~g' \
 		/etc/php.d/10-opcache.ini.default \
 		> /etc/php.d/10-opcache.ini \
+	&& cp -pf \
+		/etc/php-fpm.conf \
+		/etc/php-fpm.conf.default \
+	&& cp -pf \
+		/etc/php-fpm.d/www.conf \
+		/etc/php-fpm.d/www.conf.default \
+	&& cp -pf \
+		/etc/httpd/conf.d/php-fpm.conf \
+		/etc/httpd/conf.d/php-fpm.conf.default \
 	&& sed -r -i \
 		-e 's~^(error_log( )?=).*$~\1\2/dev/stderr~' \
 		-e 's~^;?(systemd_interval( )?=).*$~\1\20~' \
