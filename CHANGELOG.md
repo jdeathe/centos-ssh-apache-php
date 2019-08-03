@@ -8,6 +8,7 @@ Summary of release changes.
 
 - Updates bootstrap script to set ownership of app package binaries in the `bin/` path irrespective of `mod_fcgid` being installed.
 - Updates bootstrap script to truncate `/etc/httpd/conf.d/10-ssl.conf` if SSL disabled; included for consistency with el7 script.
+- Adds configuration file replacement of placeholders for Xdebug's `DBGP_IDEKEY`.
 
 ### 1.13.1 - 2019-07-26
 
