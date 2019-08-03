@@ -3,7 +3,7 @@ FROM jdeathe/centos-ssh:1.11.0
 # Use the form ([{fqdn}-]{package-name}|[{fqdn}-]{provider-name})
 ARG PACKAGE_NAME="app"
 ARG PACKAGE_PATH="/opt/${PACKAGE_NAME}"
-ARG PACKAGE_RELEASE_VERSION="0.13.0"
+ARG PACKAGE_RELEASE_VERSION="0.14.0"
 ARG RELEASE_VERSION="1.13.1"
 
 # ------------------------------------------------------------------------------
@@ -43,9 +43,9 @@ ADD src /
 # - Disable Apache language based content negotiation
 # - Custom Apache configuration
 # - Disable all Apache modules and enable the minimum
-# - Disable SSL
 # - Disable the default SSL Virtual Host
-# - Global PHP configuration changes
+# - Disable SSL
+# - Add default PHP configuration overrides to 00-php.ini drop-in
 # - APC configuration
 # - Replace placeholders with values in systemd service unit template
 # - Set permissions
@@ -89,21 +89,21 @@ RUN useradd -r -M -d /var/www/app -s /sbin/nologin app \
 		-e '/<Location \/server-status>/,/<\/Location>/ s~Allow from .example.com~Allow from localhost 127.0.0.1~' \
 		/etc/httpd/conf/httpd.conf \
 	&& { printf -- \
-			'\n%s\n%s\n%s\n%s\\\n%s%s\\\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n' \
-			'#' \
-			'# Custom configuration' \
-			'#' \
-			'LogFormat ' \
-			'  "%{X-Forwarded-For}i %l %u %t \"%r\" %>s %b' \
-			' \"%{Referer}i\" \"%{User-Agent}i\"" ' \
-			'  forwarded_for_combined' \
-			'Listen 8443' \
-			'Options -Indexes' \
-			'ServerSignature Off' \
-			'ServerTokens Prod' \
-			'TraceEnable Off' \
-			'UseCanonicalName On' \
-			'UseCanonicalPhysicalPort On'; \
+		'\n%s\n%s\n%s\n%s\\\n%s%s\\\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n' \
+		'#' \
+		'# Custom configuration' \
+		'#' \
+		'LogFormat ' \
+		'  "%{X-Forwarded-For}i %l %u %t \"%r\" %>s %b' \
+		' \"%{Referer}i\" \"%{User-Agent}i\"" ' \
+		'  forwarded_for_combined' \
+		'Listen 8443' \
+		'Options -Indexes' \
+		'ServerSignature Off' \
+		'ServerTokens Prod' \
+		'TraceEnable Off' \
+		'UseCanonicalName On' \
+		'UseCanonicalPhysicalPort On'; \
 		} >> /etc/httpd/conf/httpd.conf \
 	&& sed -i \
 		-e 's~^\(LoadModule .*\)$~#\1~g' \
