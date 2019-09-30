@@ -4,6 +4,13 @@
 
 Summary of release changes.
 
+### 3.3.3 - Unreleased
+
+- Updates `httpd24u` packages to 2.4.41-1.
+- Updates `php72u` packages to 7.2.22-1.
+- Updates `php72u-pecl-memcached` package to 3.1.3-1.
+- Fixes missing `/run/php-fpm` path in build and adds fail-safe setup in `php-fpm-wrapper`.
+
 ### 3.3.2 - 2019-08-03
 
 - Updates php-hello-world to [0.14.0](https://github.com/jdeathe/php-hello-world/releases/tag/0.14.0).

@@ -25,7 +25,7 @@ function __delete_lock ()
 
 function __get_options ()
 {
-	local -r pid_file="/var/run/php-fpm/php-fpm.pid"
+	local -r pid_file="/run/php-fpm/php-fpm.pid"
 	local -r options="${1}"
 
 	printf -- \
@@ -41,6 +41,15 @@ function __get_proxy ()
 		'%s -n %s' \
 		"${nice}" \
 		"${niceness}"
+}
+
+function __set_run_path ()
+{
+	if [[ ! -d /run/php-fpm ]]
+	then
+		mkdir -p \
+			/run/php-fpm
+	fi
 }
 
 function main ()
@@ -83,6 +92,8 @@ function main ()
 		__get_proxy
 	)"
 
+	__set_run_path
+
 	if [[ ${verbose} == true ]]
 	then
 		printf -- \
@@ -104,7 +115,7 @@ function main ()
 	done
 	set -e
 
-	if ! [[ -f ${bootstrap_state_file} ]]
+	if [[ ! -f ${bootstrap_state_file} ]]
 	then
 		>&2 printf -- \
 			'ERROR: %s timed out waiting on %s\n' \
