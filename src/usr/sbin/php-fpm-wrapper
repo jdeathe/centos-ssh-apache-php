@@ -94,7 +94,8 @@ function main ()
 
 	__set_run_path
 
-	if [[ ${verbose} == true ]]
+	if [[ ${verbose} == true ]] \
+		&& [[ ! -f ${bootstrap_state_file} ]]
 	then
 		printf -- \
 			'INFO: %s waiting on %s\n' \
