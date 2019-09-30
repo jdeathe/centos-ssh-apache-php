@@ -13,6 +13,7 @@ Summary of release changes.
 - Updates healthcheck failure messages to remove EOL character that is rendered in status response.
 - Updates wrapper script; only emit "waiting on" info message if bootstrap hasn't completed.
 - Updates ordering of Tags and respective Dockerfile links in README.md for readability.
+- Updates session test cases; replace PHP memcached session store with redis.
 - Adds improved test workflow; added `test-setup` target to Makefile.
 - Adds Makefile target `logsdef` to handle deferred logs output within a target chain.
 - Adds `/docs` directory for supplementary documentation and simplify README.
