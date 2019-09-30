@@ -6,10 +6,21 @@ Summary of release changes.
 
 ### 3.3.3 - Unreleased
 
+- Updates source image to [2.6.1](https://github.com/jdeathe/centos-ssh/releases/tag/2.6.1).
 - Updates `httpd24u` packages to 2.4.41-1.
 - Updates `php72u` packages to 7.2.22-1.
 - Updates `php72u-pecl-memcached` package to 3.1.3-1.
+- Updates `test/health_status` helper script with for consistency.
+- Updates Makefile target `logs` to accept `[OPTIONS]` (e.g `make -- logs -ft`).
+- Updates info/error output for consistency.
+- Updates healthcheck failure messages to remove EOL character that is rendered in status response.
+- Updates wrapper script; only emit "waiting on" info message if bootstrap hasn't completed.
+- Updates ordering of Tags and respective Dockerfile links in README.md for readability.
+- Adds improved test workflow; added `test-setup` target to Makefile.
+- Adds Makefile target `logsdef` to handle deferred logs output within a target chain.
+- Adds `/docs` directory for supplementary documentation and simplify README.
 - Fixes missing `/run/php-fpm` path in build and adds fail-safe setup in `php-fpm-wrapper`.
+- Fixes validation failure of 0 second --timeout value in `test/health_status`.
 
 ### 3.3.2 - 2019-08-03
 

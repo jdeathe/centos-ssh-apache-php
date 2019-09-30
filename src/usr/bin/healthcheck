@@ -75,45 +75,6 @@ function __last_check_passed ()
 	fi
 }
 
-function __print_message ()
-{
-	local -r quiet="${quiet:-false}"
-	local -r type="${1}"
-
-	local message="${2}"
-	local prefix
-
-	case "${type}" in
-		error)
-			prefix="ERROR: "
-			;;
-		info)
-			prefix="INFO: "
-			;;
-		*)
-			message="${type}"
-			;;
-	esac
-
-	if [[ ${quiet} == true ]] \
-		&& [[ ${type} != error ]]
-	then
-		return 0
-	elif [[ ${quiet} == true ]] \
-		&& [[ ${type} == error ]]
-	then
-		>&2 printf -- \
-			'%s%s\n' \
-			"${prefix}" \
-			"${message}"
-	else
-		printf -- \
-			'%s%s\n' \
-			"${prefix}" \
-			"${message}"
-	fi
-}
-
 function __record_exit_status ()
 {
 	local -r status_directory="${status_path%/*}"
@@ -257,50 +218,48 @@ function main ()
 
 	if [[ ! ${host} =~ ${pattern_host} ]]
 	then
-		__print_message \
-			"error" \
-			"Invalid host."
+		>&2 printf -- \
+			'ERROR: %s invalid host' \
+			"${0##*/}"
 		exit 1
 	fi
 
 	if [[ ! ${interval} =~ ${pattern_seconds_in_minute} ]]
 	then
-		__print_message \
-			"error" \
-			"Invalid interval."
+		>&2 printf -- \
+			'ERROR: %s invalid interval' \
+			"${0##*/}"
 		exit 1
 	fi
 
 	if [[ ! ${max_time} =~ ${pattern_max_time} ]]
 	then
-		__print_message \
-			"error" \
-			"Invalid max_time."
+		>&2 printf -- \
+			'ERROR: %s invalid max_time' \
+			"${0##*/}"
 		exit 1
 	fi
 
 	if [[ ! ${url} =~ ${pattern_local_url} ]]
 	then
-		__print_message \
-			"error" \
-			"Invalid url."
+		>&2 printf -- \
+			'ERROR: %s invalid url' \
+			"${0##*/}"
 		exit 1
 	fi
 
 	if ! ps axo command \
 		| grep -qE '^/usr/bin/python /usr/bin/supervisord'
 	then
-		__print_message \
-			"error" \
-			"supervisord not running."
+		>&2 printf -- \
+			"supervisord not running"
 		exit 1
 	fi
 
 	if [[ ${system_timezone} != "${zone}" ]]
 	then
-		__print_message \
-			"error" \
-			"system-timezone zone mismatch."
+		>&2 printf -- \
+			"system-timezone zone mismatch"
 		exit 1
 	fi
 
@@ -314,9 +273,8 @@ function main ()
 	if [[ ${ENABLE_HTTPD_BOOTSTRAP} == true ]] \
 		&& [[ ! -f /var/lib/misc/httpd-bootstrap ]]
 	then
-		__print_message \
-			"error" \
-			"httpd-bootstrap not completed."
+		>&2 printf -- \
+			"httpd-bootstrap not completed"
 		exit 1
 	fi
 
@@ -324,9 +282,8 @@ function main ()
 		&& ! ps axo command \
 		| grep -qE '^/usr/sbin/httpd(\.worker|\.event)? '
 	then
-		__print_message \
-			"error" \
-			"httpd not running."
+		>&2 printf -- \
+			"httpd not running"
 		exit 1
 	fi
 
@@ -334,9 +291,8 @@ function main ()
 		&& ! ps axo command \
 		| grep -q "^php-fpm: pool ${APACHE_RUN_USER}[ ]*$"
 	then
-		__print_message \
-			"error" \
-			"php-fpm not running."
+		>&2 printf -- \
+			"php-fpm not running"
 		exit 1
 	fi
 

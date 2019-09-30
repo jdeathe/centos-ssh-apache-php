@@ -134,7 +134,8 @@ function main ()
 		__get_proxy
 	)"
 
-	if [[ ${verbose} == true ]]
+	if [[ ${verbose} == true ]] \
+		&& [[ ! -f ${bootstrap_state_file} ]]
 	then
 		printf -- \
 			'INFO: %s waiting on %s\n' \
@@ -155,7 +156,7 @@ function main ()
 	done
 	set -e
 
-	if ! [[ -f ${bootstrap_state_file} ]]
+	if [[ ! -f ${bootstrap_state_file} ]]
 	then
 		>&2 printf -- \
 			'ERROR: %s timed out waiting on %s\n' \
