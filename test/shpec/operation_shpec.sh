@@ -88,7 +88,7 @@ function __setup ()
 	local -r session_store_alias="memcached_1"
 	local -r session_store_name="memcached.1"
 	local -r session_store_network="bridge_internal_1"
-	local -r session_store_release="1.4.0"
+	local -r session_store_release="1.4.1"
 
 	if [[ -z $(docker network ls -q -f name="${session_store_network}") ]]; then
 		docker network create \

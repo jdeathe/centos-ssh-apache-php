@@ -4,6 +4,20 @@
 
 Summary of release changes.
 
+### 1.13.3 - Unreleased
+
+- Updates source image to [1.11.1](https://github.com/jdeathe/centos-ssh/releases/tag/1.11.1).
+- Updates `test/health_status` helper script with for consistency.
+- Updates Makefile target `logs` to accept `[OPTIONS]` (e.g `make -- logs -ft`).
+- Updates info/error output for consistency.
+- Updates healthcheck failure messages to remove EOL character that is rendered in status response.
+- Updates wrapper script; only emit "waiting on" info message if bootstrap hasn't completed.
+- Updates ordering of Tags and respective Dockerfile links in README.md for readability.
+- Adds improved test workflow; added `test-setup` target to Makefile.
+- Adds Makefile target `logsdef` to handle deferred logs output within a target chain.
+- Adds `/docs` directory for supplementary documentation and simplify README.
+- Fixes validation failure of 0 second --timeout value in `test/health_status`.
+
 ### 1.13.2 - 2019-08-03
 
 - Updates php-hello-world to [0.14.0](https://github.com/jdeathe/php-hello-world/releases/tag/0.14.0).

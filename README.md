@@ -1,7 +1,7 @@
 ### Tags and respective `Dockerfile` links
 
-- `centos-7-httpd24u-php72u`, `3.3.2` [(centos-7-httpd24u-php72u/Dockerfile)](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-7-httpd24u-php72u/Dockerfile)
-- `centos-6`, `1.13.2` [(centos-6/Dockerfile)](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6/Dockerfile)
+- [`3.3.2`](https://github.com/jdeathe/centos-ssh-apache-php/tree/3.3.2), `centos-7-httpd24u-php72u` [(centos-7-httpd24u-php72u/Dockerfile)](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-7-httpd24u-php72u/Dockerfile)
+- [`1.13.2`](https://github.com/jdeathe/centos-ssh-apache-php/tree/1.13.2), `centos-6` [(centos-6/Dockerfile)](https://github.com/jdeathe/centos-ssh-apache-php/blob/centos-6/Dockerfile)
 
 ## Overview
 

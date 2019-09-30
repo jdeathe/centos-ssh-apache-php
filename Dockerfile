@@ -1,4 +1,4 @@
-FROM jdeathe/centos-ssh:1.11.0
+FROM jdeathe/centos-ssh:1.11.1
 
 # Use the form ([{fqdn}-]{package-name}|[{fqdn}-]{provider-name})
 ARG PACKAGE_NAME="app"
