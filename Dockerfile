@@ -41,6 +41,7 @@ ADD src /
 # - Limit threads for the application user
 # - Disable Apache directory indexes and welcome page
 # - Disable Apache language based content negotiation
+# - Prevent unintentional override of default DirectoryIndex
 # - Custom Apache configuration
 # - Disable all Apache modules and enable the minimum
 # - Disable the default SSL Virtual Host
@@ -85,6 +86,7 @@ RUN useradd -r -M -d /var/www/app -s /sbin/nologin app \
 		-e 's~^LanguagePriority \(.*\)$~#LanguagePriority \1~g' \
 		-e 's~^ForceLanguagePriority \(.*\)$~#ForceLanguagePriority \1~g' \
 		-e 's~^AddLanguage \(.*\)$~#AddLanguage \1~g' \
+		-e '/^Include conf.d\/\*.conf/i DirectoryIndex index.html index.html.var' \
 		-e '/#<Location \/server-status>/,/#<\/Location>/ s~^#~~' \
 		-e '/<Location \/server-status>/,/<\/Location>/ s~Allow from .example.com~Allow from localhost 127.0.0.1~' \
 		/etc/httpd/conf/httpd.conf \

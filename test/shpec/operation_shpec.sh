@@ -180,6 +180,7 @@ function test_basic_operations ()
  - setenvif_module
  - status_module
  - version_module"
+	local -r content_index_html="$(< test/fixture/apache/var/www/public_html/index.html)"
 	local -r required_apache_modules="
 authz_user_module
 log_config_module
@@ -653,6 +654,48 @@ ${other_required_apache_modules}
 				assert equal \
 					"${php_session_name}" \
 					"PHPSESSID"
+			end
+		end
+
+		describe "Apache DirectoryIndex"
+			it "Defaults to index.html"
+				__terminate_container \
+					apache-php.1 \
+				&> /dev/null
+
+				docker run \
+					--detach \
+					--no-healthcheck \
+					--name apache-php.1 \
+					--publish ${DOCKER_PORT_MAP_TCP_80}:80 \
+					--volume ${PWD}/test/fixture/apache/var/www/public_html:/opt/app/public_html:ro \
+					jdeathe/centos-ssh-apache-php:latest \
+				&> /dev/null
+
+				if ! __is_container_ready \
+					apache-php.1 \
+					${STARTUP_TIME} \
+					"/usr/sbin/httpd(\.worker|\.event)? " \
+					"[[ 000 != \$(curl -sI -o /dev/null -w %{http_code} localhost/) ]]"
+				then
+					exit 1
+				fi
+
+				container_hostname="$(
+					docker exec \
+						apache-php.1 \
+						hostname
+				)"
+
+				curl_get_request="$(
+					curl -s \
+						--header "Host: ${container_hostname}" \
+						http://127.0.0.1:${container_port_80}/
+				)"
+
+				assert equal \
+					"${curl_get_request}" \
+					"${content_index_html}"
 			end
 		end
 
