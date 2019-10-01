@@ -19,6 +19,7 @@ Summary of release changes.
 - Adds `/docs` directory for supplementary documentation and simplify README.
 - Adds test case for Apache `DirectoryIndex` default.
 - Fixes validation failure of 0 second --timeout value in `test/health_status`.
+- Fixes unintentional override of default `DirectoryIndex` in main Apache configuration.
 
 ### 1.13.2 - 2019-08-03
 
