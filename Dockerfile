@@ -87,8 +87,6 @@ RUN useradd -r -M -d /var/www/app -s /sbin/nologin app \
 		-e 's~^ForceLanguagePriority \(.*\)$~#ForceLanguagePriority \1~g' \
 		-e 's~^AddLanguage \(.*\)$~#AddLanguage \1~g' \
 		-e '/^Include conf.d\/\*.conf/i DirectoryIndex index.html index.html.var' \
-		-e '/#<Location \/server-status>/,/#<\/Location>/ s~^#~~' \
-		-e '/<Location \/server-status>/,/<\/Location>/ s~Allow from .example.com~Allow from localhost 127.0.0.1~' \
 		/etc/httpd/conf/httpd.conf \
 	&& { printf -- \
 		'\n%s\n%s\n%s\n%s\\\n%s%s\\\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n' \

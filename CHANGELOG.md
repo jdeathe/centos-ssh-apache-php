@@ -18,6 +18,7 @@ Summary of release changes.
 - Adds Makefile target `logsdef` to handle deferred logs output within a target chain.
 - Adds `/docs` directory for supplementary documentation and simplify README.
 - Adds test case for Apache `DirectoryIndex` default.
+- Adds drop-in configuration for `/server-satus`; removes from global Apache configuration.
 - Fixes validation failure of 0 second --timeout value in `test/health_status`.
 - Fixes unintentional override of default `DirectoryIndex` in main Apache configuration.
 
