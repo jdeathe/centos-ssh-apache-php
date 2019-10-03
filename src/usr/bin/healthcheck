@@ -174,37 +174,37 @@ function main ()
 				__usage
 				break
 				;;
-			-H)
-				host="${2}"
-				shift 2 || break
-				;;
 			--host=*)
 				host="${1#*=}"
 				shift 1
 				;;
-			-i)
-				interval="${2}"
+			-H|--host)
+				host="${2}"
 				shift 2 || break
 				;;
 			--interval=*)
 				interval="${1#*=}"
 				shift 1
 				;;
-			-m)
-				max_time="${2}"
+			-i|--interval)
+				interval="${2}"
 				shift 2 || break
 				;;
 			--max-time=*)
 				max_time="${1#*=}"
 				shift 1
 				;;
-			-u)
-				url="${2}"
+			-m|--max-time)
+				max_time="${2}"
 				shift 2 || break
 				;;
 			--url=*)
 				url="${1#*=}"
 				shift 1
+				;;
+			-u|--url)
+				url="${2}"
+				shift 2 || break
 				;;
 			-q|--quiet)
 				quiet="true"
@@ -325,14 +325,11 @@ function main ()
 	if [[ ${http_code} == 000 ]] \
 		|| [[ ${http_code} -ge 500 ]]
 	then
-		__print_message \
-			"$(
-				printf -- \
-					'%s Host:%s %s' \
-					"${http_code}" \
-					"${host}" \
-					"${url}"
-			)"
+		>&2 printf -- \
+			'%s Host:%s %s' \
+			"${http_code}" \
+			"${host}" \
+			"${url}"
 		exit 1
 	fi
 
