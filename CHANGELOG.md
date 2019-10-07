@@ -6,6 +6,7 @@ Summary of release changes.
 
 ### 3.3.3 - Unreleased
 
+- Deprecate Makefile target `logs-delayed`; replaced with `logsdef`.
 - Updates source image to [2.6.1](https://github.com/jdeathe/centos-ssh/releases/tag/2.6.1).
 - Updates `httpd24u` packages to 2.4.41-1.
 - Updates `php72u` packages to 7.2.22-1.
