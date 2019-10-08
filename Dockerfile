@@ -1,10 +1,10 @@
-FROM jdeathe/centos-ssh:1.11.0
+FROM jdeathe/centos-ssh:1.11.1
 
 # Use the form ([{fqdn}-]{package-name}|[{fqdn}-]{provider-name})
 ARG PACKAGE_NAME="app"
 ARG PACKAGE_PATH="/opt/${PACKAGE_NAME}"
 ARG PACKAGE_RELEASE_VERSION="0.14.0"
-ARG RELEASE_VERSION="1.13.2"
+ARG RELEASE_VERSION="1.13.3"
 
 # ------------------------------------------------------------------------------
 # Base install of required packages
@@ -41,6 +41,7 @@ ADD src /
 # - Limit threads for the application user
 # - Disable Apache directory indexes and welcome page
 # - Disable Apache language based content negotiation
+# - Prevent unintentional override of default DirectoryIndex
 # - Custom Apache configuration
 # - Disable all Apache modules and enable the minimum
 # - Disable the default SSL Virtual Host
@@ -85,8 +86,7 @@ RUN useradd -r -M -d /var/www/app -s /sbin/nologin app \
 		-e 's~^LanguagePriority \(.*\)$~#LanguagePriority \1~g' \
 		-e 's~^ForceLanguagePriority \(.*\)$~#ForceLanguagePriority \1~g' \
 		-e 's~^AddLanguage \(.*\)$~#AddLanguage \1~g' \
-		-e '/#<Location \/server-status>/,/#<\/Location>/ s~^#~~' \
-		-e '/<Location \/server-status>/,/<\/Location>/ s~Allow from .example.com~Allow from localhost 127.0.0.1~' \
+		-e '/^Include conf.d\/\*.conf/i DirectoryIndex index.html index.html.var' \
 		/etc/httpd/conf/httpd.conf \
 	&& { printf -- \
 		'\n%s\n%s\n%s\n%s\\\n%s%s\\\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n' \

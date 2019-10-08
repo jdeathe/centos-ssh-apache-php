@@ -10,7 +10,7 @@ DOCKER_PORT_MAP_TCP_8443="${DOCKER_PORT_MAP_TCP_8443:-NULL}"
 
 function __destroy ()
 {
-	local -r session_store_name="memcached.1"
+	local -r session_store_name="redis.1"
 	local -r session_store_network="bridge_internal_1"
 
 	# Destroy the session store container
@@ -85,10 +85,10 @@ function __is_container_ready ()
 
 function __setup ()
 {
-	local -r session_store_alias="memcached_1"
-	local -r session_store_name="memcached.1"
+	local -r session_store_alias="redis_1"
+	local -r session_store_name="redis.1"
 	local -r session_store_network="bridge_internal_1"
-	local -r session_store_release="1.4.0"
+	local -r session_store_release="1.2.1"
 
 	if [[ -z $(docker network ls -q -f name="${session_store_network}") ]]; then
 		docker network create \
@@ -107,7 +107,7 @@ function __setup ()
 		--name ${session_store_name} \
 		--network ${session_store_network} \
 		--network-alias ${session_store_alias} \
-		jdeathe/centos-ssh-memcached:${session_store_release} \
+		jdeathe/centos-ssh-redis:${session_store_release} \
 	&> /dev/null
 
 	# Generate a self-signed certificate
@@ -180,6 +180,7 @@ function test_basic_operations ()
  - setenvif_module
  - status_module
  - version_module"
+	local -r content_index_html="$(< test/fixture/apache/var/www/public_html/index.html)"
 	local -r required_apache_modules="
 authz_user_module
 log_config_module
@@ -656,6 +657,48 @@ ${other_required_apache_modules}
 			end
 		end
 
+		describe "Apache DirectoryIndex"
+			it "Defaults to index.html"
+				__terminate_container \
+					apache-php.1 \
+				&> /dev/null
+
+				docker run \
+					--detach \
+					--no-healthcheck \
+					--name apache-php.1 \
+					--publish ${DOCKER_PORT_MAP_TCP_80}:80 \
+					--volume ${PWD}/test/fixture/apache/var/www/public_html:/opt/app/public_html:ro \
+					jdeathe/centos-ssh-apache-php:latest \
+				&> /dev/null
+
+				if ! __is_container_ready \
+					apache-php.1 \
+					${STARTUP_TIME} \
+					"/usr/sbin/httpd(\.worker|\.event)? " \
+					"[[ 000 != \$(curl -sI -o /dev/null -w %{http_code} localhost/) ]]"
+				then
+					exit 1
+				fi
+
+				container_hostname="$(
+					docker exec \
+						apache-php.1 \
+						hostname
+				)"
+
+				curl_get_request="$(
+					curl -s \
+						--header "Host: ${container_hostname}" \
+						http://127.0.0.1:${container_port_80}/
+				)"
+
+				assert equal \
+					"${curl_get_request}" \
+					"${content_index_html}"
+			end
+		end
+
 		__terminate_container \
 			apache-php.1 \
 		&> /dev/null
@@ -667,7 +710,7 @@ ${other_required_apache_modules}
 
 function test_custom_configuration ()
 {
-	local -r session_store_alias="memcached_1"
+	local -r session_store_alias="redis_1"
 	local -r session_store_network="bridge_internal_1"
 
 	local apache_access_log_entry=""
@@ -2187,7 +2230,7 @@ function test_custom_configuration ()
 			&> /dev/null
 		end
 
-		describe "PHP memcached session store"
+		describe "PHP redis session store"
 			__terminate_container \
 				apache-php.1 \
 			&> /dev/null
@@ -2196,8 +2239,8 @@ function test_custom_configuration ()
 				--detach \
 				--name apache-php.1 \
 				--publish ${DOCKER_PORT_MAP_TCP_80}:80 \
-				--env PHP_OPTIONS_SESSION_SAVE_HANDLER="memcached" \
-				--env PHP_OPTIONS_SESSION_SAVE_PATH="${session_store_alias}:11211" \
+				--env PHP_OPTIONS_SESSION_SAVE_HANDLER="redis" \
+				--env PHP_OPTIONS_SESSION_SAVE_PATH="${session_store_alias}:6379" \
 				jdeathe/centos-ssh-apache-php:latest \
 			&> /dev/null
 
@@ -2229,7 +2272,7 @@ function test_custom_configuration ()
 				session_start();
 				\$_SESSION['integer'] = 123;
 				\$_SESSION['float'] = 12345.67890;
-				\$_SESSION['string'] = '@memcached:#\$£';
+				\$_SESSION['string'] = '@ABCabc:#\$£';
 				session_write_close();
 				var_dump(\$_SESSION);
 			EOT
@@ -2316,7 +2359,7 @@ function test_custom_configuration ()
   ["float"]=>
   float(12345.6789)
   ["string"]=>
-  string(15) "@memcached:#$£"
+  string(12) "@ABCabc:#$£"
 }'
 				end
 			end
