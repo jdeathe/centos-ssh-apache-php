@@ -1,10 +1,10 @@
-FROM jdeathe/centos-ssh:2.6.0
+FROM jdeathe/centos-ssh:2.6.1
 
 # Use the form ([{fqdn}-]{package-name}|[{fqdn}-]{provider-name})
 ARG PACKAGE_NAME="app"
 ARG PACKAGE_PATH="/opt/${PACKAGE_NAME}"
 ARG PACKAGE_RELEASE_VERSION="0.14.0"
-ARG RELEASE_VERSION="3.3.2"
+ARG RELEASE_VERSION="3.3.3"
 
 # ------------------------------------------------------------------------------
 # Base install of required packages
@@ -13,15 +13,15 @@ RUN yum -y install \
 		--setopt=tsflags=nodocs \
 		--disableplugin=fastestmirror \
 		elinks-0.12-0.37.pre6.el7.0.1 \
-		httpd24u-2.4.39-2.el7.ius \
+		httpd24u-2.4.41-1.el7.ius \
 		httpd24u-tools \
 		httpd24u-mod_ssl \
 		php72u-cli \
-		php72u-common-7.2.19-1.el7.ius \
+		php72u-common-7.2.22-1.el7.ius \
 		php72u-fpm \
 		php72u-fpm-httpd \
 		php72u-opcache \
-		php72u-pecl-memcached-3.0.4-2.ius.el7 \
+		php72u-pecl-memcached-3.1.3-1.el7.ius \
 		php72u-pecl-redis-3.1.6-2.ius.el7 \
 	&& yum versionlock add \
 		elinks \
@@ -52,6 +52,7 @@ ADD src /
 # - Disable SSL
 # - Add default PHP configuration overrides to 00-php.ini drop-in
 # - PHP OPcache configuration
+# - Add PHP-FPM run directory
 # - PHP-FPM configuration
 # - Replace placeholders with values in systemd service unit template
 # - Set permissions
@@ -192,6 +193,8 @@ RUN useradd -r -M -d /var/www/app -s /sbin/nologin app \
 		-e 's~^;\(opcache.validate_timestamps=\).*$~\10~g' \
 		/etc/php.d/10-opcache.ini.default \
 		> /etc/php.d/10-opcache.ini \
+	&& mkdir -p \
+		/run/php-fpm \
 	&& cp -pf \
 		/etc/php-fpm.conf \
 		/etc/php-fpm.conf.default \
